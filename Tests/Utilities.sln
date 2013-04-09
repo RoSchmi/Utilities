@@ -1,0 +1,28 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "Utilities.vcxproj", "{95A88AB2-083D-4E46-82EF-1627A5E143DD}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://arke.visualstudio.com/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = Utilities.vcxproj
+		SccLocalPath1 = .
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{95A88AB2-083D-4E46-82EF-1627A5E143DD}.Debug|x64.ActiveCfg = Debug|x64
+		{95A88AB2-083D-4E46-82EF-1627A5E143DD}.Debug|x64.Build.0 = Debug|x64
+		{95A88AB2-083D-4E46-82EF-1627A5E143DD}.Release|x64.ActiveCfg = Release|x64
+		{95A88AB2-083D-4E46-82EF-1627A5E143DD}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
