@@ -6,6 +6,7 @@ string Utilities::Misc::base64Encode(const uint8* data, uint32 dataLength) {
 	static const char* characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	static int32 mask = 0x3F;
 	uint32 i, j, left, resultLength;
+	string sresult;
 
 	union {
 		uint8 bytes[4];
@@ -16,7 +17,7 @@ string Utilities::Misc::base64Encode(const uint8* data, uint32 dataLength) {
 	if (resultLength % 4)
 		resultLength += 4 - resultLength % 4;
 
-	int8 result[resultLength];
+	int8* result = new int8[resultLength];
 
 	for(i = 0, j = 0, left = dataLength; i < dataLength; i += 3, j += 4, left -= 3) {
 		buffer.bytes[2] = data[i];
@@ -47,7 +48,9 @@ string Utilities::Misc::base64Encode(const uint8* data, uint32 dataLength) {
 		}
 	}
 
-	return string(result);
+	sresult = string(result);
+	delete[] result;
+	return sresult;
 }
 
 bool Utilities::Misc::isStringUTF8(string str) {
