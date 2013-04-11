@@ -9,7 +9,7 @@ file(GLOB util_headers *.h)
 
 add_library(Utilities SHARED ${util_sources})
 
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -pedantic ${CMAKE_CXX_FLAGS}")
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
