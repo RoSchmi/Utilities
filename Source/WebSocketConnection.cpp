@@ -27,8 +27,7 @@ void WebSocketConnection::doHandshake() {
 	Array keyAndMagic(60);
 	Array response;
 	uint8 hash[Cryptography::SHA1_LENGTH];
-	int8* base64;
-	uint32 base64Length;
+	string base64;
 	
 	this->bytesReceived = static_cast<uint32>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
 
@@ -54,21 +53,19 @@ void WebSocketConnection::doHandshake() {
 	
 	keyAndMagic.write("258EAFA5-E914-47DA-95CA-C5AB0DC85B11", 24, 36);
 	Cryptography::SHA1(keyAndMagic.getBuffer(), 60, hash);
-	Misc::base64Encode(hash, 20, &base64, &base64Length);
+	base64 = Misc::base64Encode(hash, 20);
 
 	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: webSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 0, 97);
-	response.write(base64, 97, base64Length);
-	response.write("\r\n\r\n", 97 + base64Length, 4);
+	response.write(base64.c_str(), 97, base64.length());
+	response.write("\r\n\r\n", 97 + base64.length(), 4);
 	
-	if (this->connection.ensureWrite(response.getBuffer(), 97 + 4 + base64Length, 10) != 97 + 4 + base64Length) {
+	if (this->connection.ensureWrite(response.getBuffer(), 97 + 4 + base64.length(), 10) != 97 + 4 + base64.length()) {
 		TCPConnection::disconnect();
 		return;
 	}
 
 	this->ready = true;
 	this->bytesReceived = 0;
-	
-	delete[] base64;
 }
 
 MovableList<TCPConnection::Message> WebSocketConnection::read() {

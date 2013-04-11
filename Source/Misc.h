@@ -8,7 +8,7 @@ namespace Utilities {
 		/**
 		 * Encode @a dataLength bytes from @a data as a base64 ASCII string
 		 */
-		exported void base64Encode(const uint8* data, uint32 dataLength, int8** result, uint32* resultLength);
+		exported std::string base64Encode(const uint8* data, uint32 dataLength);
 
 		/**
 		 * @return true if @a str is a valid UTF-8 encoded string, false
