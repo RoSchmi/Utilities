@@ -31,5 +31,5 @@ namespace Utilities {
 		 * ceiling]
 		 */
 		exported uint64 randomInt64(int64 floor, int64 ceiling);
-	};
-};
+	}
+}

@@ -93,4 +93,4 @@ namespace Utilities {
 			 */
 			void write(const Array& source, uint32 position, uint32 amount = 0);
 	};
-};
+}

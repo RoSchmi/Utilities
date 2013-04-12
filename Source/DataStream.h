@@ -51,4 +51,4 @@ namespace Utilities {
 				return *(T*)this->read(sizeof(T));
 			}
 	};
-};
+}

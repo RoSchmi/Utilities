@@ -30,4 +30,4 @@ namespace Utilities {
 			static DateTime now();
 			static uint64 getMillisecondsSinceEpoch();
 	};
-};
+}

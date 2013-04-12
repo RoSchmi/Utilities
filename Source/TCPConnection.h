@@ -79,5 +79,5 @@ namespace Utilities {
 
 				friend class TCPServer;
 		};
-	};
-};
+	}
+}

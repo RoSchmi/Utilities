@@ -153,5 +153,5 @@ namespace Utilities {
 		int16 networkToHostInt16(int16 value);
 		int32 networkToHostInt32(int32 value);
 		int64 networkToHostInt64(int64 value);
-	};
-};
+	}
+}

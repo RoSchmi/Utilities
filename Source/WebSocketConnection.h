@@ -52,5 +52,5 @@ namespace Utilities {
 					exported virtual bool send(const uint8* data, uint16 length);
 					exported virtual bool sendParts();
 		};
-	};
-};
+	}
+}

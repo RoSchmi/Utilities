@@ -42,5 +42,5 @@ namespace Utilities {
 				friend class TCPConnection;
 				friend class WebSocketConnection;
 		};
-	};
-};
+	}
+}

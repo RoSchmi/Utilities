@@ -47,4 +47,4 @@ namespace Utilities {
 		 */
 		DecrementResult decrement(uint32 timeout);
 	};
-};
+}

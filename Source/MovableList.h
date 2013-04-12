@@ -113,4 +113,4 @@ namespace Utilities {
 				return this->ending;
 			}
 	};
-};
+}

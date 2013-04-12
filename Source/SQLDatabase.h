@@ -358,5 +358,5 @@ namespace Utilities {
 					this->updateQueryString = query.str();
 				}
 		};
-	};
-};
+	}
+}

@@ -17,5 +17,5 @@ namespace Utilities {
 		 * @warning Does NOT check normalization etc!
 		 */
 		exported bool isStringUTF8(std::string str);
-	};
-};
+	}
+}
