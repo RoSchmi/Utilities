@@ -19,7 +19,7 @@ namespace Utilities {
 				uint8 ipAddress[Utilities::Net::Socket::ADDRESS_LENGTH];
 				uint64 authenticatedId;
 
-				Client(Net::TCPConnection& connection, RequestProcessor& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : connection(connection), parent(parent) {
+				Client(Net::TCPConnection& connection, RequestProcessor& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {
 					this->authenticatedId = 0;
 					memcpy(this->ipAddress, clientAddress, Net::Socket::ADDRESS_LENGTH);
 				}
