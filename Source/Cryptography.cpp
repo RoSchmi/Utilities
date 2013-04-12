@@ -15,7 +15,6 @@
 using namespace std;
 using namespace Utilities::Cryptography;
 
-static bool seeded = false;
 static random_device device;
 static mt19937_64 generator(device());
 
