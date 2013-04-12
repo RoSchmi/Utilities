@@ -56,8 +56,8 @@ void WebSocketConnection::doHandshake() {
 	base64 = Misc::base64Encode(hash, 20);
 
 	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: webSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 0, 97);
-	response.write(base64.c_str(), 97, base64.length());
-	response.write("\r\n\r\n", 97 + base64.length(), 4);
+	response.write(base64.c_str(), 97, static_cast<uint32>(base64.length()));
+	response.write("\r\n\r\n", 97 + static_cast<uint32>(base64.length()), 4);
 	
 	if (this->connection.ensureWrite(response.getBuffer(), 97 + 4 + base64.length(), 10) != 97 + 4 + base64.length()) {
 		TCPConnection::disconnect();
