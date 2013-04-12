@@ -36,8 +36,6 @@
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".gitattributes" />
-    <None Include=".gitignore" />
     <None Include="Doxyfile" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

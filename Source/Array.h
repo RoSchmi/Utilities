@@ -5,7 +5,6 @@
 namespace Utilities {
 	class exported Array {
 		uint8* buffer;
-		/** Size of @a buffer */
 		uint32 allocation;
 		uint32 furthestWrite;
 		
@@ -19,8 +18,8 @@ namespace Utilities {
 			/**
 			 * Create an empty Array
 			 *
-			 * @warning the array is *not* zero-initialized. don't read past
-			 * what you write
+			 * @warning the array is *not* zero-initialized. don't read
+			 * past what you write
 			 */
 			Array(uint32 size = 0);
 
