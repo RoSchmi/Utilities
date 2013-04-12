@@ -238,13 +238,13 @@ bool WebSocketConnection::sendParts() {
 	uint8 bytes[4];
 	uint8 sendLength;
 	vector<pair<uint8 const*, uint16>>::iterator i;
-	uint16 totalLength = 0;
+	uint32 totalLength = 0;
 	
 	for (i = this->messageParts.begin(); i != this->messageParts.end(); i++)
 		totalLength += i->second;
 
 	bytes[0] = 128 | static_cast<uint8>(OpCodes::Binary);
-	sendLength = sizeof(totalLength);
+	sendLength = sizeof(uint16);
 
 	if (totalLength <= 125) {
 		bytes[1] = (uint8)totalLength;
@@ -253,7 +253,7 @@ bool WebSocketConnection::sendParts() {
 	else if (totalLength <= 65536) {
 		bytes[1] = 126;
 		sendLength += 2;
-		*(uint16*)(bytes + 2) = Net::hostToNetworkInt16(totalLength);
+		*(uint16*)(bytes + 2) = Net::hostToNetworkInt16(static_cast<int16>(totalLength));
 	}
 	else { // we dont support longer messages
 		this->disconnect(CloseCodes::MessageTooBig);
