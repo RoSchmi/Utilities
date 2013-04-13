@@ -103,7 +103,7 @@ namespace Utilities {
 			friend class Query;
 			
 			public:
-				struct ConnectionParameters {
+				struct Parameters {
 					std::string host;
 					std::string port;
 					std::string database;
@@ -112,7 +112,7 @@ namespace Utilities {
 				};
 
 				exported Connection(const int8* host, const int8* port, const int8* database, const int8* username, const int8* password);
-				exported Connection(const ConnectionParameters& parameters);
+				exported Connection(const Parameters& parameters);
 				exported ~Connection();
 				exported bool getIsConnected() const;
 				exported Query newQuery(std::string queryString = "") const;

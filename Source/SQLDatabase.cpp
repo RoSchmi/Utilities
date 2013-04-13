@@ -21,7 +21,7 @@ Connection::Connection(const int8* host, const int8* port, const int8* database,
 }
 
 //move to delegating constructor eventually
-Connection::Connection(const ConnectionParameters& parameters) {
+Connection::Connection(const Parameters& parameters) {
 	const int8* keywords[] = {"host", "port", "dbname", "user", "password", nullptr};
 	const int8* values[] = {parameters.host.c_str(), parameters.port.c_str(), parameters.database.c_str(), parameters.username.c_str(), parameters.password.c_str(), nullptr};
 	
