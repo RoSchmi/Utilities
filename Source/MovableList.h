@@ -112,5 +112,9 @@ namespace Utilities {
 			Iterator end() {
 				return this->ending;
 			}
+
+			uint32 getCount() const {
+				return this->count;
+			}
 	};
 }
