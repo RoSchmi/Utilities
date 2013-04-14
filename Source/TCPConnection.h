@@ -43,7 +43,7 @@ namespace Utilities {
 				exported virtual ~TCPConnection();
 		 
 				exported const Socket& getBaseSocket() const;
-				exported virtual MovableList<Message> read();
+				exported virtual MovableList<Message> read(uint32 messagesToWaitFor = 0);
 				exported virtual bool send(const uint8* buffer, uint16 length);
 
 				/**

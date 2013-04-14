@@ -30,29 +30,32 @@ const Socket& TCPConnection::getBaseSocket() const {
 	return this->connection;
 }
 
-MovableList<TCPConnection::Message> TCPConnection::read() {
+MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor) {
 	MovableList<TCPConnection::Message> messages;
-	uint32 received = static_cast<uint32>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
-	this->bytesReceived += received;
 
-	if (received == 0) {
-		this->disconnect();
-		messages.insert(TCPConnection::Message(true));
-	}
+	do {
+		uint32 received = static_cast<uint32>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
+		this->bytesReceived += received;
+
+		if (received == 0) {
+			this->disconnect();
+			messages.insert(TCPConnection::Message(true));
+		}
 	
-	while (this->bytesReceived >= TCPConnection::MESSAGE_LENGTH_BYTES) {
-		uint16 length = *reinterpret_cast<uint16*>(this->buffer);
-		int32 remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
+		while (this->bytesReceived >= TCPConnection::MESSAGE_LENGTH_BYTES) {
+			uint16 length = *reinterpret_cast<uint16*>(this->buffer);
+			int32 remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
 
-		if (remaining >= 0) {
-			messages.insert(TCPConnection::Message(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length));
-			memcpy(this->buffer, this->buffer + this->bytesReceived - remaining, remaining);
-			this->bytesReceived = remaining;
+			if (remaining >= 0) {
+				messages.insert(TCPConnection::Message(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length));
+				memcpy(this->buffer, this->buffer + this->bytesReceived - remaining, remaining);
+				this->bytesReceived = remaining;
+			}
+			else {
+				break;
+			}
 		}
-		else {
-			break;
-		}
-	}
+	} while (messages.getCount() < messagesToWaitFor);
 
 	return messages;
 }
