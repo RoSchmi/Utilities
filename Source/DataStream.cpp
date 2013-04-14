@@ -13,7 +13,7 @@ DataStream::DataStream() {
 
 DataStream::DataStream(uint8* exisitingBuffer, uint32 length, bool copy) {
 	this->cursor = 0;
-	this->farthestWrite = 0;
+	this->farthestWrite = length;
 	this->allocation = length;
 	if (copy) {
 		this->buffer = new uint8[length];
