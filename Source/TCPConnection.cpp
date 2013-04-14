@@ -8,7 +8,7 @@ using namespace Utilities::Net;
 using namespace Utilities;
 using namespace std;
 
-TCPConnection::TCPConnection(const int8* address, const int8* port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
+TCPConnection::TCPConnection(std::string address, std::string port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
 	this->owningServer = nullptr;
 	this->bytesReceived = 0;
 	this->state = state;

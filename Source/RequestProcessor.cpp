@@ -3,11 +3,26 @@
 using namespace Utilities;
 using namespace std;
 
-RequestProcessor::RequestProcessor(const int8* port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) : server(port, usesWebSockets, this, onClientConnect, onRequestReceived) {
+RequestProcessor::RequestProcessor(string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) {
 	this->running = true;
 	this->handler = handler;
 	this->retryCode = retryCode;
 	this->state = state;
+
+	this->servers.push_back(new Net::TCPServer(port, usesWebSockets, this, onClientConnect, onRequestReceived));
+
+	for (uint8 i = 0; i < workers; i++)
+		this->workers.push_back(thread(&RequestProcessor::workerRun, this));
+}
+
+RequestProcessor::RequestProcessor(vector<string> ports, uint8 workers, vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) {
+	this->running = true;
+	this->handler = handler;
+	this->retryCode = retryCode;
+	this->state = state;
+	
+	for (uint8 i = 0; i < ports.size(); i++)
+		this->servers.push_back(new Net::TCPServer(ports[i], usesWebSockets[i], this, onClientConnect, onRequestReceived));
 
 	for (uint8 i = 0; i < workers; i++)
 		this->workers.push_back(thread(&RequestProcessor::workerRun, this));
@@ -16,9 +31,11 @@ RequestProcessor::RequestProcessor(const int8* port, uint8 workers, bool usesWeb
 RequestProcessor::~RequestProcessor() {
 	this->running = false;
 
-	for (auto& i : this->workers) {
+	for (auto i : this->servers)
+		delete i;
+
+	for (auto& i : this->workers)
 		i.join();
-	}
 }
 
 void* RequestProcessor::onClientConnect(Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) {
@@ -34,7 +51,7 @@ void RequestProcessor::onRequestReceived(Net::TCPConnection& connection, void* s
 		return;
 	}
 	
-	requestProcessor.requestQueue.enqueue(new RequestProcessor::Request(*client, message));
+	requestProcessor.queue.enqueue(new RequestProcessor::Request(*client, message));
 	message.data = nullptr;
 	message.length = 0;
 }
@@ -47,7 +64,7 @@ void RequestProcessor::workerRun() {
 	Request* request;
 
 	while (this->running) {
-		if (!this->requestQueue.dequeue(request, 1000))
+		if (!this->queue.dequeue(request, 1000))
 			continue;
 
 		requestId =  request->parameters.read<uint16>();
@@ -64,7 +81,7 @@ void RequestProcessor::workerRun() {
 		else {
 			request->currentAttempts++;
 			if (request->currentAttempts < RequestProcessor::MAX_RETRIES) {
-				this->requestQueue.enqueue(request);
+				this->queue.enqueue(request);
 			}
 			else {
 				this->response.write<uint16>(this->retryCode);

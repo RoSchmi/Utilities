@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <vector>
+#include <string>
 
 // todo: doc this
 namespace Utilities {
@@ -15,7 +16,7 @@ namespace Utilities {
 				typedef void* (*OnConnectCallback)(TCPConnection& client, void* state, const uint8 clientAddress[Socket::ADDRESS_LENGTH]); /* return a pointer to a state object passed in to OnReceive */
 				typedef void (*OnReceiveCallback)(TCPConnection& client, void* state, TCPConnection::Message& message);
 			
-				exported TCPServer(const int8* port, bool isWebSocket, void* onConnectState, OnConnectCallback connectCallback, OnReceiveCallback receiveCallback);
+				exported TCPServer(std::string port, bool isWebSocket, void* onConnectState, OnConnectCallback connectCallback, OnReceiveCallback receiveCallback);
 				exported ~TCPServer();
 
 			private:

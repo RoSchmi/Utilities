@@ -8,7 +8,7 @@
 using namespace std;
 using namespace Utilities::Net;
 
-TCPServer::TCPServer(const int8* port, bool isWebSocket, void* onConnectState, OnConnectCallback connectCallback, OnReceiveCallback receiveCallback) : listener(Socket::Families::IPAny, Socket::Types::TCP, port), asyncWorker(TCPServer::asyncReadCallback) {
+TCPServer::TCPServer(string port, bool isWebSocket, void* onConnectState, OnConnectCallback connectCallback, OnReceiveCallback receiveCallback) : listener(Socket::Families::IPAny, Socket::Types::TCP, port), asyncWorker(TCPServer::asyncReadCallback) {
 	this->isWebSocket = isWebSocket;
 	this->active = true;
 	this->receiveCallback = receiveCallback;

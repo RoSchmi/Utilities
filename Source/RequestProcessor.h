@@ -38,8 +38,9 @@ namespace Utilities {
 			static const uint8 MAX_RETRIES = 5;
 			
 			typedef bool (*HandlerCallback)(Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, void* state);
-			RequestProcessor(const int8* port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
-			virtual ~RequestProcessor();
+			RequestProcessor(std::string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
+			RequestProcessor(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
+			~RequestProcessor();
 
 		private:
 			RequestProcessor(const RequestProcessor& other);
@@ -47,11 +48,11 @@ namespace Utilities {
 			RequestProcessor& operator=(const RequestProcessor& other);
 			RequestProcessor& operator=(RequestProcessor&& other);
 
-			Net::TCPServer server;
+			std::vector<Net::TCPServer*> servers;
 		
 			HandlerCallback handler;
 			DataStream response;
-			SafeQueue<Request> requestQueue;
+			SafeQueue<Request> queue;
 			uint16 retryCode;
 			void* state;
 

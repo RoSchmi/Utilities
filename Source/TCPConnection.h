@@ -39,7 +39,7 @@ namespace Utilities {
 						Message& operator=(const Message& other);
 				};
 				
-				exported TCPConnection(const int8* address, const int8* port, void* state);
+				exported TCPConnection(std::string address, std::string port, void* state);
 				exported virtual ~TCPConnection();
 		 
 				exported const Socket& getBaseSocket() const;

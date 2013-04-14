@@ -27,7 +27,7 @@
 using namespace Utilities::Net;
 using namespace std;
 
-bool Socket::prepareRawSocket(const int8* address, const int8* port, bool willListenOn, void** addressInfo) {
+bool Socket::prepareRawSocket(string address, string port, bool willListenOn, void** addressInfo) {
 	addrinfo serverHints;
 	addrinfo* serverAddrInfo;
 
@@ -64,7 +64,7 @@ bool Socket::prepareRawSocket(const int8* address, const int8* port, bool willLi
 	if (willListenOn)
 		serverHints.ai_flags = AI_PASSIVE;
 		
-	if (getaddrinfo(address, port, &serverHints, &serverAddrInfo) != 0) {
+	if (getaddrinfo(address != "" ? address.c_str() : nullptr, port.c_str(), &serverHints, &serverAddrInfo) != 0) {
 		return false;
 	}
 
@@ -110,7 +110,7 @@ Socket::Socket(Families family, Types type) {
 	#endif
 }
 
-Socket::Socket(Families family, Types type, const int8* address, const int8* port) {
+Socket::Socket(Families family, Types type, string address, string port) {
 	this->family = family;
 	this->type = type;
 	this->connected = true;
@@ -137,7 +137,7 @@ Socket::Socket(Families family, Types type, const int8* address, const int8* por
 	freeaddrinfo(serverAddrInfo);
 }
 
-Socket::Socket(Families family, Types type, const int8* port) {
+Socket::Socket(Families family, Types type, string port) {
 	this->family = family;
 	this->type = type;
 	this->connected = true;
@@ -146,7 +146,7 @@ Socket::Socket(Families family, Types type, const int8* port) {
 
 	addrinfo* serverAddrInfo;
 	
-	if (!this->prepareRawSocket(nullptr, port, true, (void**)&serverAddrInfo))
+	if (!this->prepareRawSocket("", port, true, (void**)&serverAddrInfo))
 		throw runtime_error("Can't create raw socket.");
 
 	if (::bind(this->rawSocket, serverAddrInfo->ai_addr, (int)serverAddrInfo->ai_addrlen) != 0)

@@ -5,6 +5,7 @@
 #include <thread>
 #include <condition_variable>
 #include <mutex>
+#include <string>
 #include <atomic>
 #include <algorithm>
 
@@ -40,8 +41,8 @@ namespace Utilities {
 					IPAny
 				};
 			
-				Socket(Families family, Types type, const int8* address, const int8* port);
-				Socket(Families family, Types type, const int8* port);
+				Socket(Families family, Types type, std::string address, std::string port);
+				Socket(Families family, Types type, std::string port);
 				Socket(Socket&& other);
 				Socket& operator=(Socket&& other);
 				~Socket();
@@ -108,7 +109,7 @@ namespace Utilities {
 					int rawSocket;
 				#endif
 
-				bool prepareRawSocket(const int8* address, const int8* port, bool willListenOn, void** addressInfo);
+				bool prepareRawSocket(std::string address, std::string port, bool willListenOn, void** addressInfo);
 				Socket(Families family, Types type);
 			
 				Socket(const Socket& other);
