@@ -48,7 +48,7 @@ string Utilities::Misc::base64Encode(const uint8* data, uint32 dataLength) {
 		}
 	}
 
-	sresult = string(result);
+	sresult = string(result, resultLength);
 	delete[] result;
 	return sresult;
 }
