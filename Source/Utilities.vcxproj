@@ -8,7 +8,7 @@
     <ClInclude Include="DataStream.h" />
     <ClInclude Include="MovableList.h" />
     <ClInclude Include="Misc.h" />
-    <ClInclude Include="RequestProcessor.h" />
+    <ClInclude Include="RequestServer.h" />
     <ClInclude Include="SafeQueue.h" />
     <ClInclude Include="SQLDatabase.h" />
     <ClInclude Include="Socket.h" />
@@ -23,7 +23,7 @@
     <ClCompile Include="Cryptography.cpp" />
     <ClCompile Include="DataStream.cpp" />
     <ClCompile Include="Misc.cpp" />
-    <ClCompile Include="RequestProcessor.cpp" />
+    <ClCompile Include="RequestServer.cpp" />
     <ClCompile Include="SQLDatabase.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="TCPConnection.cpp" />

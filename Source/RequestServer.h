@@ -11,15 +11,15 @@
 #include <cstring>
 
 namespace Utilities {
-	class RequestProcessor {
+	class RequestServer {
 		public: 
 			struct Client {
-				RequestProcessor& parent;
+				RequestServer& parent;
 				Net::TCPConnection& connection;
 				uint8 ipAddress[Utilities::Net::Socket::ADDRESS_LENGTH];
 				uint64 authenticatedId;
 
-				Client(Net::TCPConnection& connection, RequestProcessor& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {
+				Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {
 					this->authenticatedId = 0;
 					memcpy(this->ipAddress, clientAddress, Net::Socket::ADDRESS_LENGTH);
 				}
@@ -37,16 +37,16 @@ namespace Utilities {
 
 			static const uint8 MAX_RETRIES = 5;
 			
-			typedef bool (*HandlerCallback)(Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, void* state);
-			RequestProcessor(std::string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
-			RequestProcessor(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
-			~RequestProcessor();
+			typedef bool (*HandlerCallback)(uint8 workerNumber, Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, void* state);
+			RequestServer(std::string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
+			RequestServer(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
+			~RequestServer();
 
 		private:
-			RequestProcessor(const RequestProcessor& other);
-			RequestProcessor(RequestProcessor&& other);
-			RequestProcessor& operator=(const RequestProcessor& other);
-			RequestProcessor& operator=(RequestProcessor&& other);
+			RequestServer(const RequestServer& other);
+			RequestServer(RequestServer&& other);
+			RequestServer& operator=(const RequestServer& other);
+			RequestServer& operator=(RequestServer&& other);
 
 			std::vector<Net::TCPServer*> servers;
 		
@@ -59,7 +59,7 @@ namespace Utilities {
 			std::vector<std::thread> workers;
 			std::atomic<bool> running;
 
-			void workerRun();
+			void workerRun(uint8 workerNumber);
 	
 			static void* onClientConnect(Utilities::Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Utilities::Net::Socket::ADDRESS_LENGTH]);
 			static void onRequestReceived(Utilities::Net::TCPConnection& connection, void* state, Utilities::Net::TCPConnection::Message& message);

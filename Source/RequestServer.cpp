@@ -1,9 +1,9 @@
-#include "RequestProcessor.h"
+#include "RequestServer.h"
 
 using namespace Utilities;
 using namespace std;
 
-RequestProcessor::RequestProcessor(string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) {
+RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) {
 	this->running = true;
 	this->handler = handler;
 	this->retryCode = retryCode;
@@ -12,10 +12,10 @@ RequestProcessor::RequestProcessor(string port, uint8 workers, bool usesWebSocke
 	this->servers.push_back(new Net::TCPServer(port, usesWebSockets, this, onClientConnect, onRequestReceived));
 
 	for (uint8 i = 0; i < workers; i++)
-		this->workers.push_back(thread(&RequestProcessor::workerRun, this));
+		this->workers.push_back(thread(&RequestServer::workerRun, this, i));
 }
 
-RequestProcessor::RequestProcessor(vector<string> ports, uint8 workers, vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) {
+RequestServer::RequestServer(vector<string> ports, uint8 workers, vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) {
 	this->running = true;
 	this->handler = handler;
 	this->retryCode = retryCode;
@@ -25,10 +25,10 @@ RequestProcessor::RequestProcessor(vector<string> ports, uint8 workers, vector<b
 		this->servers.push_back(new Net::TCPServer(ports[i], usesWebSockets[i], this, onClientConnect, onRequestReceived));
 
 	for (uint8 i = 0; i < workers; i++)
-		this->workers.push_back(thread(&RequestProcessor::workerRun, this));
+		this->workers.push_back(thread(&RequestServer::workerRun, this, i));
 }
 
-RequestProcessor::~RequestProcessor() {
+RequestServer::~RequestServer() {
 	this->running = false;
 
 	for (auto i : this->servers)
@@ -38,25 +38,25 @@ RequestProcessor::~RequestProcessor() {
 		i.join();
 }
 
-void* RequestProcessor::onClientConnect(Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) {
-	return new RequestProcessor::Client(connection, *reinterpret_cast<RequestProcessor*>(serverState), clientAddress);
+void* RequestServer::onClientConnect(Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) {
+	return new RequestServer::Client(connection, *reinterpret_cast<RequestServer*>(serverState), clientAddress);
 }
 
-void RequestProcessor::onRequestReceived(Net::TCPConnection& connection, void* state, Net::TCPConnection::Message& message) {
-	RequestProcessor::Client* client = reinterpret_cast<RequestProcessor::Client*>(state);
-	RequestProcessor& requestProcessor = client->parent;
+void RequestServer::onRequestReceived(Net::TCPConnection& connection, void* state, Net::TCPConnection::Message& message) {
+	RequestServer::Client* client = reinterpret_cast<RequestServer::Client*>(state);
+	RequestServer& RequestServer = client->parent;
 
 	if (message.length == 0) {
 		delete client;
 		return;
 	}
 	
-	requestProcessor.queue.enqueue(new RequestProcessor::Request(*client, message));
+	RequestServer.queue.enqueue(new RequestServer::Request(*client, message));
 	message.data = nullptr;
 	message.length = 0;
 }
 
-void RequestProcessor::workerRun() {
+void RequestServer::workerRun(uint8 workerNumber) {
 	uint16 requestId;
 	uint8 requestCategory;
 	uint8 requestMethod;
@@ -73,14 +73,14 @@ void RequestProcessor::workerRun() {
 
 		this->response.reset();
 		this->response.write<uint16>(requestId);
-		wasHandled = this->handler(request->client, requestCategory, requestMethod, request->parameters, this->response, this->state);
+		wasHandled = this->handler(workerNumber, request->client, requestCategory, requestMethod, request->parameters, this->response, this->state);
 		
 		if (wasHandled) {
 			request->client.connection.send(this->response.getBuffer(), static_cast<uint16>(this->response.getLength()));
 		}
 		else {
 			request->currentAttempts++;
-			if (request->currentAttempts < RequestProcessor::MAX_RETRIES) {
+			if (request->currentAttempts < RequestServer::MAX_RETRIES) {
 				this->queue.enqueue(request);
 			}
 			else {
