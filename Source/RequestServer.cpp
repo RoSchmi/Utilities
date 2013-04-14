@@ -67,7 +67,10 @@ void RequestServer::workerRun(uint8 workerNumber) {
 		if (!this->queue.dequeue(request, 1000))
 			continue;
 
-		requestId =  request->parameters.read<uint16>();
+		if (request->parameters.getLength() < 4)
+			continue; //maybe we should return an error?
+
+		requestId = request->parameters.read<uint16>();
 		requestCategory = request->parameters.read<uint8>();
 		requestMethod = request->parameters.read<uint8>();
 
@@ -77,6 +80,7 @@ void RequestServer::workerRun(uint8 workerNumber) {
 		
 		if (wasHandled) {
 			request->client.connection.send(this->response.getBuffer(), static_cast<uint16>(this->response.getLength()));
+			delete request;
 		}
 		else {
 			request->currentAttempts++;
