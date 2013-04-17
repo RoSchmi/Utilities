@@ -23,7 +23,7 @@ namespace Utilities {
 		struct Exception {
 			std::string what;
 
-			Exception(std::string what) : what(what) { }
+			exported Exception(std::string what) : what(what) { }
 		};
 
 		class Query {
@@ -119,10 +119,10 @@ namespace Utilities {
 		};
 
 		struct IDBObject {
-			IDBObject();
-			virtual ~IDBObject();
+			exported IDBObject();
+			exported virtual ~IDBObject();
 
-			operator bool();
+			exported operator bool();
 			
 			uint64 id;
 			bool valid;
@@ -143,14 +143,14 @@ namespace Utilities {
 							Array
 						};
 	
-						ColumnDefinition(std::string name, bool updatable, uint64 T::*uint64Type) : name(name), updatable(updatable), type(DataType::UInt64) { this->value.uint64Type = uint64Type; };
-						ColumnDefinition(std::string name, bool updatable, uint32 T::*uint32Type) : name(name), updatable(updatable), type(DataType::UInt32) { this->value.uint32Type = uint32Type; };
-						ColumnDefinition(std::string name, bool updatable, uint16 T::*uint16Type) : name(name), updatable(updatable), type(DataType::UInt16) { this->value.uint16Type = uint16Type; };
-						ColumnDefinition(std::string name, bool updatable, float64 T::*float64Type) : name(name), updatable(updatable), type(DataType::Float64) { this->value.float64Type = float64Type; };
-						ColumnDefinition(std::string name, bool updatable, bool T::*booleanType) : name(name), updatable(updatable), type(DataType::Boolean) { this->value.booleanType = booleanType; };
-						ColumnDefinition(std::string name, bool updatable, std::string T::*stringType) : name(name), updatable(updatable), type(DataType::String) { this->value.stringType = stringType; };
-						ColumnDefinition(std::string name, bool updatable, Utilities::DateTime T::*dateTimeType) : name(name), updatable(updatable), type(DataType::DateTime) { this->value.dateTimeType = dateTimeType; };
-						ColumnDefinition(std::string name, bool updatable, Utilities::Array T::*binaryType) : name(name), updatable(updatable), type(DataType::Array) { this->value.binaryType = binaryType; };
+						exported ColumnDefinition(std::string name, bool updatable, uint64 T::*uint64Type) : name(name), updatable(updatable), type(DataType::UInt64) { this->value.uint64Type = uint64Type; };
+						exported ColumnDefinition(std::string name, bool updatable, uint32 T::*uint32Type) : name(name), updatable(updatable), type(DataType::UInt32) { this->value.uint32Type = uint32Type; };
+						exported ColumnDefinition(std::string name, bool updatable, uint16 T::*uint16Type) : name(name), updatable(updatable), type(DataType::UInt16) { this->value.uint16Type = uint16Type; };
+						exported ColumnDefinition(std::string name, bool updatable, float64 T::*float64Type) : name(name), updatable(updatable), type(DataType::Float64) { this->value.float64Type = float64Type; };
+						exported ColumnDefinition(std::string name, bool updatable, bool T::*booleanType) : name(name), updatable(updatable), type(DataType::Boolean) { this->value.booleanType = booleanType; };
+						exported ColumnDefinition(std::string name, bool updatable, std::string T::*stringType) : name(name), updatable(updatable), type(DataType::String) { this->value.stringType = stringType; };
+						exported ColumnDefinition(std::string name, bool updatable, Utilities::DateTime T::*dateTimeType) : name(name), updatable(updatable), type(DataType::DateTime) { this->value.dateTimeType = dateTimeType; };
+						exported ColumnDefinition(std::string name, bool updatable, Utilities::Array T::*binaryType) : name(name), updatable(updatable), type(DataType::Array) { this->value.binaryType = binaryType; };
 
 					private:
 						std::string name;
@@ -171,47 +171,47 @@ namespace Utilities {
 						friend class TableBinding<T>;
 				};
 
-				TableBinding(std::string name, bool lockSelectedRow) {
+				exported TableBinding(std::string name, bool lockSelectedRow) {
 					this->name = name;
 					this->lockStatement = lockSelectedRow ? " FOR UPDATE;" : "";
 				}
 
-				void prepateStatements() {
+				exported void prepateStatements() {
 					this->generateSelectById();
 					this->generateUpdate();
 					this->generateInsert();
 					this->generateDelete();
 				}
 
-				void addColumnDefinition(ColumnDefinition ColumnDefinition) {
+				exported void addColumnDefinition(ColumnDefinition ColumnDefinition) {
 					this->columnDefinitions.push_back(ColumnDefinition);
 				}
 
-				template<typename U> T executeSelectSingleByField(const Connection& db, std::string field, U value) const {
+				template<typename U> exported T executeSelectSingleByField(const Connection& db, std::string field, U value) const {
 					auto query = db.newQuery("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lockStatement);
 					query.addParameter(value);
 					return this->fillObjectFromQuery(query);
 				}
 
-				template<typename U> std::vector<T> executeSelectManyByField(const Connection& db, std::string field, U value) const {
+				template<typename U> exported std::vector<T> executeSelectManyByField(const Connection& db, std::string field, U value) const {
 					auto query = db.newQuery("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lockStatement);
 					query.addParameter(value);
 					return this->fillObjectsFromQuery(query);
 				}
 
-				T executeSelectById(const Connection& db, uint64 id) const {
+				exported T executeSelectById(const Connection& db, uint64 id) const {
 					auto query = db.newQuery(this->selectByIdQueryString);
 					query.addParameter(id);
 					return this->fillObjectFromQuery(query);
 				}
 
-				void executeDelete(const Connection& db, T& object) const {
+				exported void executeDelete(const Connection& db, T& object) const {
 					auto query = db.newQuery(this->deleteQueryString);
 					query.addParameter(object.id);
 					query.execute();
 				}
 		
-				void executeInsert(const Connection& db, T& object) const {
+				exported void executeInsert(const Connection& db, T& object) const {
 					auto query = db.newQuery(this->insertQueryString);
 
 					for (auto i : this->columnDefinitions)
@@ -220,7 +220,7 @@ namespace Utilities {
 					query.execute();
 				}
 		
-				void executeUpdate(const Connection& db, T& object) const {
+				exported void executeUpdate(const Connection& db, T& object) const {
 					auto query = db.newQuery(this->updateQueryString);
 
 					for (auto i : this->columnDefinitions)
@@ -231,7 +231,7 @@ namespace Utilities {
 					query.execute();
 				}
 
-				T fillObjectFromQuery(Query& query) const {
+				exported T fillObjectFromQuery(Query& query) const {
 					T result;
 
 					query.execute();
@@ -247,7 +247,7 @@ namespace Utilities {
 					return result;
 				}
 
-				std::vector<T> fillObjectsFromQuery(Query& query) const {
+				exported std::vector<T> fillObjectsFromQuery(Query& query) const {
 					std::vector<T> result;
 					query.execute();
 

@@ -19,7 +19,7 @@ namespace Utilities {
 				uint8 ipAddress[Utilities::Net::Socket::ADDRESS_LENGTH];
 				uint64 authenticatedId;
 
-				Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {
+				exported Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {
 					this->authenticatedId = 0;
 					memcpy(this->ipAddress, clientAddress, Net::Socket::ADDRESS_LENGTH);
 				}
@@ -30,7 +30,7 @@ namespace Utilities {
 				DataStream parameters;
 				uint8 currentAttempts;
 
-				Request(Client& client, Net::TCPConnection::Message& message) : client(client), parameters(message.data, message.length, false) {
+				exported Request(Client& client, Net::TCPConnection::Message& message) : client(client), parameters(message.data, message.length, false) {
 					this->currentAttempts = 0;
 				}
 			};
@@ -38,9 +38,9 @@ namespace Utilities {
 			static const uint8 MAX_RETRIES = 5;
 			
 			typedef bool (*HandlerCallback)(uint8 workerNumber, Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, void* state);
-			RequestServer(std::string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
-			RequestServer(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
-			~RequestServer();
+			exported RequestServer(std::string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
+			exported RequestServer(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state = nullptr);
+			exported ~RequestServer();
 
 		private:
 			RequestServer(const RequestServer& other);
