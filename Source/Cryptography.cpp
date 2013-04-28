@@ -78,7 +78,7 @@ void Utilities::Cryptography::randomBytes(uint8* buffer, uint32 count) {
 	}
 }
 
-uint64 Utilities::Cryptography::randomInt64(int64 floor, int64 ceiling) {
+int64 Utilities::Cryptography::randomInt64(int64 floor, int64 ceiling) {
 	uniform_int_distribution<int64> distribution(floor, ceiling);
 	
 	return distribution(generator);

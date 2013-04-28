@@ -30,6 +30,6 @@ namespace Utilities {
 		 * @returns a random 64-bit integer in the interval of [@a floor, @a
 		 * ceiling]
 		 */
-		exported uint64 randomInt64(int64 floor, int64 ceiling);
+		exported int64 randomInt64(int64 floor, int64 ceiling);
 	}
 }
