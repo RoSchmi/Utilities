@@ -31,5 +31,11 @@ namespace Utilities {
 		 * ceiling]
 		 */
 		exported int64 randomInt64(int64 floor, int64 ceiling);
+
+		/**
+		 * @returns a random 64-bit floating point number in the interval of [@a floor, @a
+		 * ceiling]
+		 */
+		exported float64 randomFloat64(float64 floor, float64 ceiling);
 	}
 }

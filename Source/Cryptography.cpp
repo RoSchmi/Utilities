@@ -83,3 +83,9 @@ int64 Utilities::Cryptography::randomInt64(int64 floor, int64 ceiling) {
 	
 	return distribution(generator);
 }
+
+float64 Utilities::Cryptography::randomFloat64(float64 floor, float64 ceiling) {
+	uniform_real_distribution<float64> distribution(floor, ceiling);
+	
+	return distribution(generator);
+}
