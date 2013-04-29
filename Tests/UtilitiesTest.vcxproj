@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\..\Dependencies\C Test.props" />
+  <ItemGroup>
+	<ClCompile Include="Array.cpp" />
+	<ClCompile Include="Cryptography.cpp" />
+	<ClCompile Include="Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+	<Text Include="CMakeLists.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+	<ProjectGuid>{98033adb-01cc-4ab8-bc8e-0a9a019efb5d}</ProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+	<ClCompile>
+	  <DisableLanguageExtensions>false</DisableLanguageExtensions>
+	</ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+	<Link>
+	  <AdditionalDependencies>Ws2_32.lib;libpq\libpq.lib;gtest\gtest.lib;%(AdditionalDependencies)</AdditionalDependencies>
+	</Link>
+  </ItemDefinitionGroup>
+</Project>
