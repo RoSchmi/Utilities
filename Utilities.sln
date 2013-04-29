@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "Source\Utilities.vcxproj", "{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UtilitiesTest", "Tests\UtilitiesTest.vcxproj", "{AB0EEB95-7AE0-4CBB-820C-6DA39CB7BFB9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UtilitiesTest", "Tests\UtilitiesTest.vcxproj", "{98033adb-01cc-4ab8-bc8e-0a9a019efb5d}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
