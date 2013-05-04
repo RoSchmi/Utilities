@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)..\Dependencies\C Library.props" />
+  <ItemGroup>
+    <ClInclude Include="Array.h" />
+    <ClInclude Include="AsyncHashTable.h" />
+    <ClInclude Include="AsyncLinkedList.h" />
+    <ClInclude Include="AsyncList.h" />
+    <ClInclude Include="AsyncQueue.h" />
+    <ClInclude Include="AsyncStack.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Cryptography.h" />
+    <ClInclude Include="DataStream.h" />
+    <ClInclude Include="HashTable.h" />
+    <ClInclude Include="LinkedList.h" />
+    <ClInclude Include="List.h" />
+    <ClInclude Include="Memory.h" />
+    <ClInclude Include="Misc.h" />
+    <ClInclude Include="Queue.h" />
+    <ClInclude Include="Socket.h" />
+    <ClInclude Include="Stack.h" />
+    <ClInclude Include="Strings.h" />
+    <ClInclude Include="TCPClient.h" />
+    <ClInclude Include="TCPServer.h" />
+    <ClInclude Include="Thread.h" />
+    <ClInclude Include="Time.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Array.c" />
+    <ClCompile Include="AsyncHashTable.c" />
+    <ClCompile Include="AsyncLinkedList.c" />
+    <ClCompile Include="AsyncList.c" />
+    <ClCompile Include="AsyncQueue.c" />
+    <ClCompile Include="AsyncStack.c" />
+    <ClCompile Include="Cryptography.c" />
+    <ClCompile Include="DataStream.c" />
+    <ClCompile Include="HashTable.c" />
+    <ClCompile Include="LinkedList.c" />
+    <ClCompile Include="List.c" />
+    <ClCompile Include="Memory.c" />
+    <ClCompile Include="Misc.c" />
+    <ClCompile Include="Queue.c" />
+    <ClCompile Include="Socket.c" />
+    <ClCompile Include="Stack.c" />
+    <ClCompile Include="Strings.c" />
+    <ClCompile Include="TCPClient.c" />
+    <ClCompile Include="TCPServer.c" />
+    <ClCompile Include="Thread.c" />
+    <ClCompile Include="Time.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Doxyfile" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}</ProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+	<ClCompile>
+	  <DisableLanguageExtensions>false</DisableLanguageExtensions>
+	</ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+	<Link>
+	  <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+	</Link>
+  </ItemDefinitionGroup>
+</Project>
