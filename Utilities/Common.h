@@ -12,6 +12,24 @@
 	#define threadlocal __thread
 #endif
 
+#ifdef WINDOWS
+
+#if defined _WIN64	
+typedef uint64 word;
+#else
+typedef uint32 word;
+#endif
+
+#elif defined POSIX
+
+#if defined __X86_64__
+typedef uint64 word;
+#else
+typedef uint32 word;
+#endif
+
+#endif
+
 typedef long long int64;
 typedef int int32;
 typedef short int16;
@@ -23,21 +41,4 @@ typedef unsigned char uint8;
 typedef double float64;
 typedef float float32;
 typedef const int8* cstr;
-
-#ifdef WINDOWS
-
-#if defined _WIN32 && !defined _WIN64	
-typedef unsigned int uintptr;
-#elif defined _WIN64
-typedef unsigned long long uintptr;
-#endif
-
-#elif defined POSIX
-
-#if defined __X86_64__
-typedef unsigned long long uintptr;
-#else
-typedef unsigned int uintptr;
-#endif
-
-#endif
+typedef word uintptr;
