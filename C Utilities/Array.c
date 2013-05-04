@@ -13,7 +13,7 @@
  * @param size Size in bytes of new array
  * @returns pointer to newly initialzed array
  */
-Array* Array_New(uint64 size) {
+Array* Array_New(uint32 size) {
 	Array* array;
 
 	array = Allocate(Array);
@@ -29,9 +29,9 @@ Array* Array_New(uint64 size) {
  * @param size New size of array
  * @returns pointer to newly created array
  */
-Array* Array_NewFromExisting(uint8* data, uint64 size) {
+Array* Array_NewFromExisting(uint8* data, uint32 size) {
 	Array* array;
-	uint64 actualSize;
+	uint32 actualSize;
 
 	assert(size > 0);
 	assert(data != NULL);
@@ -56,8 +56,8 @@ Array* Array_NewFromExisting(uint8* data, uint64 size) {
  * @param array array object to initialize
  * @param size size of new array
  */
-void Array_Initialize(Array* array, uint64 size) {
-	uint64 actualSize;
+void Array_Initialize(Array* array, uint32 size) {
+	uint32 actualSize;
 
 	assert(array != NULL);
 
@@ -100,8 +100,8 @@ void Array_Uninitialize(Array* self) {
  * @param self Array to resize
  * @param newSize Desired size of array
  */
-void Array_Resize(Array* self, uint64 newSize) {
-	uint64 actualSize;
+void Array_Resize(Array* self, uint32 newSize) {
+	uint32 actualSize;
 
 	assert(newSize > 0);
 	assert(self != NULL);
@@ -125,7 +125,7 @@ void Array_Resize(Array* self, uint64 newSize) {
  * @warning Returns a pointer into the array. If you mutate this, you mutate
  * the array.
  */
-uint8* Array_Read(Array* self, uint64 position, uint64 amount) {
+uint8* Array_Read(Array* self, uint32 position, uint32 amount) {
 	assert(self != NULL);
 	assert(position + amount <= self->Size);
 
@@ -140,7 +140,7 @@ uint8* Array_Read(Array* self, uint64 position, uint64 amount) {
  * @param amount Number of bytes to read
  * @param targetBuffer Buffer to write to
  */
-void Array_ReadTo(Array* self, uint64 position, uint64 amount, uint8* targetBuffer) {
+void Array_ReadTo(Array* self, uint32 position, uint32 amount, uint8* targetBuffer) {
 	assert(self != NULL && targetBuffer != NULL);
 	assert(position + amount <= self->Size);
 
@@ -155,7 +155,7 @@ void Array_ReadTo(Array* self, uint64 position, uint64 amount, uint8* targetBuff
  * @param data Data to write
  * @param amount Number of bytes to write from @a data
  */
-void Array_Write(Array* self, uint8* data, uint64 position, uint64 amount) {
+void Array_Write(Array* self, uint8* data, uint32 position, uint32 amount) {
 	assert(self != NULL);
 
 	if (position + amount > self->Size) Array_Resize(self, position + amount);

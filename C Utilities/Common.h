@@ -1,13 +1,13 @@
 #ifndef INCLUDE_UTILITIES_COMMON
 #define INCLUDE_UTILITIES_COMMON
 
-#ifdef _WIN64
+#if defined _WIN64 || defined _WIN32
 	#define WINDOWS
 #elif __unix__
 	#define POSIX
 #endif
 
-#ifdef WINDOWS
+#if defined WINDOWS
 	#define exported  __declspec(dllexport)
 #elif defined __clang__ || defined __GNUC__
 	#define exported __attribute__((visibility ("default")))
@@ -31,7 +31,25 @@ typedef int8 boolean;
 
 #include "Memory.h"
 
-#ifdef NDEBUG
+#ifdef WINDOWS
+
+#if defined _WIN32 && !defined _WIN64	
+typedef unsigned int uintptr;
+#elif defined _WIN64
+typedef unsigned long long uintptr;
+#endif
+
+#elif defined POSIX
+
+#if defined __X86_64__
+typedef unsigned long long uintptr;
+#else
+typedef unsigned int uintptr;
+#endif
+
+#endif
+
+#if defined NDEBUG
 	#define assert(expression) ((void)0)
 #else
 	#define assert(expression) (void)( (!!(expression)) || true) /*(logger(#expression, __FILE__, __LINE__), 0) ) we need to make logger*/

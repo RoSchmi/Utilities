@@ -18,7 +18,7 @@ typedef void (*SAL_Socket_ReadCallback)(SAL_Socket* socket, void* const state);
 
 struct SAL_Socket {
 	#ifdef WINDOWS
-		uint64 RawSocket;
+		uintptr RawSocket;
 	#elif defined POSIX
 		int RawSocket;
 	#endif

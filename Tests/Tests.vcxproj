@@ -10,7 +10,7 @@
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{98033adb-01cc-4ab8-bc8e-0a9a019efb5d}</ProjectGuid>
+    <ProjectGuid>{5A9F392E-9D05-4F1E-951C-C236005614EB}</ProjectGuid>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>

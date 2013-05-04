@@ -12,15 +12,15 @@ typedef struct List_Iterator List_Iterator;
 
 struct List {
 	Array DataStore;
-	uint64 Cursor;
-	uint64 Count;
+	uint32 Cursor;
+	uint32 Count;
 	List_Iterator* DefaultIterator;
 	List_ElementDisposer Disposer;
 };
 
 struct List_Iterator {
     List* ParentList;
-    uint64 Position;
+    uint32 Position;
 };
 
 /* Iterates over every item in list using the list's DefaultIterator method. Resets the iterator upon invocation. Used like a while loop. */ 

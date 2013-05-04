@@ -106,7 +106,7 @@ uint8* SAL_Cryptography_SHA1(uint8* source, uint32 length) {
  *
  * @warning You need to free the returned memory yourself
  */
-uint8* SAL_Cryptography_RandomBytes(uint64 count) {
+uint8* SAL_Cryptography_RandomBytes(uint32 count) {
 	uint8* bytes = NULL;
 	uint8 i;
 

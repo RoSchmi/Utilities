@@ -10,8 +10,8 @@ typedef struct {
 	Stack* BaseStack;
 } AsyncStack;
 
-exported AsyncStack* AsyncStack_New(uint64 size);
-exported void AsyncStack_Initialize(AsyncStack* stack, uint64 size);
+exported AsyncStack* AsyncStack_New(uint32 size);
+exported void AsyncStack_Initialize(AsyncStack* stack, uint32 size);
 exported void AsyncStack_Free(AsyncStack* self);
 exported void AsyncStack_Uninitialize(AsyncStack* self);
 exported void AsyncStack_PushUInt64(AsyncStack* self, uint64 value);

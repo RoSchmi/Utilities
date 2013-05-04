@@ -193,6 +193,7 @@ SAL_Socket* SAL_Socket_Connect(const int8* const address, const int8* port, uint
 	if (server == NULL) {
 		return NULL;
 	}
+
 	if (connect(server->RawSocket, serverAddrInfo->ai_addr, (int)serverAddrInfo->ai_addrlen) != 0) {
 		goto error;
 	}

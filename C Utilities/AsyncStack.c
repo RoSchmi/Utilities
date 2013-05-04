@@ -1,6 +1,6 @@
 #include "AsyncStack.h"
 
-AsyncStack* AsyncStack_New(uint64 size) {
+AsyncStack* AsyncStack_New(uint32 size) {
 	AsyncStack* stack;
 
 	stack = Allocate(AsyncStack);
@@ -10,7 +10,7 @@ AsyncStack* AsyncStack_New(uint64 size) {
 	return stack;
 }
 
-void AsyncStack_Initialize(AsyncStack* stack, uint64 size) {
+void AsyncStack_Initialize(AsyncStack* stack, uint32 size) {
 	assert(stack != NULL);
 	stack->BaseStack = Stack_New(size);
 	stack->Lock = SAL_Mutex_Create();

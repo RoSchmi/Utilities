@@ -6,11 +6,11 @@
 
 typedef struct {
 	Array Data;
-	uint64 Pointer;
+	uint32 Pointer;
 } Stack;
 
-exported Stack* Stack_New(uint64 size);
-exported void Stack_Initialize(Stack* stack, uint64 size);
+exported Stack* Stack_New(uint32 size);
+exported void Stack_Initialize(Stack* stack, uint32 size);
 exported void Stack_Free(Stack* self);
 exported void Stack_Uninitialize(Stack* self);
 exported void Stack_Push(Stack* self, void* value);

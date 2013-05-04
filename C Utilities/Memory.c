@@ -7,11 +7,11 @@
 
 #ifdef NDEBUG
 
-void* Memory_Allocate(uint64 size) {
+void* Memory_Allocate(uint32 size) {
 	return malloc(size);
 }
 
-void* Memory_Reallocate(void* block, uint64 size) {
+void* Memory_Reallocate(void* block, uint32 size) {
 	return realloc(block, size);
 }
 
@@ -21,13 +21,13 @@ LinkedList* allocations;
 static boolean allocationsInitialized = false;
 
 //add a record of the allocation to allocations and remove it on FreeD()
-void* Memory_AllocateD(uint64 size, uint64 line, int8* file) {
+void* Memory_AllocateD(uint32 size, uint64 line, int8* file) {
 	/*if (!allocationsInitialized) allocations = LinkedList_New( ( void(*)(void*) ) String_Free);*/
 
 	return malloc(size);
 }
 
-void* Memory_ReallocateD(void* block, uint64 size, uint64 line, int8* file) {
+void* Memory_ReallocateD(void* block, uint32 size, uint64 line, int8* file) {
 	/*if (!allocationsInitialized) allocations = LinkedList_New( ( void(*)(void*) ) String_Free);*/
 
 	return realloc(block, size);
@@ -44,7 +44,7 @@ void Memory_Free(void* block) {
 #endif
 }
 
-void Memory_BlockCopy(uint8* source, uint8* destination, uint64 amount) {
+void Memory_BlockCopy(uint8* source, uint8* destination, uint32 amount) {
 	uint8 i;
 
 	if (amount > 0) {

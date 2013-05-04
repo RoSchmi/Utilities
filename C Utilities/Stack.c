@@ -1,6 +1,6 @@
 #include "Stack.h"
 
-Stack* Stack_New(uint64 size) {
+Stack* Stack_New(uint32 size) {
 	Stack* stack;
 
 	stack = Allocate(Stack);
@@ -10,7 +10,7 @@ Stack* Stack_New(uint64 size) {
 	return stack;
 }
 
-void Stack_Initialize(Stack* stack, uint64 size) {
+void Stack_Initialize(Stack* stack, uint32 size) {
 	stack->Pointer = 0;
 	Array_Initialize(&stack->Data, size);
 }

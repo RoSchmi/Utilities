@@ -1,6 +1,6 @@
 #include "DataStream.h"
 
-DataStream* DataStream_New(uint64 allocation) {
+DataStream* DataStream_New(uint32 allocation) {
 	DataStream* dataStream;
 
 	dataStream = Allocate(DataStream);
@@ -9,8 +9,8 @@ DataStream* DataStream_New(uint64 allocation) {
 	return dataStream;
 }
 
-void DataStream_Initialize(DataStream* dataStream, uint64 allocation) {
-	uint64 actualSize;
+void DataStream_Initialize(DataStream* dataStream, uint32 allocation) {
+	uint32 actualSize;
 
 	assert(dataStream != NULL);
 
@@ -36,7 +36,7 @@ void DataStream_Uninitialize(DataStream* self) {
 	self->IsEOF = true;
 }
 
-void DataStream_Seek(DataStream* self, uint64 position) {
+void DataStream_Seek(DataStream* self, uint32 position) {
 	assert(self != NULL);
 
 	if (position >= self->Data.Size)
@@ -87,7 +87,7 @@ void DataStream_WriteFloat64(DataStream* self, float64 data) {
 	DataStream_WriteBytes(self, (uint8*)&data, sizeof(data), false);
 }
 
-void DataStream_WriteBytes(DataStream* self, uint8* data, uint64 count, boolean disposeBytes) {
+void DataStream_WriteBytes(DataStream* self, uint8* data, uint32 count, boolean disposeBytes) {
 	assert(self != NULL);
 	assert(data != NULL);
 
@@ -247,7 +247,7 @@ float64 DataStream_ReadFloat64(DataStream* self) {
 }
 
 /*should this return a pointer within the backing data store itself or create a new allocation and return that?*/
-uint8* DataStream_ReadBytes(DataStream* self, uint64 count) {
+uint8* DataStream_ReadBytes(DataStream* self, uint32 count) {
 	uint8* result;
 
 	result = NULL;
@@ -262,7 +262,7 @@ uint8* DataStream_ReadBytes(DataStream* self, uint64 count) {
 	return result;
 }
 
-Array* DataStream_ReadArray(DataStream* self, uint64 count) {
+Array* DataStream_ReadArray(DataStream* self, uint32 count) {
 	Array* array;
 
 	array = NULL;

@@ -6,7 +6,7 @@
 exported uint8* SAL_Cryptography_SHA512(uint8* source, uint32 length);
 exported uint8* SAL_Cryptography_SHA1(uint8* source, uint32 length);
 
-exported uint8* SAL_Cryptography_RandomBytes(uint64 count);
+exported uint8* SAL_Cryptography_RandomBytes(uint32 count);
 
 exported uint64 SAL_Cryptography_RandomUInt64(uint64 floor, uint64 ceiling);
 exported uint32 SAL_Cryptography_RandomUInt32(uint32 floor, uint32 ceiling);

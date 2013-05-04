@@ -4,7 +4,7 @@
 #include "Common.h"
 
 exported void Memory_Free(void* block);
-exported void Memory_BlockCopy(uint8* source, uint8* destination, uint64 amount);
+exported void Memory_BlockCopy(uint8* source, uint8* destination, uint32 amount);
 exported boolean Memory_Compare(uint8* blockA, uint8* blockB, uint64 lengthA, uint64 lengthB);
 
 /**
@@ -15,8 +15,8 @@ exported boolean Memory_Compare(uint8* blockA, uint8* blockB, uint64 lengthA, ui
 
 #ifdef NDEBUG
 
-exported void* Memory_Allocate(uint64 size);
-exported void* Memory_Reallocate(void* block, uint64 size);
+exported void* Memory_Allocate(uint32 size);
+exported void* Memory_Reallocate(void* block, uint32 size);
 
 /**
  * @returns a pointer to a block of memory at least the sizeof @a type.
@@ -37,8 +37,8 @@ exported void* Memory_Reallocate(void* block, uint64 size);
 
 #else
 
-exported void* Memory_AllocateD(uint64 size, uint64 line, int8* file);
-exported void* Memory_ReallocateD(void* block, uint64 size, uint64 line, int8* file);
+exported void* Memory_AllocateD(uint32 size, uint64 line, int8* file);
+exported void* Memory_ReallocateD(void* block, uint32 size, uint64 line, int8* file);
 
 #define Allocate(type) ((type*)Memory_AllocateD(sizeof(type), __LINE__, __FILE__))
 #define AllocateArray(type, count) ((type*)Memory_AllocateD(sizeof(type) * count, __LINE__, __FILE__))
