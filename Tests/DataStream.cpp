@@ -1,11 +1,10 @@
 #include <cstring>
-#include "Common.h"
+#include <gtest/gtest.h>
 
 #include <Utilities/DataStream.h>
 
 using namespace Utilities;
-SUITE("DataStream tests") {
-	FACT("DataStreams can be created") {
-		DataStream foo;
-	}
+
+TEST(DataStream, Creation) {
+	DataStream foo;
 }
