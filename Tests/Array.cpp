@@ -29,7 +29,7 @@ TEST(Array, Read) {
 	Array foo;
 	uint8 data[] = {1, 2, 3, 4, 5};
 	foo.write(data, 10, 5);
-	EXPECT_TRUE(memcmp(data, foo.read(10, 5), 5));
+	EXPECT_EQ(0, memcmp(data, foo.read(10, 5), 5));
 }
 
 TEST(Array, ensureSize) {
