@@ -59,7 +59,7 @@ uint32 DataStream::getLength() const {
 }
 
 
-uint32 DataStream::getEOF() const {
+bool DataStream::getEOF() const {
 	return this->cursor < this->farthestWrite;
 }
 
@@ -88,13 +88,11 @@ void DataStream::reset() {
 	this->farthestWrite = 0;
 }
 
-bool DataStream::seek(uint32 position) {
+void DataStream::seek(uint32 position) {
 	if (position > this->farthestWrite)
 		throw DataStream::ReadPastEndException();
 
 	this->cursor = position;
-
-	return true;
 }
 
 void DataStream::adopt(uint8* buffer, uint32 length) {
