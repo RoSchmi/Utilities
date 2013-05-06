@@ -3,6 +3,9 @@
 #include "Common.h"
 
 namespace Utilities {
+	/**
+	 * Cryptographic utilities
+	 */
 	namespace Cryptography {
 		static const uint8 SHA512_LENGTH = 64;
 		static const uint8 SHA1_LENGTH = 20;
@@ -10,14 +13,14 @@ namespace Utilities {
 		/**
 		 * Take SHA512 of @a length bytes from @a source
 		 *
-		 * @param hashOutput Array the hash will be written to
+		 * @param hashOutput Buffer the hash will be written to
 		 */
 		exported void SHA512(const uint8* source, uint32 length, uint8 hashOutput[SHA512_LENGTH]);
 
 		/**
 		 * Take SHA512 of @a length bytes from @a source
 		 *
-		 * @param hashOutput Array the hash will be written to
+		 * @param hashOutput Buffer the hash will be written to
 		 */
 		exported void SHA1(const uint8* source, uint32 length, uint8 hashOutput[SHA1_LENGTH]);
 
