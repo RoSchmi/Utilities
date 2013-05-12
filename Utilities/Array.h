@@ -3,6 +3,9 @@
 #include "Common.h"
 
 namespace Utilities {
+	/**
+	 * A dynamically-allocated automatically expanding buffer.
+	 */
 	class exported Array {
 		uint8* buffer;
 		uint32 allocation;

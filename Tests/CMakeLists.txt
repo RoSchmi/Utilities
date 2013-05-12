@@ -3,7 +3,7 @@ project(UtilitiesTests)
 
 enable_testing()
 
-set(util_test_sources Main.cpp Cryptography.cpp Array.cpp)
+set(util_test_sources Main.cpp Array.cpp Cryptography.cpp DataStream.cpp)
 
 add_executable(RunTests ${util_test_sources})
 
