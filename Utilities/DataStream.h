@@ -82,7 +82,7 @@ namespace Utilities {
 			/**
 			 * As @write, but using the backing buffer and size from @a array
 			 */
-			void write(Utilities::Array& array);
+			void writeArray(const Utilities::Array& array);
 			/**
 			 * Writes @a toWrite to the buffer, prefixing the length of the
 			 * string. This is the same format used by @a readString.
@@ -90,7 +90,7 @@ namespace Utilities {
 			 * @warning The length is only two bytes, maximum string length is
 			 * 2^16
 			 */
-			void write(std::string& toWrite);
+			void writeString(const std::string& toWrite);
 			/**
 			 * Read @a count bytes, starting at the cursor, into @a buffer.
 			 */

@@ -116,11 +116,11 @@ void DataStream::write(const uint8* data, uint32 count) {
 		this->farthestWrite = this->cursor;
 }
 
-void DataStream::write(Array& toWrite) {
+void DataStream::writeArray(const Array& toWrite) {
 	this->write(toWrite.getBuffer(), toWrite.getSize());
 }
 
-void DataStream::write(std::string& toWrite) {
+void DataStream::writeString(const std::string& toWrite) {
 	uint16 size;
 
 	size = (uint16)toWrite.size();
