@@ -22,7 +22,6 @@ namespace Utilities {
 
 		void resize(uint32 newSize);
 		
-		DataStream(const DataStream& other);
 		DataStream& operator=(const DataStream& other);
 
 		public:
@@ -44,6 +43,7 @@ namespace Utilities {
 			DataStream(uint8* exisitingBuffer, uint32 length, bool copy = true);
 			DataStream(DataStream&& other);
 			DataStream& operator=(DataStream&& other);
+			DataStream(const DataStream& other);
 			~DataStream();
 
 			/**
