@@ -33,14 +33,8 @@ namespace Utilities {
 		
 			DataStream();
 
-			/**
-			 * Creates a datastream with the given @a existingBuffer. If @a
-			 * copy is true, the data will be copied to a new, internal buffer
-			 * @a length bytes long. Assumes the entier buffer is initialized
-			 * (ie, ReadPastEndException will not be thrown on all operations
-			 * occuring less then @a length bytes from the start
-			 */
-			DataStream(uint8* exisitingBuffer, uint32 length, bool copy = true);
+			DataStream(uint8* exisitingBuffer, uint32 length);
+			DataStream(const uint8* exisitingBuffer, uint32 length);
 			DataStream(DataStream&& other);
 			DataStream& operator=(DataStream&& other);
 			DataStream(const DataStream& other);
@@ -84,13 +78,13 @@ namespace Utilities {
 			 */
 			void writeArray(const Utilities::Array& array);
 			/**
-			 * Writes @a toWrite to the buffer, prefixing the length of the
-			 * string. This is the same format used by @a readString.
-			 *
-			 * @warning The length is only two bytes, maximum string length is
-			 * 2^16
+			 * Writes the contents of @a toWrite to the buffer
 			 */
 			void writeString(const std::string& toWrite);
+			/**
+			 * Writes the contents of @a toWrite to the buffer
+			 */
+			void writeDataStream(const DataStream& toWrite);
 			/**
 			 * Read @a count bytes, starting at the cursor, into @a buffer.
 			 */

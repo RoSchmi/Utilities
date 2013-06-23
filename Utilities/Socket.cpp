@@ -322,7 +322,6 @@ uint64 Socket::ensureWrite(const uint8* toWrite, uint64 writeAmount, uint8 maxAt
 		this_thread::sleep_for(chrono::milliseconds(tries * 50));
 	}
 
-
 	return sentSoFar;
 }
 

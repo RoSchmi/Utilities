@@ -60,7 +60,6 @@ namespace Utilities {
 			}
 
 		public:
-
 			MovableList() : beginning(*this, 0), ending(*this, 0) {
 				this->size = 2;
 				this->count = 0;

@@ -11,17 +11,12 @@ DataStream::DataStream() {
 	this->buffer = new uint8[DataStream::MINIMUM_SIZE];
 }
 
-DataStream::DataStream(uint8* exisitingBuffer, uint32 length, bool copy) {
+DataStream::DataStream(const uint8* exisitingBuffer, uint32 length) {
 	this->cursor = 0;
 	this->farthestWrite = length;
 	this->allocation = length;
-	if (copy) {
-		this->buffer = new uint8[length];
-		memcpy(this->buffer, exisitingBuffer, length);
-	}
-	else {
-		this->buffer = exisitingBuffer;
-	}
+	this->buffer = new uint8[length];
+	memcpy(this->buffer, exisitingBuffer, length);
 }
 
 DataStream::DataStream(DataStream&& other) {
@@ -73,18 +68,18 @@ bool DataStream::getEOF() const {
 	return this->cursor < this->farthestWrite;
 }
 
-void DataStream::resize(uint32 newsize) {
+void DataStream::resize(uint32 newSize) {
 	uint32 actualsize;
 	uint8* newData;
 
 	actualsize = DataStream::MINIMUM_SIZE;
-	while (actualsize < newsize)
+	while (actualsize < newSize)
 		actualsize *= 2;
 
 	if (actualsize != this->allocation) {
 		newData = new uint8[actualsize];
 		if (this->buffer) {
-			memcpy(newData, this->buffer, newsize);
+			memcpy(newData, this->buffer, newSize > this->allocation ? this->allocation : newSize);
 			delete [] this->buffer;
 		}
 		this->buffer = newData;
@@ -106,7 +101,8 @@ void DataStream::seek(uint32 position) {
 }
 
 void DataStream::adopt(uint8* buffer, uint32 length) {
-	delete [] this->buffer;
+	if (this->buffer)
+		delete [] this->buffer;
 
 	this->cursor = 0;
 	this->farthestWrite = length;
@@ -137,6 +133,10 @@ void DataStream::writeString(const std::string& toWrite) {
 
 	this->write((uint8*)&size, sizeof(size));
 	this->write((uint8*)toWrite.data(), size);
+}
+
+void DataStream::writeDataStream(const DataStream& toWrite) {
+	this->write(toWrite.getBuffer(), toWrite.getLength());
 }
 
 void DataStream::read(uint8* buffer, uint32 count) {

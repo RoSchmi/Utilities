@@ -130,13 +130,19 @@ TCPConnection::Message::~Message() {
 }
 
 TCPConnection::Message::Message(TCPConnection::Message&& other) {
+	this->data = nullptr;
+	this->length = 0;
 	*this = std::move(other);
 }
 
 TCPConnection::Message& TCPConnection::Message::operator=(TCPConnection::Message&& other) {
+	if (this->data)
+		delete [] this->data;
+
 	this->data = other.data;
 	this->length = other.length;
 	this->wasClosed = other.wasClosed;
+
 	other.data = nullptr;
 	other.length = 0;
 	other.wasClosed = false;

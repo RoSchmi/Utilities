@@ -3,9 +3,11 @@
 using namespace Utilities;
 using namespace std;
 
-RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) {
+RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) {
 	this->running = true;
-	this->handler = handler;
+	this->onConnect = onConnect;
+	this->onDisconnect = onDisconnect;
+	this->onRequest = onRequest;
 	this->retryCode = retryCode;
 	this->state = state;
 
@@ -17,9 +19,11 @@ RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, ui
 	this->outgoingWorker = thread(&RequestServer::outgoingWorkerRun, this);
 }
 
-RequestServer::RequestServer(vector<string> ports, uint8 workers, vector<bool> usesWebSockets, uint16 retryCode, HandlerCallback handler, void* state) {
+RequestServer::RequestServer(vector<string> ports, uint8 workers, vector<bool> usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) {
 	this->running = true;
-	this->handler = handler;
+	this->onConnect = onConnect;
+	this->onDisconnect = onDisconnect;
+	this->onRequest = onRequest;
 	this->retryCode = retryCode;
 	this->state = state;
 	
@@ -41,8 +45,7 @@ RequestServer::~RequestServer() {
 	this->outgoingWorker.join();
 
 	for (auto& i : this->clients)
-		for (auto j : i.second)
-			delete j.second;
+			delete i.second;
 
 	for (auto& i : this->servers)
 		delete i;
@@ -50,31 +53,36 @@ RequestServer::~RequestServer() {
 
 void* RequestServer::onClientConnect(Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) {
 	auto& requestServer = *reinterpret_cast<RequestServer*>(serverState);
-	auto id = requestServer.nextId++;
-	auto client = new RequestServer::Client(connection, requestServer, clientAddress, id);
-	
+	auto client = new RequestServer::Client(connection, requestServer, clientAddress);
+
 	requestServer.clientListLock.lock();
-	requestServer.clients[0][id] = client;
+	requestServer.clients[client->id] = client;
 	requestServer.clientListLock.unlock();
+
+	if (requestServer.onConnect)
+		client->state = requestServer.onConnect(*client, requestServer.state);
 	
 	return client;
 }
 
 void RequestServer::onRequestReceived(Net::TCPConnection& connection, void* state, Net::TCPConnection::Message& message) {
-	RequestServer::Client& client = *reinterpret_cast<RequestServer::Client*>(state);
-	RequestServer& requestServer = client.parent;
+	RequestServer::Client* client = reinterpret_cast<RequestServer::Client*>(state);
+	RequestServer& requestServer = client->parent;
 	
 	if (message.length == 0) {
 		requestServer.clientListLock.lock();
-		requestServer.clients[client.authenticatedId].erase(client.id);
+		requestServer.clients.erase(client->id);
 		requestServer.clientListLock.unlock();
-		delete &client;
-		return;
+		requestServer.onDisconnect(*client, requestServer.state);
+		delete client;
 	}
-	
-	requestServer.queue.enqueue(new RequestServer::Message(client, message));
-	message.data = nullptr;
-	message.length = 0;
+	else {
+		DataStream stream;
+		stream.adopt(message.data, message.length);
+		requestServer.queue.enqueue(new RequestServer::Message(*client, stream));
+		message.data = nullptr;
+		message.length = 0;
+	}
 }
 
 void RequestServer::workerRun(uint8 workerNumber) {
@@ -83,7 +91,6 @@ void RequestServer::workerRun(uint8 workerNumber) {
 	uint8 requestMethod;
 	bool wasHandled;
 	Message* request;
-	uint64 startId;
 
 	while (this->running) {
 		if (!this->queue.dequeue(request, 1000))
@@ -92,24 +99,16 @@ void RequestServer::workerRun(uint8 workerNumber) {
 		if (request->data.getLength() < 4)
 			continue; //maybe we should return an error?
 
-		startId = request->client.authenticatedId;
 		requestId = request->data.read<uint16>();
 		requestCategory = request->data.read<uint8>();
 		requestMethod = request->data.read<uint8>();
 
-		this->response.reset();
-		this->response.write<uint16>(requestId);
-		wasHandled = this->handler(workerNumber, request->client, requestCategory, requestMethod, request->data, this->response, this->state);
+		DataStream response;
+		response.write<uint16>(requestId);
+		wasHandled = this->onRequest(workerNumber, request->client, requestCategory, requestMethod, request->data, response, this->state);
 		
-		if (startId != request->client.authenticatedId) {
-			this->clientListLock.lock();
-			this->clients[startId].erase(request->client.id);
-			this->clients[request->client.authenticatedId][request->client.id] = &request->client;
-			this->clientListLock.unlock();
-		}
-
 		if (wasHandled) {
-			request->client.connection.send(this->response.getBuffer(), static_cast<uint16>(this->response.getLength()));
+			this->send(request->client, response);
 			delete request;
 		}
 		else {
@@ -118,8 +117,10 @@ void RequestServer::workerRun(uint8 workerNumber) {
 				this->queue.enqueue(request);
 			}
 			else {
-				this->response.write<uint16>(this->retryCode);
-				request->client.connection.send(this->response.getBuffer(), static_cast<uint16>(this->response.getLength()));
+				response.reset();
+				response.write<uint16>(requestId);
+				response.write<uint16>(this->retryCode);
+				this->send(request->client, response);
 				delete request;
 			}
 		}
@@ -128,27 +129,42 @@ void RequestServer::workerRun(uint8 workerNumber) {
 
 void RequestServer::outgoingWorkerRun() {
 	Message* message;
-	uint8 requestId[2] = {0x00, 0x0};
 
 	while (this->running) {
 		if (!this->outgoingQueue.dequeue(message, 1000))
 			continue;
 			
-		message->client.connection.addPart(requestId, 2);
-		message->client.connection.addPart(message->data.getBuffer(), message->data.getLength());
-		message->client.connection.sendParts();
+		message->client.connection.send(message->data.getBuffer(), message->data.getLength());
 		delete message;
 	}
 }
 
-void RequestServer::send(uint64 authenticatedId, uint64 sourceConnectionId, DataStream& message) {
+DataStream RequestServer::getOutOfBandMessageStream() const {
+	DataStream stream;
+	stream.write<uint16>(0);
+	return stream;
+}
+
+void RequestServer::send(uint64 connectionId, DataStream& message) {
 	this->clientListLock.lock();
 
-	auto iter = this->clients.find(authenticatedId);
+	auto iter = this->clients.find(connectionId);
 	if (iter != this->clients.end())
-		for (auto i : iter->second)
-			if (i.second->id != sourceConnectionId)
-				this->outgoingQueue.enqueue(new RequestServer::Message(*i.second, message));
+		this->send(*iter->second, message);
 
 	this->clientListLock.unlock();
+}
+
+void RequestServer::send(Client& client, DataStream& message) {
+	this->outgoingQueue.enqueue(new RequestServer::Message(client, message));
+}
+
+RequestServer::Client::Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {
+	this->state = nullptr;
+	this->id = parent.nextId++;
+	memcpy(this->ipAddress, clientAddress, Net::Socket::ADDRESS_LENGTH);
+}
+
+RequestServer::Message::Message(Client& client, DataStream& message) : client(client), data(message) {
+	this->currentAttempts = 0;
 }
