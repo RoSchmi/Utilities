@@ -24,6 +24,17 @@ DataStream::DataStream(DataStream&& other) {
 	*this = std::move(other);
 }
 
+DataStream::DataStream(const DataStream& other) {
+	this->buffer = nullptr;
+	*this = other;
+}
+
+DataStream::~DataStream() {
+	this->cursor = 0;
+	this->farthestWrite = 0;
+	delete [] this->buffer;
+}
+
 DataStream& DataStream::operator=(DataStream&& other) {
 	if (this->buffer)
 		delete [] this->buffer;
@@ -41,18 +52,18 @@ DataStream& DataStream::operator=(DataStream&& other) {
 	return *this;
 }
 
-DataStream::DataStream(const DataStream& other) {
+DataStream& DataStream::operator=(const DataStream& other) {
+	if (this->buffer)
+		delete [] this->buffer;
+
+	this->allocation = other.allocation;
 	this->cursor = other.cursor;
 	this->farthestWrite = other.farthestWrite;
-	this->allocation = other.allocation;
 	this->buffer = new uint8[this->allocation];
-	memcpy(this->buffer, other.buffer, other.allocation);
-}
 
-DataStream::~DataStream() {
-	this->cursor = 0;
-	this->farthestWrite = 0;
-	delete [] this->buffer;
+	memcpy(this->buffer, other.buffer, other.allocation);
+
+	return *this;
 }
 
 const uint8* DataStream::getBuffer() const {
@@ -63,8 +74,7 @@ uint32 DataStream::getLength() const {
 	return this->farthestWrite;
 }
 
-
-bool DataStream::getEOF() const {
+bool DataStream::isEOF() const {
 	return this->cursor < this->farthestWrite;
 }
 

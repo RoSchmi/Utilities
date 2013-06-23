@@ -29,12 +29,15 @@ namespace Utilities {
 				DataStream data;
 				uint8 currentAttempts;
 
-				exported Message(Client& client, DataStream& message);
+				exported Message(Client& client, const DataStream& message);
+				exported Message(Client& client, uint16 id, uint8 category = 0, uint8 method = 0);
+
+				exported static void getHeader(DataStream& stream, uint16 id, uint8 category, uint8 method);
 			};
 
 			static const uint8 MAX_RETRIES = 5;
 			
-			typedef bool (*RequestCallback)(uint8 workerNumber, Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, void* state);
+			typedef bool (*RequestCallback)(uint8 workerNumber, Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, uint16& resultCode, void* state);
 			typedef void* (*ConnectCallback)(Client& client, void* state);
 			typedef void (*DisconnectCallback)(Client& client, void* state);
 
@@ -42,9 +45,8 @@ namespace Utilities {
 			exported RequestServer(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 			exported ~RequestServer();
 			
-			exported Utilities::DataStream getOutOfBandMessageStream() const;
-			exported void send(uint64 connectionId, DataStream& message);
-			exported void send(Client& client, DataStream& message);
+			exported void addToIncomingQueue(Message* const message);
+			exported void addToOutgoingQueue(Message* const message);
 
 		private:
 			RequestServer(const RequestServer& other);
@@ -60,7 +62,7 @@ namespace Utilities {
 			ConnectCallback onConnect;
 			DisconnectCallback onDisconnect;
 
-			SafeQueue<Message*> queue;
+			SafeQueue<Message*> incomingQueue;
 			SafeQueue<Message*> outgoingQueue;
 			uint16 retryCode;
 			void* state;

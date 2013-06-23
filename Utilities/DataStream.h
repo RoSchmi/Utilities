@@ -22,7 +22,6 @@ namespace Utilities {
 
 		void resize(uint32 newSize);
 		
-		DataStream& operator=(const DataStream& other);
 
 		public:
 
@@ -32,13 +31,13 @@ namespace Utilities {
 			class ReadPastEndException {};
 		
 			DataStream();
-
-			DataStream(uint8* exisitingBuffer, uint32 length);
 			DataStream(const uint8* exisitingBuffer, uint32 length);
 			DataStream(DataStream&& other);
-			DataStream& operator=(DataStream&& other);
 			DataStream(const DataStream& other);
 			~DataStream();
+
+			DataStream& operator=(DataStream&& other);
+			DataStream& operator=(const DataStream& other);
 
 			/**
 			 * @returns read-only reference to internal buffer
@@ -52,7 +51,7 @@ namespace Utilities {
 			 * @returns true if the cursor is past the end of initialized
 			 * memory
 			 */
-			bool getEOF() const;
+			bool isEOF() const;
 
 			/**
 			 * Resets the steam. Sets the cursor to the beginning of the

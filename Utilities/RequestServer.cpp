@@ -66,22 +66,18 @@ void* RequestServer::onClientConnect(Net::TCPConnection& connection, void* serve
 }
 
 void RequestServer::onRequestReceived(Net::TCPConnection& connection, void* state, Net::TCPConnection::Message& message) {
-	RequestServer::Client* client = reinterpret_cast<RequestServer::Client*>(state);
-	RequestServer& requestServer = client->parent;
+	Client& client = *reinterpret_cast<Client*>(state);
+	RequestServer& requestServer = client.parent;
 	
 	if (message.length == 0) {
 		requestServer.clientListLock.lock();
-		requestServer.clients.erase(client->id);
+		requestServer.clients.erase(client.id);
 		requestServer.clientListLock.unlock();
-		requestServer.onDisconnect(*client, requestServer.state);
-		delete client;
+		requestServer.onDisconnect(client, requestServer.state);
+		delete &client;
 	}
 	else {
-		DataStream stream;
-		stream.adopt(message.data, message.length);
-		requestServer.queue.enqueue(new RequestServer::Message(*client, stream));
-		message.data = nullptr;
-		message.length = 0;
+		requestServer.addToIncomingQueue(new Message(client, DataStream(message.data, message.length)));
 	}
 }
 
@@ -89,41 +85,43 @@ void RequestServer::workerRun(uint8 workerNumber) {
 	uint16 requestId;
 	uint8 requestCategory;
 	uint8 requestMethod;
+	uint16 resultCode;
 	bool wasHandled;
 	Message* request;
+	Message* response;
 
 	while (this->running) {
-		if (!this->queue.dequeue(request, 1000))
+		if (!this->incomingQueue.dequeue(request, 1000))
 			continue;
 
-		if (request->data.getLength() < 4)
+		if (request->data.getLength() < 4) {
+			delete request;
 			continue; //maybe we should return an error?
+		}
 
 		requestId = request->data.read<uint16>();
 		requestCategory = request->data.read<uint8>();
 		requestMethod = request->data.read<uint8>();
+		resultCode = 0;
 
-		DataStream response;
-		response.write<uint16>(requestId);
-		wasHandled = this->onRequest(workerNumber, request->client, requestCategory, requestMethod, request->data, response, this->state);
+		response = new Message(request->client, requestId);
+
+		wasHandled = this->onRequest(workerNumber, request->client, requestCategory, requestMethod, request->data, response->data, resultCode, this->state);
+
+		response->data.write(resultCode);
 		
-		if (wasHandled) {
-			this->send(request->client, response);
-			delete request;
-		}
-		else {
-			request->currentAttempts++;
-			if (request->currentAttempts < RequestServer::MAX_RETRIES) {
-				this->queue.enqueue(request);
+		if (!wasHandled) {
+			if (request->currentAttempts++ < RequestServer::MAX_RETRIES) {
+				response->data.write(this->retryCode);
 			}
 			else {
-				response.reset();
-				response.write<uint16>(requestId);
-				response.write<uint16>(this->retryCode);
-				this->send(request->client, response);
-				delete request;
+				this->addToIncomingQueue(request);
+				continue;
 			}
 		}
+
+		this->addToOutgoingQueue(response);
+		delete request;
 	}
 }
 
@@ -135,28 +133,17 @@ void RequestServer::outgoingWorkerRun() {
 			continue;
 			
 		message->client.connection.send(message->data.getBuffer(), message->data.getLength());
+
 		delete message;
 	}
 }
 
-DataStream RequestServer::getOutOfBandMessageStream() const {
-	DataStream stream;
-	stream.write<uint16>(0);
-	return stream;
+void RequestServer::addToIncomingQueue(Message* const message) {
+	this->incomingQueue.enqueue(message);
 }
 
-void RequestServer::send(uint64 connectionId, DataStream& message) {
-	this->clientListLock.lock();
-
-	auto iter = this->clients.find(connectionId);
-	if (iter != this->clients.end())
-		this->send(*iter->second, message);
-
-	this->clientListLock.unlock();
-}
-
-void RequestServer::send(Client& client, DataStream& message) {
-	this->outgoingQueue.enqueue(new RequestServer::Message(client, message));
+void RequestServer::addToOutgoingQueue(Message* const message) {
+	this->outgoingQueue.enqueue(message);
 }
 
 RequestServer::Client::Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {
@@ -165,6 +152,17 @@ RequestServer::Client::Client(Net::TCPConnection& connection, RequestServer& par
 	memcpy(this->ipAddress, clientAddress, Net::Socket::ADDRESS_LENGTH);
 }
 
-RequestServer::Message::Message(Client& client, DataStream& message) : client(client), data(message) {
+RequestServer::Message::Message(Client& client, const DataStream& message) : client(client), data(message) {
 	this->currentAttempts = 0;
+}
+
+RequestServer::Message::Message(Client& client, uint16 id, uint8 category, uint8 method) : client(client) {
+	RequestServer::Message::getHeader(this->data, id, category, method);
+	this->currentAttempts = 0;
+}
+
+void RequestServer::Message::getHeader(DataStream& stream, uint16 id, uint8 category, uint8 method) {
+	stream.write(id);
+	stream.write(category);
+	stream.write(method);
 }
