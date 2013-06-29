@@ -1,54 +1,54 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)..\..\Dependencies\VC Static Library.props" />
   <ItemGroup>
-	<ClInclude Include="Array.h" />
-	<ClInclude Include="Common.h" />
-	<ClInclude Include="Cryptography.h" />
-	<ClInclude Include="DataStream.h" />
-	<ClInclude Include="MovableList.h" />
-	<ClInclude Include="Misc.h" />
-	<ClInclude Include="RequestServer.h" />
-	<ClInclude Include="SafeQueue.h" />
-	<ClInclude Include="SQLDatabase.h" />
-	<ClInclude Include="Socket.h" />
-	<ClInclude Include="TCPConnection.h" />
-	<ClInclude Include="TCPServer.h" />
-	<ClInclude Include="Semaphore.h" />
-	<ClInclude Include="Time.h" />
-	<ClInclude Include="WebSocketConnection.h" />
+    <ClInclude Include="Array.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Cryptography.h" />
+    <ClInclude Include="DataStream.h" />
+    <ClInclude Include="MovableList.h" />
+    <ClInclude Include="Misc.h" />
+    <ClInclude Include="RequestServer.h" />
+    <ClInclude Include="SafeQueue.h" />
+    <ClInclude Include="SQLDatabase.h" />
+    <ClInclude Include="Socket.h" />
+    <ClInclude Include="TCPConnection.h" />
+    <ClInclude Include="TCPServer.h" />
+    <ClInclude Include="Semaphore.h" />
+    <ClInclude Include="Time.h" />
+    <ClInclude Include="WebSocketConnection.h" />
   </ItemGroup>
   <ItemGroup>
-	<ClCompile Include="Array.cpp" />
-	<ClCompile Include="Cryptography.cpp" />
-	<ClCompile Include="DataStream.cpp" />
-	<ClCompile Include="Misc.cpp" />
-	<ClCompile Include="RequestServer.cpp" />
-	<ClCompile Include="SQLDatabase.cpp" />
-	<ClCompile Include="Socket.cpp" />
-	<ClCompile Include="TCPConnection.cpp" />
-	<ClCompile Include="TCPServer.cpp" />
-	<ClCompile Include="Semaphore.cpp" />
-	<ClCompile Include="Time.cpp" />
-	<ClCompile Include="WebSocketConnection.cpp" />
+    <ClCompile Include="Array.cpp" />
+    <ClCompile Include="Cryptography.cpp" />
+    <ClCompile Include="DataStream.cpp" />
+    <ClCompile Include="Misc.cpp" />
+    <ClCompile Include="RequestServer.cpp" />
+    <ClCompile Include="SQLDatabase.cpp" />
+    <ClCompile Include="Socket.cpp" />
+    <ClCompile Include="TCPConnection.cpp" />
+    <ClCompile Include="TCPServer.cpp" />
+    <ClCompile Include="Semaphore.cpp" />
+    <ClCompile Include="Time.cpp" />
+    <ClCompile Include="WebSocketConnection.cpp" />
   </ItemGroup>
   <ItemGroup>
-	<Text Include="CMakeLists.txt" />
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-	<None Include="Doxyfile" />
+    <None Include="Doxyfile" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-	<ProjectGuid>{98033adb-01cc-4ab8-bb8e-0a9a029bfb5d}</ProjectGuid>
+    <ProjectGuid>{98033adb-01cc-4ab8-bb8e-0a9a029bfb5d}</ProjectGuid>
   </PropertyGroup>
   <ItemDefinitionGroup>
-	<ClCompile>
-	  <DisableLanguageExtensions>false</DisableLanguageExtensions>
-	</ClCompile>
+    <ClCompile>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
-	<Link>
-	  <AdditionalDependencies>Ws2_32.lib;libpq\libpq.lib;%(AdditionalDependencies)</AdditionalDependencies>
-	</Link>
+    <Link>
+      <AdditionalDependencies>Ws2_32.lib;libpq\libpq.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
 </Project>
