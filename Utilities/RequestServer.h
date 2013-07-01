@@ -37,7 +37,7 @@ namespace Utilities {
 
 			static const uint8 MAX_RETRIES = 5;
 			
-			typedef bool (*RequestCallback)(uint8 workerNumber, Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, uint16& resultCode, void* state);
+			typedef bool (*RequestCallback)(uint8 workerNumber, Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, void* state);
 			typedef void* (*ConnectCallback)(Client& client, void* state);
 			typedef void (*DisconnectCallback)(Client& client, void* state);
 

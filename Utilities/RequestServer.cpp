@@ -85,7 +85,6 @@ void RequestServer::workerRun(uint8 workerNumber) {
 	uint16 requestId;
 	uint8 requestCategory;
 	uint8 requestMethod;
-	uint16 resultCode;
 	bool wasHandled;
 	Message* request;
 	Message* response;
@@ -102,14 +101,11 @@ void RequestServer::workerRun(uint8 workerNumber) {
 		requestId = request->data.read<uint16>();
 		requestCategory = request->data.read<uint8>();
 		requestMethod = request->data.read<uint8>();
-		resultCode = 0;
 
 		response = new Message(request->client, requestId);
 
-		wasHandled = this->onRequest(workerNumber, request->client, requestCategory, requestMethod, request->data, response->data, resultCode, this->state);
+		wasHandled = this->onRequest(workerNumber, request->client, requestCategory, requestMethod, request->data, response->data, this->state);
 
-		response->data.write(resultCode);
-		
 		if (!wasHandled) {
 			if (request->currentAttempts++ < RequestServer::MAX_RETRIES) {
 				response->data.write(this->retryCode);
