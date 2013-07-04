@@ -1,7 +1,7 @@
 #include "WebSocketConnection.h"
 #include "Misc.h"
-#include "Array.h"
 #include "Cryptography.h"
+#include "DataStream.h"
 #include <mutex>
 #include <cstring>
 #include <stdexcept>
@@ -23,9 +23,9 @@ void WebSocketConnection::doHandshake() {
 	int32 i;
 	int32 lastOffset;
 	int32 nextHeaderLine;
-	Array headerLines[HEADER_LINES];
-	Array keyAndMagic(60);
-	Array response;
+	DataStream headerLines[HEADER_LINES];
+	DataStream keyAndMagic;
+	DataStream response;
 	uint8 hash[Cryptography::SHA1_LENGTH];
 	string base64;
 	
@@ -38,26 +38,26 @@ void WebSocketConnection::doHandshake() {
 
 	for (i = 0, lastOffset = 0, nextHeaderLine = 0; i < this->bytesReceived && nextHeaderLine < HEADER_LINES; i++) {
 		if (this->buffer[i] == 13 && this->buffer[i + 1] == 10) {
-			headerLines[nextHeaderLine].write(this->buffer + lastOffset, 0, i - lastOffset);
+			headerLines[nextHeaderLine].write(this->buffer + lastOffset, i - lastOffset);
 			nextHeaderLine++;
 			lastOffset = i + 2;
 		}
 	}
 	
 	for (i = 0; i < nextHeaderLine; i++) {
-		if (headerLines[i].getSize() >= 17 && memcmp("Sec-WebSocket-Key", headerLines[i].getBuffer(), 17) == 0) {
-			keyAndMagic.write(headerLines[i].getBuffer() + 19, 0, 24);
+		if (headerLines[i].getLength() >= 17 && memcmp("Sec-WebSocket-Key", headerLines[i].getBuffer(), 17) == 0) {
+			keyAndMagic.write(headerLines[i].getBuffer() + 19, 24);
 			break;
 		}
 	}
 	
-	keyAndMagic.write("258EAFA5-E914-47DA-95CA-C5AB0DC85B11", 24, 36);
+	keyAndMagic.writeCString("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 	Cryptography::SHA1(keyAndMagic.getBuffer(), 60, hash);
 	base64 = Misc::base64Encode(hash, 20);
 
-	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: webSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 0, 97);
-	response.write(base64.c_str(), 97, static_cast<uint32>(base64.length()));
-	response.write("\r\n\r\n", 97 + static_cast<uint32>(base64.length()), 4);
+	response.writeCString("HTTP/1.1 101 Switching Protocols\r\nUpgrade: webSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ");
+	response.writeString(base64);
+	response.writeCString("\r\n\r\n");
 	
 	if (this->connection.ensureWrite(response.getBuffer(), 97 + 4 + base64.length(), 10) != 97 + 4 + base64.length()) {
 		TCPConnection::disconnect();

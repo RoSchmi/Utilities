@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(Utilities)
 
-set(util_sources Array.cpp Cryptography.cpp DataStream.cpp Misc.cpp
+set(util_sources Cryptography.cpp DataStream.cpp Misc.cpp
 	Semaphore.cpp Socket.cpp TCPConnection.cpp TCPServer.cpp
 	Time.cpp WebSocketConnection.cpp SQLDatabase.cpp RequestServer.cpp)
 

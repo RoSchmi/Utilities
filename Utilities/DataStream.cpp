@@ -1,6 +1,7 @@
 #include "DataStream.h"
 #include "Misc.h"
 #include <cstring>
+#include <string.h>
 
 using namespace Utilities;
 
@@ -132,17 +133,22 @@ void DataStream::write(const uint8* data, uint32 count) {
 		this->farthestWrite = this->cursor;
 }
 
-void DataStream::writeArray(const Array& toWrite) {
-	this->write(toWrite.getBuffer(), toWrite.getSize());
+void DataStream::write(const int8* data, uint32 count) {
+	this->write(reinterpret_cast<const uint8*>(data), count);
+}
+
+void DataStream::writeCString(cstr toWrite) {
+	uint16 size = static_cast<uint16>(strlen(toWrite));
+
+	this->write(size);
+	this->write(reinterpret_cast<const uint8*>(toWrite), size);
 }
 
 void DataStream::writeString(const std::string& toWrite) {
-	uint16 size;
+	uint16 size = static_cast<uint16>(toWrite.size());
 
-	size = (uint16)toWrite.size();
-
-	this->write((uint8*)&size, sizeof(size));
-	this->write((uint8*)toWrite.data(), size);
+	this->write(size);
+	this->write(reinterpret_cast<const uint8*>(toWrite.data()), size);
 }
 
 void DataStream::writeDataStream(const DataStream& toWrite) {
@@ -157,23 +163,11 @@ void DataStream::read(uint8* buffer, uint32 count) {
 	this->cursor += count;
 }
 
-uint8* DataStream::read(uint32 count) {
-	uint8* result;
-
+const uint8* DataStream::read(uint32 count) {
 	if (count + this->cursor > this->farthestWrite)
 		throw DataStream::ReadPastEndException();
 
-	result = this->buffer + this->cursor;
-	this->cursor += count;
-
-	return result;
-}
-
-Array DataStream::readArray(uint32 count) {
-	if (count + this->cursor > this->farthestWrite)
-		throw DataStream::ReadPastEndException();
-
-	Array result(this->buffer + this->cursor, count);
+	uint8* result = this->buffer + this->cursor;
 	this->cursor += count;
 
 	return result;
@@ -182,13 +176,13 @@ Array DataStream::readArray(uint32 count) {
 std::string DataStream::readString() {
 	uint16 length;
 	std::string string;
-	int8* stringData;
+	const int8* stringData;
 
 	if (this->cursor + sizeof(uint16) <= this->farthestWrite) {
-		length = *(uint16*)this->read(2);
+		length = *reinterpret_cast<const uint16*>(this->read(2));
 
 		if (this->cursor + length <= this->farthestWrite) {
-			stringData = (int8*)this->read(length);
+			stringData = reinterpret_cast<const int8*>(this->read(length));
 			string = std::string(stringData, length);
 		}
 		else {

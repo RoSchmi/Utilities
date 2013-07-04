@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Common.h"
-#include "Array.h"
 #include "Time.h"
+#include "DataStream.h"
 #include <string>
 #include <vector>
 #include <sstream>
@@ -55,7 +55,7 @@ namespace Utilities {
 				exported void resetResult();
 				exported void addParameter(std::string& parameter);
 				exported void addParameter(const uint8* parameter, uint32 length);
-				exported void addParameter(const Utilities::Array& array);
+				exported void addParameter(const Utilities::DataStream& parameter);
 				exported void addParameter(float64 parameter);
 				exported void addParameter(uint64 parameter);
 				exported void addParameter(uint32 parameter);
@@ -66,7 +66,7 @@ namespace Utilities {
 				exported bool advanceToNextRow();
 				exported bool isCurrentColumnNull() const;
 				exported std::string getString(int32 column);
-				exported Utilities::Array getArray(int32 column);
+				exported Utilities::DataStream getDataStream(int32 column);
 				exported uint8* getBytes(int32 column, uint8* buffer, uint32 bufferSize);
 				exported float64 getFloat64(int32 column);
 				exported uint64 getUInt64(int32 column);
@@ -74,7 +74,7 @@ namespace Utilities {
 				exported uint16 getUInt16(int32 column);
 				exported bool getBool(int32 column);
 				exported std::string getString(std::string columnName);
-				exported Utilities::Array getArray(std::string columnName);
+				exported Utilities::DataStream getDataStream(std::string columnName);
 				exported uint8* getBytes(std::string columnName, uint8* buffer, uint32 bufferSize);
 				exported float64 getFloat64(std::string columnName);
 				exported uint64 getUInt64(std::string columnName);
@@ -82,7 +82,7 @@ namespace Utilities {
 				exported uint16 getUInt16(std::string columnName);
 				exported bool getBool(std::string columnName);
 				exported std::string getString();
-				exported Utilities::Array getArray();
+				exported Utilities::DataStream getDataStream();
 				exported uint8* getBytes(uint8* buffer, uint32 bufferSize);
 				exported float64 getFloat64();
 				exported uint64 getUInt64();
@@ -140,7 +140,7 @@ namespace Utilities {
 							Boolean,
 							String,
 							DateTime,
-							Array
+							DataStream
 						};
 	
 						exported ColumnDefinition(std::string name, bool updatable, uint64 T::*uint64Type) : name(name), updatable(updatable), type(DataType::UInt64) { this->value.uint64Type = uint64Type; };
@@ -150,7 +150,7 @@ namespace Utilities {
 						exported ColumnDefinition(std::string name, bool updatable, bool T::*booleanType) : name(name), updatable(updatable), type(DataType::Boolean) { this->value.booleanType = booleanType; };
 						exported ColumnDefinition(std::string name, bool updatable, std::string T::*stringType) : name(name), updatable(updatable), type(DataType::String) { this->value.stringType = stringType; };
 						exported ColumnDefinition(std::string name, bool updatable, Utilities::DateTime T::*dateTimeType) : name(name), updatable(updatable), type(DataType::DateTime) { this->value.dateTimeType = dateTimeType; };
-						exported ColumnDefinition(std::string name, bool updatable, Utilities::Array T::*binaryType) : name(name), updatable(updatable), type(DataType::Array) { this->value.binaryType = binaryType; };
+						exported ColumnDefinition(std::string name, bool updatable, Utilities::DataStream T::*binaryType) : name(name), updatable(updatable), type(DataType::DataStream) { this->value.binaryType = binaryType; };
 
 					private:
 						std::string name;
@@ -165,7 +165,7 @@ namespace Utilities {
 							bool T::*booleanType;
 							std::string T::*stringType;
 							Utilities::DateTime T::*dateTimeType;
-							Utilities::Array T::*binaryType;
+							Utilities::DataStream T::*binaryType;
 						} value;
 
 						friend class TableBinding<T>;
@@ -282,7 +282,7 @@ namespace Utilities {
 						case ColumnDefinition::DataType::Boolean: query.addParameter(object.*(column.value.booleanType)); break;
 						case ColumnDefinition::DataType::String: query.addParameter(object.*(column.value.stringType)); break;
 						case ColumnDefinition::DataType::DateTime: query.addParameter((object.*(column.value.dateTimeType)).getMilliseconds()); break;
-						case ColumnDefinition::DataType::Array: query.addParameter(object.*(column.value.binaryType)); break;
+						case ColumnDefinition::DataType::DataStream: query.addParameter(object.*(column.value.binaryType)); break;
 					}	
 				}
 
@@ -295,7 +295,7 @@ namespace Utilities {
 						case ColumnDefinition::DataType::Boolean: object.*(column.value.booleanType) = query.getBool(column.name); break;
 						case ColumnDefinition::DataType::String: object.*(column.value.stringType) = query.getString(column.name); break;
 						case ColumnDefinition::DataType::DateTime: object.*(column.value.dateTimeType) = query.getUInt64(column.name); break;
-						case ColumnDefinition::DataType::Array: object.*(column.value.binaryType) = query.getArray(column.name); break;
+						case ColumnDefinition::DataType::DataStream: object.*(column.value.binaryType) = query.getDataStream(column.name); break;
 					}	
 				}
 

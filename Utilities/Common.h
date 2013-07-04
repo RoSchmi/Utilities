@@ -41,5 +41,5 @@ typedef uint32 word;
 
 #endif
 
-typedef const int8* cstr;
+typedef const char* cstr;
 typedef word uintptr;

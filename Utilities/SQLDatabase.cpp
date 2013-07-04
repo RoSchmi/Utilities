@@ -133,8 +133,8 @@ void Query::addParameter(const uint8* parameter, uint32 length) {
 	this->currentParameterIndex++;
 }
 
-void Query::addParameter(const Utilities::Array& array) {
-	this->addParameter(array.getBuffer(), array.getSize());
+void Query::addParameter(const Utilities::DataStream& parameter) {
+	this->addParameter(parameter.getBuffer(), parameter.getLength());
 }
 
 void Query::addParameter(float64 parameter) {
@@ -205,8 +205,8 @@ std::string Query::getString(int32 column) {
 	return location;
 }
 
-Utilities::Array Query::getArray(int32 column) {
-	return Array(reinterpret_cast<uint8*>(PQgetvalue(this->baseResult, this->currentRow, column)), PQgetlength(this->baseResult, this->currentRow, column));
+Utilities::DataStream Query::getDataStream(int32 column) {
+	return DataStream(reinterpret_cast<uint8*>(PQgetvalue(this->baseResult, this->currentRow, column)), PQgetlength(this->baseResult, this->currentRow, column));
 }
 
 uint8* Query::getBytes(int32 column, uint8* buffer, uint32 bufferSize) {
@@ -256,8 +256,8 @@ std::string Query::getString(std::string columnName) {
 	return this->getString(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-Utilities::Array Query::getArray(std::string columnName) {
-	return this->getArray(PQfnumber(this->baseResult, columnName.c_str()));
+Utilities::DataStream Query::getDataStream(std::string columnName) {
+	return this->getDataStream(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
 uint8* Query::getBytes(std::string columnName, uint8* buffer, uint32 bufferSize) {
@@ -288,8 +288,8 @@ std::string Query::getString() {
 	return this->getString(this->currentColumn++);
 }
 
-Utilities::Array Query::getArray() {
-	return this->getArray(this->currentColumn++);
+Utilities::DataStream Query::getDataStream() {
+	return this->getDataStream(this->currentColumn++);
 }
 
 uint8* Query::getBytes(uint8* buffer, uint32 bufferSize) {

@@ -2,11 +2,10 @@
 
 #include "Common.h"
 #include <string>
-#include "Array.h"
 
 namespace Utilities {
 	/**
-	 * Seakable stream access to a buffer. Offers more safety than
+	 * Seekable stream access to a buffer. Offers more safety than
 	 * Utilities::Array by disallowing reading past the end of what has been
 	 * written.
 	 *
@@ -21,10 +20,8 @@ namespace Utilities {
 		static const uint32 MINIMUM_SIZE = 32;
 
 		void resize(uint32 newSize);
-		
 
 		public:
-
 			/**
 			 * Thrown when operations on uninitialized memory would occur
 			 */
@@ -43,10 +40,12 @@ namespace Utilities {
 			 * @returns read-only reference to internal buffer
 			 */
 			const uint8* getBuffer() const;
+
 			/**
 			 * @returns farthest offset considered initialized
 			 */
 			uint32 getLength() const;
+
 			/**
 			 * @returns true if the cursor is past the end of initialized
 			 * memory
@@ -58,46 +57,57 @@ namespace Utilities {
 			 * buffer and consider the entire buffer uninitialized
 			 */
 			void reset();
+
 			/**
 			 * Seek to @a position bytes from the start of the buffer
 			 */
 			void seek(uint32 position);
+
 			/**
 			 * Reinitialize stream to use @a buffer, considering it
 			 * initialized up to offset @a length
 			 */
 			void adopt(uint8* buffer, uint32 length);
+
 			/**
 			 * Write @a count bytes from @a bytes to the current location in
 			 * the stream, reallocating a larger buffer if need be
 			 */
 			void write(const uint8* bytes, uint32 count);
+
 			/**
-			 * As @write, but using the backing buffer and size from @a array
-			 */
-			void writeArray(const Utilities::Array& array);
+			* Write @a count bytes from @a bytes to the current location in
+			* the stream, reallocating a larger buffer if need be
+			*/
+			void write(const int8* bytes, uint32 count);
+
+			/**
+			* Write @a count bytes from @a bytes to the current location in
+			* the stream, reallocating a larger buffer if need be
+			*/
+			void writeCString(cstr string);
+
 			/**
 			 * Writes the contents of @a toWrite to the buffer
 			 */
 			void writeString(const std::string& toWrite);
+
 			/**
 			 * Writes the contents of @a toWrite to the buffer
 			 */
 			void writeDataStream(const DataStream& toWrite);
+
 			/**
 			 * Read @a count bytes, starting at the cursor, into @a buffer.
 			 */
 			void read(uint8* buffer, uint32 count);
+
 			/**
 			 * Read @a count bytes from the stream safely.
 			 * @returns a pointer into the buffer
 			 */
-			uint8* read(uint32 count);
-			/**
-			 * Create a Utilities::Array from the buffer, starting the cursor,
-			 * for @a count bytes.
-			 */
-			Utilities::Array readArray(uint32 count);
+			const uint8* read(uint32 count);
+
 			/**
 			 * Read a string from the stream. A string is considered two
 			 * bytes, the length, followed by that many bytes of data.

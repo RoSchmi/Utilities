@@ -2,7 +2,6 @@
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)..\..\Dependencies\VC Static Library.props" />
   <ItemGroup>
-    <ClInclude Include="Array.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Cryptography.h" />
     <ClInclude Include="DataStream.h" />
@@ -19,7 +18,6 @@
     <ClInclude Include="WebSocketConnection.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Array.cpp" />
     <ClCompile Include="Cryptography.cpp" />
     <ClCompile Include="DataStream.cpp" />
     <ClCompile Include="Misc.cpp" />
