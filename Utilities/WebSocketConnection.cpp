@@ -20,17 +20,20 @@ WebSocketConnection::~WebSocketConnection() {
 }
 
 void WebSocketConnection::doHandshake() {
-	uint16 start, end;
+	uint16 i, start, end;
 	DataStream keyAndMagic;
 	DataStream response;
 	uint8 hash[Cryptography::SHA1_LENGTH];
+	string base64;
 	
 	this->bytesReceived = static_cast<uint32>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
 
-	if (this->bytesReceived == 0)
-		goto fail;
+	if (this->bytesReceived == 0) {
+		TCPConnection::disconnect();
+		return;
+	}
 
-	for (uint16 i = 0; i < this->bytesReceived - 19U; i++) {
+	for (i = 0; i < this->bytesReceived - 19U; i++) {
 		if (memcmp("Sec-WebSocket-Key: ", this->buffer + i, 19) == 0) {
 			start = i + 19;
 			end = start;
@@ -38,8 +41,10 @@ void WebSocketConnection::doHandshake() {
 			while ((this->buffer[end] != '\r' || this->buffer[end + 1] != '\n') && end < this->bytesReceived)
 				end++;
 
-			if (end == this->bytesReceived)
-				goto fail;
+			if (end == this->bytesReceived) {
+				TCPConnection::disconnect();
+				return;
+			}
 
 			break;
 		}
@@ -48,19 +53,19 @@ void WebSocketConnection::doHandshake() {
 	keyAndMagic.write(this->buffer + start, end - start);
 	keyAndMagic.write("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 	Cryptography::SHA1(keyAndMagic.getBuffer(), 60, hash);
+	base64 = Misc::base64Encode(hash, 20);
 
-	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: webSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ");
-	response.write(Misc::base64Encode(hash, 20).c_str());
+	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ");
+	response.write(base64.c_str());
 	response.write("\r\n\r\n");
+	
+	if (this->connection.ensureWrite(response.getBuffer(), response.getLength(), 10) != response.getLength()) {
+		TCPConnection::disconnect();
+		return;
+	}
 
 	this->ready = true;
 	this->bytesReceived = 0;
-
-	if (this->connection.ensureWrite(response.getBuffer(), response.getLength(), 10) == response.getLength())
-		return;
-
-fail:
-	TCPConnection::disconnect();
 }
 
 MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFor) {
