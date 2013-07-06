@@ -20,52 +20,47 @@ WebSocketConnection::~WebSocketConnection() {
 }
 
 void WebSocketConnection::doHandshake() {
-	int32 i;
-	int32 lastOffset;
-	int32 nextHeaderLine;
-	DataStream headerLines[HEADER_LINES];
+	uint16 start, end;
 	DataStream keyAndMagic;
 	DataStream response;
 	uint8 hash[Cryptography::SHA1_LENGTH];
-	string base64;
 	
 	this->bytesReceived = static_cast<uint32>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
 
-	if (this->bytesReceived == 0) {
-		TCPConnection::disconnect();
-		return;
-	}
+	if (this->bytesReceived == 0)
+		goto fail;
 
-	for (i = 0, lastOffset = 0, nextHeaderLine = 0; i < this->bytesReceived && nextHeaderLine < HEADER_LINES; i++) {
-		if (this->buffer[i] == 13 && this->buffer[i + 1] == 10) {
-			headerLines[nextHeaderLine].write(this->buffer + lastOffset, i - lastOffset);
-			nextHeaderLine++;
-			lastOffset = i + 2;
-		}
-	}
-	
-	for (i = 0; i < nextHeaderLine; i++) {
-		if (headerLines[i].getLength() >= 17 && memcmp("Sec-WebSocket-Key", headerLines[i].getBuffer(), 17) == 0) {
-			keyAndMagic.write(headerLines[i].getBuffer() + 19, 24);
+	for (uint16 i = 0; i < this->bytesReceived - 19U; i++) {
+		if (memcmp("Sec-WebSocket-Key: ", this->buffer + i, 19) == 0) {
+			start = i + 19;
+			end = start;
+
+			while ((this->buffer[end] != '\r' || this->buffer[end + 1] != '\n') && end < this->bytesReceived)
+				end++;
+
+			if (end == this->bytesReceived)
+				goto fail;
+
 			break;
 		}
 	}
-	
-	keyAndMagic.writeCString("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
-	Cryptography::SHA1(keyAndMagic.getBuffer(), 60, hash);
-	base64 = Misc::base64Encode(hash, 20);
 
-	response.writeCString("HTTP/1.1 101 Switching Protocols\r\nUpgrade: webSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ");
-	response.writeString(base64);
-	response.writeCString("\r\n\r\n");
-	
-	if (this->connection.ensureWrite(response.getBuffer(), 97 + 4 + base64.length(), 10) != 97 + 4 + base64.length()) {
-		TCPConnection::disconnect();
-		return;
-	}
+	keyAndMagic.write(this->buffer + start, end - start);
+	keyAndMagic.write("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+	Cryptography::SHA1(keyAndMagic.getBuffer(), 60, hash);
+
+	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: webSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ");
+	response.write(Misc::base64Encode(hash, 20).c_str());
+	response.write("\r\n\r\n");
 
 	this->ready = true;
 	this->bytesReceived = 0;
+
+	if (this->connection.ensureWrite(response.getBuffer(), response.getLength(), 10) == response.getLength())
+		return;
+
+fail:
+	TCPConnection::disconnect();
 }
 
 MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFor) {

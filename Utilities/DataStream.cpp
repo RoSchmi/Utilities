@@ -137,6 +137,10 @@ void DataStream::write(const int8* data, uint32 count) {
 	this->write(reinterpret_cast<const uint8*>(data), count);
 }
 
+void DataStream::write(cstr data) {
+	this->write(data, static_cast<uint32>(strlen(data)));
+}
+
 void DataStream::writeCString(cstr toWrite) {
 	uint16 size = static_cast<uint16>(strlen(toWrite));
 

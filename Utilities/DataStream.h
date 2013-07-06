@@ -82,6 +82,12 @@ namespace Utilities {
 			void write(const int8* bytes, uint32 count);
 
 			/**
+			* Write the C style string @data as bytes to the current location in
+			* the stream, reallocating a larger buffer if need be
+			*/
+			void write(cstr data);
+
+			/**
 			* Write @a count bytes from @a bytes to the current location in
 			* the stream, reallocating a larger buffer if need be
 			*/
