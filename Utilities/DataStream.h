@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Time.h"
 #include <string>
 
 namespace Utilities {
@@ -25,7 +26,7 @@ namespace Utilities {
 			/**
 			 * Thrown when operations on uninitialized memory would occur
 			 */
-			class ReadPastEndException {};
+			class ReadPastEndException { };
 		
 			DataStream();
 			DataStream(const uint8* exisitingBuffer, uint32 length);
@@ -40,6 +41,11 @@ namespace Utilities {
 			 * @returns read-only reference to internal buffer
 			 */
 			const uint8* getBuffer() const;
+
+			/**
+			* @returns read-only reference to internal buffer offset by the cursor
+			*/
+			const uint8* getBufferAtCursor() const;
 
 			/**
 			 * @returns farthest offset considered initialized
@@ -88,20 +94,19 @@ namespace Utilities {
 			void write(cstr data);
 
 			/**
-			* Write @a count bytes from @a bytes to the current location in
-			* the stream, reallocating a larger buffer if need be
-			*/
-			void writeCString(cstr string);
+			 * Writes the contents of @a toWrite to the buffer
+			 */
+			void write(const std::string& toWrite);
 
 			/**
 			 * Writes the contents of @a toWrite to the buffer
 			 */
-			void writeString(const std::string& toWrite);
+			void write(const DataStream& toWrite);
 
 			/**
-			 * Writes the contents of @a toWrite to the buffer
+			 * Writes the number of milliseconds since the epoch as a uint64 to the stream.
 			 */
-			void writeDataStream(const DataStream& toWrite);
+			void write(const DateTime& toWrite);
 
 			/**
 			 * Read @a count bytes, starting at the cursor, into @a buffer.
@@ -109,9 +114,8 @@ namespace Utilities {
 			void read(uint8* buffer, uint32 count);
 
 			/**
-			 * Read @a count bytes from the stream safely.
-			 * @returns a pointer into the buffer
-			 */
+			* Returns @a count bytes, starting at the cursor.
+			*/
 			const uint8* read(uint32 count);
 
 			/**
@@ -121,13 +125,18 @@ namespace Utilities {
 			std::string readString();
 
 			/**
+			* Read a DateTime from the stream. Considered a uint64.
+			*/
+			DateTime readDateTime();
+
+			/**
 			 * Write a value of arbitrary type to the buffer. This is
 			 * inherrently non-portable past compiler/architecture boundaries,
 			 * as it just copies sizeof(T) bytes from a pointer to the passed
 			 * value.
 			 */
 			template <typename T> void write(T toWrite) {
-				this->write((uint8*)&toWrite, sizeof(T));
+				this->write(reinterpret_cast<uint8*>(&toWrite), sizeof(T));
 			}
 
 			/**
@@ -136,7 +145,7 @@ namespace Utilities {
 			 * boundaries, as it just casts sizeof(T) bytes to a T.
 			 */
 			template <typename T> T read() {
-				return *(T*)this->read(sizeof(T));
+				return *reinterpret_cast<const T*>(this->read(sizeof(T)));
 			}
 	};
 }

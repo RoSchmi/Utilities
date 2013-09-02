@@ -110,6 +110,7 @@ namespace Utilities {
 				#endif
 
 				bool prepareRawSocket(std::string address, std::string port, bool willListenOn, void** addressInfo);
+
 				Socket(Families family, Types type);
 			
 				Socket(const Socket& other);
@@ -124,6 +125,7 @@ namespace Utilities {
 			
 				exported SocketAsyncWorker(ReadCallback callback);
 				exported ~SocketAsyncWorker();
+
 				exported void registerSocket(const Socket& socket, void* state);
 				exported void unregisterSocket(const Socket& socket);
 				exported void shutdown();

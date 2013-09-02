@@ -8,9 +8,9 @@ namespace Utilities {
 		public:
 			class exported Iterator {
 				uint32 index;
-				MovableList<T>& parent;
+				const MovableList<T>& parent;
 
-				Iterator(MovableList<T>& parent, uint32 index) : parent(parent) {
+				Iterator(const MovableList<T>& parent, uint32 index) : parent(parent) {
 					this->index = index;
 				};
 				
@@ -19,6 +19,7 @@ namespace Utilities {
 				public:
 					Iterator& operator++() {
 						this->index++;
+
 						return *this;
 					}
 
@@ -27,7 +28,7 @@ namespace Utilities {
 					}
 
 					bool operator!=(const Iterator& other) const {
-						return !(other == *this);
+						return !(other.index == this->index);
 					}
 
 					T& operator*() {

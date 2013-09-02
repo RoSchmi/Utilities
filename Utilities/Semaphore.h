@@ -16,35 +16,43 @@ namespace Utilities {
 
 		Semaphore(const Semaphore& other);
 		Semaphore& operator=(const Semaphore& other);
-		Semaphore(Semaphore&& other);
-		Semaphore& operator=(Semaphore&& other);
-	public:
-		/// Possible return values for @a decrement().
-		enum class DecrementResult {
-			/// Decremented succesfully
-			Success,
-			/** Couldn't decrement the semaphore before the @a timeout
-			 *  expired
-			 */
-			TimedOut,
-			/// An error occured
-			Error
-		};
 
-		Semaphore();
-		~Semaphore();
+		public:
+			/**
+			* Possible return values for @a decrement().
+			*/
+			enum class DecrementResult {
+				/**
+				*Semaphore was decremented.
+				*/
+				Success,
+				/** 
+				* Couldn't decrement the semaphore before the @a timeout expired
+				*/
+				TimedOut,
+				/** 
+				* Platform specific error.
+				*/
+				Error
+			};
 
-		/**
-		 * Increment this semaphore
-		 */
-		void increment();
+			Semaphore();
+			~Semaphore();
 
-		/**
-		 * Decrement (consume) this semaphore
-		 *
-		 * @param timeout Number of milliseconds to wait (min) before returning
-		 * DecrementResult::TimedOut
-		 */
-		DecrementResult decrement(uint32 timeout);
+			Semaphore(Semaphore&& other);
+			Semaphore& operator=(Semaphore&& other);
+
+			/**
+			* Increment this semaphore
+			*/
+			void increment();
+
+			/**
+			* Decrement (consume) this semaphore
+			*
+			* @param timeout Number of milliseconds to wait (minimum) before returning
+			* DecrementResult::TimedOut
+			*/
+			DecrementResult decrement(uint32 timeout);
 	};
 }

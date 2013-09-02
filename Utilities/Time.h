@@ -4,10 +4,9 @@
 
 namespace Utilities {
 	class exported DateTime {
-		public:
-			/// The date/time this represents, in milliseconds
-			uint64 milliseconds;
+		uint64 milliseconds;
 
+		public:
 			DateTime();
 			DateTime(uint64 milliseconds);
 			DateTime(const DateTime& other);
@@ -18,11 +17,11 @@ namespace Utilities {
 
 			uint64 getMilliseconds() const;
 			
-			DateTime& addMilliseconds(uint64 milliseconds);
-			DateTime& addSeconds(uint64 seconds);
-			DateTime& addMinutes(uint64 minutes);
-			DateTime& addHours(uint64 hours);
-			DateTime& addDays(uint64 days);
+			DateTime& addMilliseconds(int64 milliseconds);
+			DateTime& addSeconds(int64 seconds);
+			DateTime& addMinutes(int64 minutes);
+			DateTime& addHours(int64 hours);
+			DateTime& addDays(int64 days);
 
 			/**
 			 * @returns a new DateTime for now

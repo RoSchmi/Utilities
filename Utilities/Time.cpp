@@ -41,28 +41,33 @@ uint64 DateTime::getMilliseconds() const {
 	return this->milliseconds;
 }
 
-DateTime& DateTime::addMilliseconds(uint64 milliseconds) {
+DateTime& DateTime::addMilliseconds(int64 milliseconds) {
 	this->milliseconds += milliseconds;
+
 	return *this;
 }
 
-DateTime& DateTime::addSeconds(uint64 seconds) {
+DateTime& DateTime::addSeconds(int64 seconds) {
 	this->milliseconds += seconds * 1000;
+
 	return *this;
 }
 
-DateTime& DateTime::addMinutes(uint64 minutes) {
+DateTime& DateTime::addMinutes(int64 minutes) {
 	this->milliseconds += minutes * 60 * 1000;
+
 	return *this;
 }
 
-DateTime& DateTime::addHours(uint64 hours) {
+DateTime& DateTime::addHours(int64 hours) {
 	this->milliseconds += hours * 60 * 60 * 1000;
+
 	return *this;
 }
 
-DateTime& DateTime::addDays(uint64 days) {
+DateTime& DateTime::addDays(int64 days) {
 	this->milliseconds += days * 24 * 60 * 60 * 1000;
+
 	return *this;
 }
 
@@ -94,6 +99,7 @@ uint64 DateTime::getMillisecondsSinceEpoch() {
 	result *= 1000000; // convert seconds to microseconds
 	result += tv.tv_usec; // add microseconds
 	result /= 1000; // convert to milliseconds
+
 	return result;
 #endif
 }

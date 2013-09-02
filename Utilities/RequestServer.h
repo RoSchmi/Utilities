@@ -45,8 +45,8 @@ namespace Utilities {
 			exported RequestServer(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 			exported ~RequestServer();
 			
-			exported void addToIncomingQueue(Message* const message);
-			exported void addToOutgoingQueue(Message* const message);
+			exported void addToIncomingQueue(Message* message);
+			exported void addToOutgoingQueue(Message* message);
 
 		private:
 			RequestServer(const RequestServer& other);

@@ -134,11 +134,11 @@ void RequestServer::outgoingWorkerRun() {
 	}
 }
 
-void RequestServer::addToIncomingQueue(Message* const message) {
+void RequestServer::addToIncomingQueue(Message* message) {
 	this->incomingQueue.enqueue(message);
 }
 
-void RequestServer::addToOutgoingQueue(Message* const message) {
+void RequestServer::addToOutgoingQueue(Message* message) {
 	this->outgoingQueue.enqueue(message);
 }
 

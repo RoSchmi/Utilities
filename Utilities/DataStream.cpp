@@ -71,6 +71,10 @@ const uint8* DataStream::getBuffer() const {
 	return this->buffer;
 }
 
+const uint8* DataStream::getBufferAtCursor() const {
+	return this->buffer + this->cursor;
+}
+
 uint32 DataStream::getLength() const {
 	return this->farthestWrite;
 }
@@ -137,26 +141,26 @@ void DataStream::write(const int8* data, uint32 count) {
 	this->write(reinterpret_cast<const uint8*>(data), count);
 }
 
-void DataStream::write(cstr data) {
-	this->write(data, static_cast<uint32>(strlen(data)));
-}
-
-void DataStream::writeCString(cstr toWrite) {
+void DataStream::write(cstr toWrite) {
 	uint16 size = static_cast<uint16>(strlen(toWrite));
 
 	this->write(size);
 	this->write(reinterpret_cast<const uint8*>(toWrite), size);
 }
 
-void DataStream::writeString(const std::string& toWrite) {
+void DataStream::write(const std::string& toWrite) {
 	uint16 size = static_cast<uint16>(toWrite.size());
 
 	this->write(size);
 	this->write(reinterpret_cast<const uint8*>(toWrite.data()), size);
 }
 
-void DataStream::writeDataStream(const DataStream& toWrite) {
+void DataStream::write(const DataStream& toWrite) {
 	this->write(toWrite.getBuffer(), toWrite.getLength());
+}
+
+void DataStream::write(const DateTime& toWrite) {
+	this->write(toWrite.getMilliseconds());
 }
 
 void DataStream::read(uint8* buffer, uint32 count) {
@@ -180,14 +184,12 @@ const uint8* DataStream::read(uint32 count) {
 std::string DataStream::readString() {
 	uint16 length;
 	std::string string;
-	const int8* stringData;
 
 	if (this->cursor + sizeof(uint16) <= this->farthestWrite) {
-		length = *reinterpret_cast<const uint16*>(this->read(2));
+		length = this->read<uint16>();
 
 		if (this->cursor + length <= this->farthestWrite) {
-			stringData = reinterpret_cast<const int8*>(this->read(length));
-			string = std::string(stringData, length);
+			string = std::string(reinterpret_cast<const int8*>(this->getBufferAtCursor()), length);
 		}
 		else {
 			this->cursor -= sizeof(uint16);
@@ -199,4 +201,8 @@ std::string DataStream::readString() {
 	}
 
 	return string;
+}
+
+DateTime DataStream::readDateTime() {
+	return DateTime(this->read<uint64>());
 }

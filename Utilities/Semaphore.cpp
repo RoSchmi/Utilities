@@ -1,4 +1,5 @@
 #include "Semaphore.h"
+#include <utility>
 
 #ifdef WINDOWS
 	#define WIN32_LEAN_AND_MEAN
@@ -26,6 +27,18 @@ Semaphore::~Semaphore() {
 	sem_destroy(this->baseSemaphore);
 	delete this->baseSemaphore;
 #endif
+}
+
+Semaphore::Semaphore(Semaphore&& other) {
+	*this = std::move(other);
+}
+
+Semaphore& Semaphore::operator=(Semaphore && other) {
+	this->baseSemaphore = other.baseSemaphore;
+
+	other.baseSemaphore = nullptr;
+
+	return *this;
 }
 
 void Semaphore::increment() {
@@ -56,6 +69,7 @@ eintr_restart:
 		ts.tv_sec++;
 		ts.tv_nsec %= 1000 * 1000 * 1000;
 	}
+
 	result = sem_timedwait(this->baseSemaphore, &ts);
 
 	if (result == -1 && errno == EINTR)
