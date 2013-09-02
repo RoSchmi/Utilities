@@ -26,6 +26,10 @@ TCPConnection::~TCPConnection() {
 	this->disconnect();
 }
 
+void* TCPConnection::getState() const {
+	return this->state;
+}
+
 const Socket& TCPConnection::getBaseSocket() const {
 	return this->connection;
 }

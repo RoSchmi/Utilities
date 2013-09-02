@@ -42,6 +42,7 @@ namespace Utilities {
 				exported TCPConnection(std::string address, std::string port, void* state);
 				exported virtual ~TCPConnection();
 		 
+				exported void* getState() const;
 				exported const Socket& getBaseSocket() const;
 				exported virtual MovableList<Message> read(uint32 messagesToWaitFor = 0);
 				exported virtual bool send(const uint8* buffer, uint16 length);
