@@ -286,6 +286,9 @@ uint64 Socket::read(uint8* buffer, uint64 bufferSize) {
 uint64 Socket::write(const uint8* toWrite, uint64 writeAmount) {
 	int32 result;
 
+	if (writeAmount == 0)
+		return 0;
+
 	#ifdef WINDOWS
 		result = send(static_cast<SOCKET>(this->rawSocket), reinterpret_cast<const int8*>(toWrite), static_cast<int32>(writeAmount), 0);
 	#elif defined POSIX
@@ -299,6 +302,9 @@ uint64 Socket::ensureWrite(const uint8* toWrite, uint64 writeAmount, uint8 maxAt
 	uint64 sentSoFar;
 	int32 result;
 	uint8 tries;
+
+	if (writeAmount == 0)
+		return 0;
 
 	sentSoFar = 0;
 	tries = 0;
