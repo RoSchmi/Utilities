@@ -4,6 +4,7 @@
 #include <string.h>
 
 using namespace Utilities;
+using namespace std;
 
 DataStream::DataStream() {
 	this->cursor = 0;
@@ -22,7 +23,7 @@ DataStream::DataStream(const uint8* exisitingBuffer, uint32 length) {
 
 DataStream::DataStream(DataStream&& other) {
 	this->buffer = nullptr;
-	*this = std::move(other);
+	*this = move(other);
 }
 
 DataStream::DataStream(const DataStream& other) {
@@ -148,7 +149,7 @@ void DataStream::write(cstr toWrite) {
 	this->write(reinterpret_cast<const uint8*>(toWrite), size);
 }
 
-void DataStream::write(const std::string& toWrite) {
+void DataStream::write(const string& toWrite) {
 	uint16 size = static_cast<uint16>(toWrite.size());
 
 	this->write(size);
@@ -159,8 +160,8 @@ void DataStream::write(const DataStream& toWrite) {
 	this->write(toWrite.getBuffer(), toWrite.getLength());
 }
 
-void DataStream::write(const DateTime& toWrite) {
-	this->write(toWrite.getMilliseconds());
+void DataStream::write(const datetime& toWrite) {
+	this->write(chrono::duration_cast<chrono::milliseconds>(epoch - toWrite).count());
 }
 
 void DataStream::read(uint8* buffer, uint32 count) {
@@ -181,15 +182,15 @@ const uint8* DataStream::read(uint32 count) {
 	return result;
 }
 
-std::string DataStream::readString() {
+string DataStream::readString() {
 	uint16 length;
-	std::string string;
+	string result;
 
 	if (this->cursor + sizeof(uint16) <= this->farthestWrite) {
 		length = this->read<uint16>();
 
 		if (this->cursor + length <= this->farthestWrite) {
-			string = std::string(reinterpret_cast<const int8*>(this->getBufferAtCursor()), length);
+			result = string(reinterpret_cast<const int8*>(this->getBufferAtCursor()), length);
 		}
 		else {
 			this->cursor -= sizeof(uint16);
@@ -200,9 +201,9 @@ std::string DataStream::readString() {
 		throw DataStream::ReadPastEndException();
 	}
 
-	return string;
+	return result;
 }
 
-DateTime DataStream::readDateTime() {
-	return DateTime(this->read<uint64>());
+datetime DataStream::readTimePoint() {
+	return epoch + chrono::milliseconds(this->read<uint64>());
 }

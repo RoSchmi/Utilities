@@ -25,6 +25,7 @@ void WebSocketConnection::doHandshake() {
 	DataStream response;
 	uint8 hash[Cryptography::SHA1_LENGTH];
 	string base64;
+	bool found;
 	
 	this->bytesReceived = static_cast<uint32>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
 
@@ -46,8 +47,18 @@ void WebSocketConnection::doHandshake() {
 				return;
 			}
 
+			found = true;
+
 			break;
 		}
+		else {
+			found = false;
+		}
+	}
+
+	if (end == this->bytesReceived) {
+		TCPConnection::disconnect();
+		return;
 	}
 
 	keyAndMagic.write(this->buffer + start, end - start);

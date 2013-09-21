@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "Time.h"
 #include <string>
+#include <chrono>
 
 namespace Utilities {
 	/**
@@ -27,7 +28,7 @@ namespace Utilities {
 			 * Thrown when operations on uninitialized memory would occur
 			 */
 			class ReadPastEndException { };
-		
+
 			DataStream();
 			DataStream(const uint8* exisitingBuffer, uint32 length);
 			DataStream(DataStream&& other);
@@ -106,7 +107,7 @@ namespace Utilities {
 			/**
 			 * Writes the number of milliseconds since the epoch as a uint64 to the stream.
 			 */
-			void write(const DateTime& toWrite);
+			void write(const datetime& toWrite);
 
 			/**
 			 * Read @a count bytes, starting at the cursor, into @a buffer.
@@ -125,9 +126,9 @@ namespace Utilities {
 			std::string readString();
 
 			/**
-			* Read a DateTime from the stream. Considered a uint64.
+			* Read a DateTime from the stream. Considered a uint64 of milliseconds.
 			*/
-			DateTime readDateTime();
+			datetime readTimePoint();
 
 			/**
 			 * Write a value of arbitrary type to the buffer. This is

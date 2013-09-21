@@ -14,7 +14,6 @@
     <ClInclude Include="TCPConnection.h" />
     <ClInclude Include="TCPServer.h" />
     <ClInclude Include="Semaphore.h" />
-    <ClInclude Include="Time.h" />
     <ClInclude Include="WebSocketConnection.h" />
   </ItemGroup>
   <ItemGroup>
@@ -27,7 +26,6 @@
     <ClCompile Include="TCPConnection.cpp" />
     <ClCompile Include="TCPServer.cpp" />
     <ClCompile Include="Semaphore.cpp" />
-    <ClCompile Include="Time.cpp" />
     <ClCompile Include="WebSocketConnection.cpp" />
   </ItemGroup>
   <ItemGroup>
