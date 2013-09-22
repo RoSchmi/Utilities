@@ -290,11 +290,7 @@ bool Socket::isDataAvailable() const {
 	
 	FD_SET(this->rawSocket, &readSet);
 	
-#ifdef WINDOWS
-	return select(0, &readSet, nullptr, nullptr, &timeout) > 0;
-#elif defined POSIX
-	return select(this->maxFD + 1, &readSet, nullptr, nullptr, &timeout) > 0;
-#endif
+	return select(1, &readSet, nullptr, nullptr, &timeout) > 0;
 }
 
 
