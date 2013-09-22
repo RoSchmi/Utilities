@@ -8,13 +8,6 @@ using namespace Utilities::Net;
 using namespace Utilities;
 using namespace std;
 
-TCPConnection::TCPConnection() {
-	this->owningServer = nullptr;
-	this->bytesReceived = 0;
-	this->state = nullptr;
-	this->connected = true;
-}
-
 TCPConnection::TCPConnection(std::string address, std::string port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
 	this->owningServer = nullptr;
 	this->bytesReceived = 0;
@@ -33,9 +26,14 @@ TCPConnection::~TCPConnection() {
 	this->disconnect();
 }
 
-TCPConnection::TCPConnection(TCPConnection&& other) {
+TCPConnection::TCPConnection(TCPConnection&& other) : connection(std::move(other.connection)) {
 	this->connected = false;
-	*this = std::move(other);
+	this->owningServer = other.owningServer;
+	this->state = other.state;
+	this->connected = other.connected;
+	this->messageParts = std::move(other.messageParts);
+	this->bytesReceived = other.bytesReceived;
+	memcpy(this->buffer, other.buffer, this->bytesReceived);
 }
 
 TCPConnection& TCPConnection::operator = (TCPConnection&& other) {

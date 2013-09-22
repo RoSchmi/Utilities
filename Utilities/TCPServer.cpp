@@ -7,10 +7,6 @@
 using namespace std;
 using namespace Utilities::Net;
 
-TCPServer::TCPServer() {
-	this->active = false;
-}
-
 TCPServer::TCPServer(string port, bool isWebSocket, void* onConnectState, OnConnectCallback connectCallback, OnReceiveCallback receiveCallback) : listener(Socket::Families::IPAny, Socket::Types::TCP, port) {
 	this->isWebSocket = isWebSocket;
 	this->active = true;
@@ -23,40 +19,6 @@ TCPServer::TCPServer(string port, bool isWebSocket, void* onConnectState, OnConn
 
 TCPServer::~TCPServer() {
 	this->shutdown();
-}
-
-TCPServer::TCPServer(TCPServer&& other) {
-	this->active = false;
-	*this = std::move(other);
-}
-
-TCPServer& TCPServer::operator=(TCPServer&& other) {
-	this->shutdown();
-
-	bool wasActive = other.active;
-	if (wasActive) {
-		other.active = false;
-		other.asyncWorker.join();
-		other.acceptWorker.join();
-	}
-
-	this->listener = std::move(other.listener);
-	this->isWebSocket = other.isWebSocket;
-	this->state = other.state;
-	this->connectCallback = other.connectCallback;
-	this->receiveCallback = other.receiveCallback;
-
-	this->active = wasActive;
-	if (wasActive) {
-		other.clientListLock.lock();
-		this->clientList = std::move(other.clientList);
-		other.clientListLock.unlock();
-
-		this->acceptWorker = thread(&TCPServer::acceptWorkerRun, this);
-		this->asyncWorker = thread(&TCPServer::asyncWorkerRun, this);
-	}
-
-	return *this;
 }
 
 void TCPServer::shutdown() {

@@ -11,6 +11,7 @@
 #include <cstring>
 #include <mutex>
 #include <condition_variable>
+#include <memory>
 
 namespace Utilities {
 	class RequestServer {
@@ -42,7 +43,6 @@ namespace Utilities {
 			typedef void* (*ConnectCallback)(Client& client, void* state);
 			typedef void (*DisconnectCallback)(Client& client, void* state);
 
-			exported RequestServer();
 			exported RequestServer(std::string port, uint8 workers, bool usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 			exported RequestServer(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 			exported ~RequestServer();
@@ -50,13 +50,14 @@ namespace Utilities {
 			exported void addToIncomingQueue(Message* message);
 			exported void addToOutgoingQueue(Message* message);
 
-		private:
+	    private:
+			RequestServer();
 			RequestServer(const RequestServer& other);
 			RequestServer& operator=(const RequestServer& other);
 			RequestServer(RequestServer&& other);
 			RequestServer& operator=(RequestServer&& other);
 
-			std::vector<Net::TCPServer*> servers;
+			std::vector<std::unique_ptr<Net::TCPServer>> servers;
 			std::map<uint64, Client*> clients;
 			std::mutex clientListLock;
 		

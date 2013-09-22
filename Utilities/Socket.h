@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+
 #include <map>
 #include <vector>
 #include <thread>
@@ -12,7 +13,6 @@
 
 namespace Utilities {
 	namespace Net {
-
 		/**
 		 * Socket, a bidirectional stream endpoint
 		 *
@@ -29,8 +29,6 @@ namespace Utilities {
 		 * foo.accept();
 		 */
 		class exported Socket {
-			class TCPConnection;
-
 			public:	
 				static const uint16 ADDRESS_LENGTH = 16;
 
@@ -43,8 +41,6 @@ namespace Utilities {
 					IPV6,
 					IPAny
 				};
-
-				Socket();
 				Socket(Families family, Types type, std::string address, std::string port);
 				Socket(Families family, Types type, std::string port);
 				Socket(Socket&& other);
@@ -124,6 +120,7 @@ namespace Utilities {
 			
 				Socket(const Socket& other);
 				Socket& operator=(const Socket& other);
+				Socket();
 		};
 
 		int16 hostToNetworkInt16(int16 value);

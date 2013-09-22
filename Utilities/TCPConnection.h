@@ -38,7 +38,6 @@ namespace Utilities {
 						Message& operator=(const Message& other);
 				};
 
-				exported TCPConnection();
 				exported TCPConnection(std::string address, std::string port, void* state);
 				exported virtual ~TCPConnection();
 
@@ -76,6 +75,7 @@ namespace Utilities {
 				virtual void disconnect(bool callServerDisconnect = true);
 
 			private:
+				TCPConnection();
 				TCPConnection(const TCPConnection& other);
 				TCPConnection& operator=(const TCPConnection& other);
 

@@ -170,10 +170,6 @@ error:
 	throw runtime_error("Couldn't listen on port.");
 }
 
-Socket::Socket() {
-	this->connected = false;
-}
-
 Socket::Socket(Socket&& other) {
 	this->connected = false;
 	*this = std::move(other);

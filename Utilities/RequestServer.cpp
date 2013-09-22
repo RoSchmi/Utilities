@@ -3,10 +3,6 @@
 using namespace Utilities;
 using namespace std;
 
-RequestServer::RequestServer() {
-	this->running = false;
-}
-
 RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) {
 	this->running = true;
 	this->onConnect = onConnect;
@@ -14,8 +10,8 @@ RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, ui
 	this->onRequest = onRequest;
 	this->retryCode = retryCode;
 	this->state = state;
-
-	this->servers.push_back(new Net::TCPServer(port, usesWebSockets, this, onClientConnect, onRequestReceived));
+	
+	this->servers.push_back(make_unique<Net::TCPServer>(port, usesWebSockets, this, onClientConnect, onRequestReceived));
 
 	for (uint8 i = 0; i < workers; i++)
 		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
@@ -32,7 +28,7 @@ RequestServer::RequestServer(vector<string> ports, uint8 workers, vector<bool> u
 	this->state = state;
 	
 	for (uint8 i = 0; i < ports.size(); i++)
-		this->servers.push_back(new Net::TCPServer(ports[i], usesWebSockets[i], this, onClientConnect, onRequestReceived));
+		this->servers.push_back(make_unique<Net::TCPServer>(ports[i], usesWebSockets[i], this, onClientConnect, onRequestReceived));
 
 	for (uint8 i = 0; i < workers; i++)
 		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
@@ -50,9 +46,6 @@ RequestServer::~RequestServer() {
 
 	for (auto& i : this->clients)
 		delete i.second;
-
-	for (auto& i : this->servers)
-		delete i;
 }
 
 void* RequestServer::onClientConnect(Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) {

@@ -16,12 +16,8 @@ namespace Utilities {
 				typedef void* (*OnConnectCallback)(TCPConnection& client, void* state, const uint8 clientAddress[Socket::ADDRESS_LENGTH]); /* return a pointer to a state object passed in to OnReceive */
 				typedef void (*OnReceiveCallback)(TCPConnection& client, void* state, TCPConnection::Message& message);
 			
-				exported TCPServer();
 				exported TCPServer(std::string port, bool isWebSocket, void* onConnectState, OnConnectCallback connectCallback, OnReceiveCallback receiveCallback);
 				exported ~TCPServer();
-
-				exported TCPServer(TCPServer&& other);
-				exported TCPServer& operator=(TCPServer&& other);
 
 			private:
 				Socket listener;
@@ -40,8 +36,11 @@ namespace Utilities {
 				void onClientDisconnecting(TCPConnection* client);
 				void shutdown();
 
+				TCPServer();
 				TCPServer(const TCPServer& other);
 				TCPServer& operator=(const TCPServer& other);
+				TCPServer(TCPServer&& other);
+				TCPServer& operator=(TCPServer&& other);
 			
 				friend class TCPConnection;
 				friend class WebSocketConnection;
