@@ -95,10 +95,10 @@ bool TCPConnection::send(const uint8* buffer, uint16 length) {
 	if (!this->connected)
 		return false;
 
-	if (this->connection.ensureWrite(reinterpret_cast<uint8*>(&length), sizeof(length), 10) != sizeof(length))
+	if (!this->ensureWrite(reinterpret_cast<uint8*>(&length), sizeof(length)))
 		return false;
 
-	if (this->connection.ensureWrite(buffer, length, 10) != length)
+	if (!this->ensureWrite(buffer, length))
 		return false;
 
 	return true;
@@ -117,11 +117,11 @@ bool TCPConnection::sendParts() {
 	for (auto i : this->messageParts)
 		totalLength += i.second;
 
-	if (this->connection.ensureWrite((uint8*)&totalLength, sizeof(totalLength), 10) != sizeof(totalLength))
+	if (!this->ensureWrite(reinterpret_cast<uint8*>(&totalLength), sizeof(totalLength)))
 		goto error;
 			
 	for (auto i : this->messageParts)
-		if (this->connection.ensureWrite(i.first, i.second, 10) != i.second)
+		if (!this->ensureWrite(i.first, i.second))
 			goto error;
 
 	return true;
@@ -141,6 +141,20 @@ void TCPConnection::disconnect(bool callServerDisconnect) {
 		this->owningServer->onClientDisconnecting(this);
 
 	this->connected = false;
+}
+
+bool TCPConnection::ensureWrite(const uint8* toWrite, uint64 writeAmount) {
+	if (writeAmount == 0)
+		return true;
+
+	uint64 sentSoFar = 0;
+	for (uint8 i = 0; i < 10 && sentSoFar < writeAmount; i++) {
+		sentSoFar += this->connection.write(toWrite + sentSoFar, writeAmount - sentSoFar);
+
+		this_thread::sleep_for(chrono::milliseconds(i * 50));
+	}
+
+	return sentSoFar == writeAmount;
 }
 
 TCPConnection::Message::Message(const uint8* buffer, uint16 length) {

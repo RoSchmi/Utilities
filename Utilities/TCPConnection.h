@@ -74,6 +74,8 @@ namespace Utilities {
 				TCPConnection(TCPServer* server, Socket& socket);
 				virtual void disconnect(bool callServerDisconnect = true);
 
+				bool ensureWrite(const uint8* toWrite, uint64 writeAmount);
+
 			private:
 				TCPConnection();
 				TCPConnection(const TCPConnection& other);

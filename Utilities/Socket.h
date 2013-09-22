@@ -41,6 +41,7 @@ namespace Utilities {
 					IPV6,
 					IPAny
 				};
+
 				Socket(Families family, Types type, std::string address, std::string port);
 				Socket(Families family, Types type, std::string port);
 				Socket(Socket&& other);
@@ -74,15 +75,6 @@ namespace Utilities {
 				 * @returns Number of bytes written
 				 */
 				uint64 write(const uint8* toWrite, uint64 writeAmount);
-
-				/**
-				 * Similar to @a write, but will make @a maxAttempts tries to
-				 * write the data if not all of the data was written on the first
-				 * attempt.
-				 *
-				 * If maxAttempts is 0, try forever (not recommended).
-				 */
-				uint64 ensureWrite(const uint8* toWrite, uint64 writeAmount, uint8 maxAttempts);
 
 				/**
 				 * @returns Address of the host on the other end of a socket

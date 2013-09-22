@@ -308,42 +308,6 @@ uint64 Socket::write(const uint8* toWrite, uint64 writeAmount) {
 	return (uint32)result;
 }
 
-uint64 Socket::ensureWrite(const uint8* toWrite, uint64 writeAmount, uint8 maxAttempts) {
-	if (!this->connected)
-		return 0;
-
-	uint64 sentSoFar;
-	int32 result;
-	uint8 tries;
-
-	if (writeAmount == 0)
-		return 0;
-
-	sentSoFar = 0;
-	tries = 0;
-
-	while (true) {
-		#ifdef WINDOWS
-			result = send(static_cast<SOCKET>(this->rawSocket), reinterpret_cast<const int8*>(toWrite + sentSoFar), static_cast<int32>(writeAmount - sentSoFar), 0);
-			if (result != SOCKET_ERROR)
-				sentSoFar += result;
-		#elif defined POSIX
-			result = send(this->rawSocket, reinterpret_cast<const int8*>(toWrite + sentSoFar), static_cast<int32>(writeAmount - sentSoFar), 0);
-			if (result != -1)
-				sentSoFar += result;
-		#endif
-
-		tries++;
-
-		if (sentSoFar == writeAmount || (maxAttempts && tries == maxAttempts))
-			break;
-
-		this_thread::sleep_for(chrono::milliseconds(tries * 50));
-	}
-
-	return sentSoFar;
-}
-
 const uint8* Socket::getRemoteAddress() const {
 	return this->remoteEndpointAddress;
 }

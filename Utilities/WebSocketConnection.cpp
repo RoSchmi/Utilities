@@ -73,7 +73,7 @@ void WebSocketConnection::doHandshake() {
 	response.write(base64.c_str());
 	response.write("\r\n\r\n");
 	
-	if (this->connection.ensureWrite(response.getBuffer(), response.getLength(), 10) != response.getLength()) {
+	if (!this->ensureWrite(response.getBuffer(), response.getLength())) {
 		TCPConnection::disconnect();
 		return;
 	}
@@ -172,7 +172,7 @@ vector<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFo
 					case OpCodes::Ping: 
 						if (length <= 125) {
 							bytes[0] = 128 | static_cast<uint8>(OpCodes::Pong);  
-							if (this->connection.ensureWrite(bytes, 2, 10) != 2 || this->connection.ensureWrite(dataBuffer + headerEnd, length + 4, 10) != length + 4) {
+							if (!this->ensureWrite(bytes, 2) || !this->ensureWrite(dataBuffer + headerEnd, length)) {
 								TCPConnection::disconnect();
 								messages.push_back(Message(true));
 								goto error;
@@ -249,9 +249,9 @@ bool WebSocketConnection::send(const uint8* data, uint16 length, OpCodes opCode)
 		*(reinterpret_cast<uint16*>(bytes + 2)) = Net::hostToNetworkInt16(length);
 	}
 
-	if (this->connection.ensureWrite(bytes, sendLength, 10) != sendLength) 
+	if (!this->ensureWrite(bytes, sendLength)) 
 		goto sendFailed;
-	if (this->connection.ensureWrite(data, length, 10) != length)
+	if (!this->ensureWrite(data, length))
 		goto sendFailed;
 
 	return true;
@@ -289,11 +289,11 @@ bool WebSocketConnection::sendParts() {
 		return false;	
 	}
 
-	if (this->connection.ensureWrite(bytes, sendLength, 10) != sendLength) 
+	if (!this->ensureWrite(bytes, sendLength)) 
 		goto sendFailed;
 		
 	for (auto i : this->messageParts)
-		if (this->connection.ensureWrite(i.first, i.second, 10) != i.second)
+		if (!this->ensureWrite(i.first, i.second))
 			goto sendFailed;
 
 	this->messageParts.clear();
