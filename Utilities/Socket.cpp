@@ -290,7 +290,7 @@ bool Socket::isDataAvailable() const {
 	
 	FD_SET(this->rawSocket, &readSet);
 	
-	return select(1, &readSet, nullptr, nullptr, &timeout) > 0;
+	return select(this->rawSocket + 1, &readSet, nullptr, nullptr, &timeout) > 0;
 }
 
 
