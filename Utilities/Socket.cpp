@@ -2,6 +2,7 @@
 #include "Misc.h"
 #include <utility>
 #include <stdexcept>
+#include <exception>
 #include <memory>
 
 #ifdef WINDOWS
@@ -83,8 +84,8 @@ int prepareRawSocket(Socket::Families family, Socket::Types type, string address
 		::setsockopt(rawSocket, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&opt), sizeof(opt));
 	}
 #elif defined POSIX
-	if (this->rawSocket == -1) {
-		::close(this->rawSocket);
+	if (rawSocket == -1) {
+		::close(rawSocket);
 		::freeaddrinfo(serverAddrInfo);
 		throw runtime_error("Unable to create socket.");
 	}
