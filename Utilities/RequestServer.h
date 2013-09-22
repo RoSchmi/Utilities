@@ -3,13 +3,14 @@
 #include "Common.h"
 #include "TCPServer.h"
 #include "DataStream.h"
-#include "SafeQueue.h"
 
 #include <atomic>
 #include <vector>
+#include <queue>
 #include <thread>
 #include <cstring>
 #include <mutex>
+#include <condition_variable>
 
 namespace Utilities {
 	class RequestServer {
@@ -62,8 +63,13 @@ namespace Utilities {
 			ConnectCallback onConnect;
 			DisconnectCallback onDisconnect;
 
-			SafeQueue<Message*> incomingQueue;
-			SafeQueue<Message*> outgoingQueue;
+			std::queue<Message*> incomingQueue;
+			std::queue<Message*> outgoingQueue;
+			std::mutex incomingLock;
+			std::mutex outgoingLock;
+			std::condition_variable incomingCV;
+			std::condition_variable outgoingCV;
+
 			uint16 retryCode;
 			void* state;
 			uint64 nextId;

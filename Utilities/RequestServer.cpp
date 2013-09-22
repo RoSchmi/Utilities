@@ -88,10 +88,15 @@ void RequestServer::workerRun(uint8 workerNumber) {
 	bool wasHandled;
 	Message* request;
 	Message* response;
+	unique_lock<mutex> lock(this->incomingLock);
 
 	while (this->running) {
-		if (!this->incomingQueue.dequeue(request, 1000))
-			continue;
+		while (this->incomingQueue.empty())
+			if (this->incomingCV.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
+				continue;
+		
+		request = this->incomingQueue.front();
+		this->incomingQueue.pop();
 
 		if (request->data.getLength() < 4) {
 			delete request;
@@ -123,10 +128,15 @@ void RequestServer::workerRun(uint8 workerNumber) {
 
 void RequestServer::outgoingWorkerRun() {
 	Message* message;
+	unique_lock<mutex> lock(this->outgoingLock);
 
 	while (this->running) {
-		if (!this->outgoingQueue.dequeue(message, 1000))
-			continue;
+		while (this->outgoingQueue.empty())
+			if (this->outgoingCV.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
+				continue;
+
+		message = this->outgoingQueue.front();
+		this->outgoingQueue.pop();
 			
 		message->client.connection.send(message->data.getBuffer(), message->data.getLength());
 
@@ -135,11 +145,15 @@ void RequestServer::outgoingWorkerRun() {
 }
 
 void RequestServer::addToIncomingQueue(Message* message) {
-	this->incomingQueue.enqueue(message);
+	unique_lock<mutex> lock(this->incomingLock);
+	this->incomingQueue.push(message);
+	this->incomingCV.notify_one();
 }
 
 void RequestServer::addToOutgoingQueue(Message* message) {
-	this->outgoingQueue.enqueue(message);
+	unique_lock<mutex> lock(this->outgoingLock);
+	this->outgoingQueue.push(message);
+	this->outgoingCV.notify_one();
 }
 
 RequestServer::Client::Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {

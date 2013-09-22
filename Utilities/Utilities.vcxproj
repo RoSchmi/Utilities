@@ -8,12 +8,10 @@
     <ClInclude Include="MovableList.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="RequestServer.h" />
-    <ClInclude Include="SafeQueue.h" />
     <ClInclude Include="SQLDatabase.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="TCPConnection.h" />
     <ClInclude Include="TCPServer.h" />
-    <ClInclude Include="Semaphore.h" />
     <ClInclude Include="WebSocketConnection.h" />
   </ItemGroup>
   <ItemGroup>
@@ -25,7 +23,6 @@
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="TCPConnection.cpp" />
     <ClCompile Include="TCPServer.cpp" />
-    <ClCompile Include="Semaphore.cpp" />
     <ClCompile Include="WebSocketConnection.cpp" />
   </ItemGroup>
   <ItemGroup>
