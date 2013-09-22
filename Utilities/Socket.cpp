@@ -2,7 +2,6 @@
 #include "Misc.h"
 #include <utility>
 #include <stdexcept>
-#include <exception>
 #include <memory>
 
 #ifdef WINDOWS
@@ -207,7 +206,7 @@ void Socket::close() {
 
 Socket Socket::accept() {
 	if (!this->connected)
-		throw exception("Socket not constructed.");
+		throw runtime_error("Socket not constructed.");
 
 	Socket socket(this->family, this->type);
 	sockaddr_storage remoteAddress;
