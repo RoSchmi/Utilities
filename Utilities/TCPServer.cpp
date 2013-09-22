@@ -28,15 +28,19 @@ void TCPServer::shutdown() {
 	this->active = false;
 	this->listener.close();
 
+	this->acceptWorker.join();
+	this->asyncWorker.join();
+
+	this->clientListLock.lock();
+
 	while (!this->clientList.empty()) {
 		auto i = this->clientList.back();
 		this->clientList.pop_back();
-		i->disconnect(false);
+		i->close(false);
 		delete i;
 	}
 
-	this->acceptWorker.join();
-	this->asyncWorker.join();
+	this->clientListLock.unlock();
 }
 
 void TCPServer::acceptWorkerRun() {

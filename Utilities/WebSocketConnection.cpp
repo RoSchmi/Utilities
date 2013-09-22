@@ -15,10 +15,6 @@ WebSocketConnection::WebSocketConnection(TCPServer* server, Socket& socket) : TC
 	this->ready = false;
 }
 
-WebSocketConnection::~WebSocketConnection() {
-
-}
-
 void WebSocketConnection::doHandshake() {
 	if (!this->connected)
 		return;
@@ -33,7 +29,7 @@ void WebSocketConnection::doHandshake() {
 	this->bytesReceived = static_cast<uint16>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
 
 	if (this->bytesReceived == 0) {
-		TCPConnection::disconnect();
+		TCPConnection::close();
 		return;
 	}
 
@@ -46,7 +42,7 @@ void WebSocketConnection::doHandshake() {
 				end++;
 
 			if (end == this->bytesReceived) {
-				TCPConnection::disconnect();
+				TCPConnection::close();
 				return;
 			}
 
@@ -60,7 +56,7 @@ void WebSocketConnection::doHandshake() {
 	}
 
 	if (end == this->bytesReceived) {
-		TCPConnection::disconnect();
+		TCPConnection::close();
 		return;
 	}
 
@@ -74,7 +70,7 @@ void WebSocketConnection::doHandshake() {
 	response.write("\r\n\r\n");
 	
 	if (!this->ensureWrite(response.getBuffer(), response.getLength())) {
-		TCPConnection::disconnect();
+		TCPConnection::close();
 		return;
 	}
 
@@ -82,14 +78,13 @@ void WebSocketConnection::doHandshake() {
 	this->bytesReceived = 0;
 }
 
-vector<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFor) {
-	vector<TCPConnection::Message> messages;
+vector<const TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFor) {
+	vector<const TCPConnection::Message> messages;
 
 	if (!this->connected)
 		return messages;
 
 	do {
-		uint8 bytes[2];
 		uint8 FIN;
 		uint8 RSV1;
 		uint8 RSV2;
@@ -97,12 +92,9 @@ vector<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFo
 		uint16 opCode;
 		uint8 mask;
 		uint16 length;
-		uint32 i;
-		uint16 received;
+		word received;
 		uint8 headerEnd;
-		uint8 maskBuffer[MASK_BYTES];
-		uint8* payloadBuffer;
-		uint8* dataBuffer; //used for websocket's framing. The unmasked data from the current frame is copied to the start of Connection.buffer. Connection.messageLength is then used to point to the end of the data copied to the start of Connection.buffer.
+		uint8* dataBuffer; //used for websocket's framing. The unmasked data from the current frame is copied to the start of connection.buffer. connection.messageLength is then used to point to the end of the data copied to the start of connection.buffer.
 
 		if (this->ready == false) {
 			this->doHandshake();
@@ -110,91 +102,89 @@ vector<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFo
 		}
 
 		dataBuffer = this->buffer + this->messageLength;
-		received = static_cast<uint16>(this->connection.read(dataBuffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived - this->messageLength));
+		received = this->connection.read(dataBuffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived - this->messageLength);
 		this->bytesReceived += received;
 	
 		if (this->bytesReceived == 0) {
-			TCPConnection::disconnect();
-			messages.push_back(Message(true));
-			goto error;
+			TCPConnection::close();
+			goto close;
 		}
 
 		while (this->bytesReceived > 0) {
 			if (this->bytesReceived >= 2) {
-				bytes[0] = dataBuffer[0];
-				bytes[1] = dataBuffer[1];
-
 				headerEnd = 2;
 		
-				FIN = bytes[0] >> 7 & 0x1;
-				RSV1 = bytes[0] >> 6 & 0x1;
-				RSV2 = bytes[0] >> 5 & 0x1;
-				RSV3 = bytes[0] >> 4 & 0x1;
-				opCode = bytes[0] & 0xF;
+				FIN = dataBuffer[0] >> 7 & 0x1;
+				RSV1 = dataBuffer[0] >> 6 & 0x1;
+				RSV2 = dataBuffer[0] >> 5 & 0x1;
+				RSV3 = dataBuffer[0] >> 4 & 0x1;
+				opCode = dataBuffer[0] & 0xF;
 
-				mask = bytes[1] >> 7 & 0x1;
-				length = bytes[1] & 0x7F;
+				mask = dataBuffer[1] >> 7 & 0x1;
+				length = dataBuffer[1] & 0x7F;
 
 				if (mask == false || RSV1 || RSV2 || RSV3) {
-					this->disconnect(CloseCodes::ProtocalError);
-					messages.push_back(Message(true));
-					goto error;
+					this->close(CloseCodes::ProtocalError);
+					goto close;
 				}
 
 				if (length == 126) {
-					if (this->bytesReceived < 4) {
-						messages.push_back(Message(true));
-						goto error;
-					}
-					length = Net::networkToHostInt16(*reinterpret_cast<uint16*>(dataBuffer + 2));
+					length = Net::networkToHostInt16(reinterpret_cast<uint16*>(dataBuffer + 2)[0]);
 					headerEnd += 2;
 				}
 				else if (length == 127) { //we don't support messages this big
-					this->disconnect(CloseCodes::MessageTooBig);
-					messages.push_back(Message(true));
-					goto error;
+					this->close(CloseCodes::MessageTooBig);
+					goto close;
 				}
 
 				switch ((OpCodes)opCode) { //ping is handled by the application, not websocket
 					case OpCodes::Text: 
-						this->disconnect(CloseCodes::InvalidDataType);
-						messages.push_back(Message(true));
-						goto error;
+						this->close(CloseCodes::InvalidDataType);
+						goto close;
+
 					case OpCodes::Close: 
-						this->disconnect(CloseCodes::Normal);
-						messages.push_back(Message(true));
-						goto error;
+						this->close(CloseCodes::Normal);
+						goto close;
+
 					case OpCodes::Pong:
 						headerEnd += mask ? MASK_BYTES : 0;
 						this->bytesReceived -= headerEnd;
 						dataBuffer = this->buffer + headerEnd;
+
 						continue;
+
 					case OpCodes::Ping: 
 						if (length <= 125) {
-							bytes[0] = 128 | static_cast<uint8>(OpCodes::Pong);  
-							if (!this->ensureWrite(bytes, 2) || !this->ensureWrite(dataBuffer + headerEnd, length)) {
-								TCPConnection::disconnect();
-								messages.push_back(Message(true));
-								goto error;
+							dataBuffer[0] = 128 | static_cast<uint8>(OpCodes::Pong);  
+
+							if (!this->ensureWrite(dataBuffer, 2) || !this->ensureWrite(dataBuffer + headerEnd, length)) {
+								TCPConnection::close();
+								goto close;
 							} 
+
 							headerEnd += mask ? MASK_BYTES : 0;
 							this->bytesReceived -= headerEnd;
 							dataBuffer = this->buffer + headerEnd;
+
 							continue;
 						}
 						else {
-							this->disconnect(CloseCodes::MessageTooBig);
-							messages.push_back(Message(true));
-							goto error;
+							this->close(CloseCodes::MessageTooBig);
+							goto close;
 						}
+
 					case OpCodes::Continuation:
-					case OpCodes::Binary:  
+					case OpCodes::Binary:
+						uint8 maskBuffer[MASK_BYTES];
+						uint8* payloadBuffer;
+
 						memcpy(maskBuffer, dataBuffer + headerEnd, MASK_BYTES);
 						headerEnd += MASK_BYTES;
 						payloadBuffer = dataBuffer + headerEnd;
 					
 						this->bytesReceived -= length + headerEnd;
-						for (i = 0; i < length; i++)
+
+						for (word i = 0; i < length; i++)
 							dataBuffer[i] = payloadBuffer[i] ^ maskBuffer[i % MASK_BYTES];
 
 						if (FIN) {
@@ -208,18 +198,22 @@ vector<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFo
 							dataBuffer = this->buffer + this->messageLength;
 							memcpy(dataBuffer, payloadBuffer + length, this->bytesReceived);
 						}
+
 						continue;
+
 					default:
-						this->disconnect(CloseCodes::ProtocalError);
-						messages.push_back(Message(true));
-						goto error;
+						this->close(CloseCodes::ProtocalError);
+						goto close;
 				}
 			}
 		}
 	} while (messages.size() < messagesToWaitFor);
 
-	error:
-		return messages;
+	return messages;
+
+close:
+	messages.push_back(Message(true));
+	return messages;
 }
 
 bool WebSocketConnection::send(const uint8* data, uint16 length) {
@@ -241,12 +235,12 @@ bool WebSocketConnection::send(const uint8* data, uint16 length, OpCodes opCode)
 
 	if (length <= 125) {
 		bytes[1] = static_cast<uint8>(length);
-		*reinterpret_cast<uint16*>(bytes + 2) = 0;
+		reinterpret_cast<uint16*>(bytes + 2)[0] = 0;
 	}
 	else {
 		bytes[1] = 126;
 		sendLength += 2;
-		*(reinterpret_cast<uint16*>(bytes + 2)) = Net::hostToNetworkInt16(length);
+		reinterpret_cast<int16*>(bytes + 2)[0] = Net::hostToNetworkInt16(static_cast<int16>(length));
 	}
 
 	if (!this->ensureWrite(bytes, sendLength)) 
@@ -255,8 +249,9 @@ bool WebSocketConnection::send(const uint8* data, uint16 length, OpCodes opCode)
 		goto sendFailed;
 
 	return true;
+
 sendFailed:
-	TCPConnection::disconnect();
+	TCPConnection::close();
 	return false;
 }
 
@@ -269,46 +264,47 @@ bool WebSocketConnection::sendParts() {
 	vector<pair<uint8 const*, uint16>>::iterator i;
 	uint32 totalLength = 0;
 	
-	for (i = this->messageParts.begin(); i != this->messageParts.end(); i++)
-		totalLength += i->second;
+	for (auto& i : this->messageParts)
+		totalLength += i.length;
 
 	bytes[0] = 128 | static_cast<uint8>(OpCodes::Binary);
 	sendLength = sizeof(uint16);
 
 	if (totalLength <= 125) {
 		bytes[1] = (uint8)totalLength;
-		*(uint16*)(bytes + 2) = 0;
+		reinterpret_cast<uint16*>(bytes + 2)[0] = 0;
 	}
 	else if (totalLength <= 65536) {
 		bytes[1] = 126;
 		sendLength += 2;
-		*(uint16*)(bytes + 2) = Net::hostToNetworkInt16(static_cast<int16>(totalLength));
+		reinterpret_cast<int16*>(bytes + 2)[0] = Net::hostToNetworkInt16(static_cast<int16>(totalLength));
 	}
 	else { // we dont support longer messages
-		this->disconnect(CloseCodes::MessageTooBig);
+		this->close(CloseCodes::MessageTooBig);
 		return false;	
 	}
 
 	if (!this->ensureWrite(bytes, sendLength)) 
 		goto sendFailed;
 		
-	for (auto i : this->messageParts)
-		if (!this->ensureWrite(i.first, i.second))
+	for (auto& i : this->messageParts)
+		if (!this->ensureWrite(i.data, i.length))
 			goto sendFailed;
 
 	this->messageParts.clear();
 
 	return true;
+
 sendFailed:
-	TCPConnection::disconnect();
+	TCPConnection::close();
 	return false;
 }
 
-void WebSocketConnection::disconnect(CloseCodes code) {
+void WebSocketConnection::close(CloseCodes code) {
 	if (!this->connected)
 		return;
 
 	this->send(reinterpret_cast<uint8*>(&code), sizeof(uint16), OpCodes::Close);
 	
-	TCPConnection::disconnect();
+	TCPConnection::close();
 }

@@ -30,26 +30,24 @@ namespace Utilities {
 
 				uint16 messageLength;
 				bool ready;
-
-				WebSocketConnection(const WebSocketConnection& other);
-				WebSocketConnection& operator=(const WebSocketConnection& other);
-				WebSocketConnection(WebSocketConnection&& other);
-				WebSocketConnection& operator=(WebSocketConnection&& other);
 			
 				WebSocketConnection(TCPServer* server, Socket& socket);
 
 				void doHandshake();
 				bool send(const uint8* data, uint16 length, OpCodes opCode);
-				void disconnect(CloseCodes code);
-				virtual std::vector<TCPConnection::Message> read(uint32 messagesToWaitFor = 0);
-			
-				friend class TCPServer;
+				void close(CloseCodes code);
 
 				public:
-					exported ~WebSocketConnection();
-				 
+					exported virtual std::vector<const TCPConnection::Message> read(uint32 messagesToWaitFor = 0);
 					exported virtual bool send(const uint8* data, uint16 length);
 					exported virtual bool sendParts();
+
+					WebSocketConnection(const WebSocketConnection& other) = delete;
+					WebSocketConnection& operator=(const WebSocketConnection& other) = delete;
+					WebSocketConnection(WebSocketConnection&& other) = delete;
+					WebSocketConnection& operator=(WebSocketConnection&& other) = delete;
+
+					friend class TCPServer;
 		};
 	}
 }

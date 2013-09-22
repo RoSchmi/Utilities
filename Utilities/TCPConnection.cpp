@@ -23,31 +23,7 @@ TCPConnection::TCPConnection(TCPServer* server, Socket& socket) : connection(std
 } 
 
 TCPConnection::~TCPConnection() {
-	this->disconnect();
-}
-
-TCPConnection::TCPConnection(TCPConnection&& other) : connection(std::move(other.connection)) {
-	this->connected = false;
-	this->owningServer = other.owningServer;
-	this->state = other.state;
-	this->connected = other.connected;
-	this->messageParts = std::move(other.messageParts);
-	this->bytesReceived = other.bytesReceived;
-	memcpy(this->buffer, other.buffer, this->bytesReceived);
-}
-
-TCPConnection& TCPConnection::operator = (TCPConnection&& other) {
-	this->disconnect();
-
-	this->connection = std::move(other.connection);
-	this->owningServer = other.owningServer;
-	this->state = other.state;
-	this->connected = other.connected;
-	this->messageParts = std::move(other.messageParts);
-	this->bytesReceived = other.bytesReceived;
-	memcpy(this->buffer, other.buffer, this->bytesReceived);
-
-	return *this;
+	this->close();
 }
 
 void* TCPConnection::getState() const {
@@ -58,29 +34,30 @@ const Socket& TCPConnection::getBaseSocket() const {
 	return this->connection;
 }
 
-vector<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor) {
-	vector<TCPConnection::Message> messages;
+vector<const TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor) {
+	vector<const TCPConnection::Message> messages;
 
 	if (!this->connected)
 		return messages;
 
 	do {
-		uint16 received = static_cast<uint16>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
+		word received = this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived);
 		this->bytesReceived += received;
 
 		if (received == 0) {
-			this->disconnect();
+			this->close();
 			messages.push_back(TCPConnection::Message(true));
+			return messages;
 		}
 	
 		while (this->bytesReceived >= TCPConnection::MESSAGE_LENGTH_BYTES) {
-			uint16 length = *reinterpret_cast<uint16*>(this->buffer);
-			int32 remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
+			uint16 length = reinterpret_cast<uint16*>(this->buffer)[0];
+			word remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
 
 			if (remaining >= 0) {
 				messages.push_back(TCPConnection::Message(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length));
 				memcpy(this->buffer, this->buffer + this->bytesReceived - remaining, remaining);
-				this->bytesReceived = static_cast<uint16>(remaining);
+				this->bytesReceived = remaining;
 			}
 			else {
 				break;
@@ -105,7 +82,7 @@ bool TCPConnection::send(const uint8* buffer, uint16 length) {
 }
 
 void TCPConnection::addPart(const uint8* buffer, uint16 length) {
-	this->messageParts.push_back(make_pair(buffer, length));
+	this->messageParts.push_back(TCPConnection::Message(buffer, length));
 }
 
 bool TCPConnection::sendParts() {
@@ -114,16 +91,17 @@ bool TCPConnection::sendParts() {
 
 	uint16 totalLength = 0;
 
-	for (auto i : this->messageParts)
-		totalLength += i.second;
+	for (auto& i : this->messageParts)
+		totalLength += i.length;
 
 	if (!this->ensureWrite(reinterpret_cast<uint8*>(&totalLength), sizeof(totalLength)))
 		goto error;
 			
-	for (auto i : this->messageParts)
-		if (!this->ensureWrite(i.first, i.second))
+	for (auto& i : this->messageParts)
+		if (!this->ensureWrite(i.data, i.length))
 			goto error;
 
+	this->messageParts.clear();
 	return true;
 
 error:
@@ -131,7 +109,7 @@ error:
 	return false;
 }
 
-void TCPConnection::disconnect(bool callServerDisconnect) {
+void TCPConnection::close(bool callServerDisconnect) {
 	if (!this->connected)
 		return;
 
@@ -158,15 +136,10 @@ bool TCPConnection::ensureWrite(const uint8* toWrite, uint64 writeAmount) {
 }
 
 TCPConnection::Message::Message(const uint8* buffer, uint16 length) {
-	this->wasClosed = length == 0;
+	this->wasClosed = false;
 	this->length = length;
-	if (length != 0) {
-		this->data = new uint8[length];
-		memcpy(this->data, buffer, length);
-	}
-	else {
-		this->data = nullptr;
-	}
+	this->data = new uint8[length];
+	memcpy(this->data, buffer, length);
 }
 
 TCPConnection::Message::Message(bool closed) {
@@ -182,7 +155,6 @@ TCPConnection::Message::~Message() {
 
 TCPConnection::Message::Message(TCPConnection::Message&& other) {
 	this->data = nullptr;
-	this->length = 0;
 	*this = std::move(other);
 }
 

@@ -80,7 +80,7 @@ int prepareRawSocket(Socket::Families family, Socket::Types type, string address
 	}
 	else {
 		int opt = 0;
-		setsockopt(rawSocket, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&opt), sizeof(opt));
+		::setsockopt(rawSocket, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&opt), sizeof(opt));
 	}
 #elif defined POSIX
 	if (this->rawSocket == -1) {

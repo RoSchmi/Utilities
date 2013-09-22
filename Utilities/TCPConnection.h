@@ -29,59 +29,49 @@ namespace Utilities {
 					
 					Message(bool closed);
 					Message(const uint8* buffer, uint16 length);
-					~Message();
 					Message(Message&& other);
+					~Message();
 					Message& operator=(Message&& other);
 
-					private:
-						Message(const Message& other);
-						Message& operator=(const Message& other);
+					Message() = delete;
+					Message(const Message& other) = delete;
+					Message& operator=(const Message& other) = delete;
 				};
 
-				exported TCPConnection(std::string address, std::string port, void* state);
+				exported TCPConnection(std::string address, std::string port, void* state = nullptr);
 				exported virtual ~TCPConnection();
-
-				exported TCPConnection(TCPConnection&& other);
-				exported TCPConnection& operator=(TCPConnection&& other);
 
 				exported void* getState() const;
 				exported const Socket& getBaseSocket() const;
-				exported virtual std::vector<Message> read(uint32 messagesToWaitFor = 0);
+				exported virtual std::vector<const Message> read(uint32 messagesToWaitFor = 0);
 				exported virtual bool send(const uint8* buffer, uint16 length);
-
-				/**
-				 * Add @a buffer to send queue
-				 */
 				exported void addPart(const uint8* buffer, uint16 length);
-
-				/**
-				 * Send all buffers queued with @a addPart
-				 */
 				exported virtual bool sendParts();
 
+				TCPConnection() = delete;
+				TCPConnection(const TCPConnection& other) = delete;
+				TCPConnection& operator=(const TCPConnection& other) = delete;
+				TCPConnection(TCPConnection&& other) = delete;
+				TCPConnection& operator=(TCPConnection&& other) = delete;
+
+				friend class TCPServer;
+
 			protected:
-				static const uint32 MESSAGE_LENGTH_BYTES = 2;
-				static const uint32 MESSAGE_MAX_SIZE = 65536 + MESSAGE_LENGTH_BYTES;
+				static const word MESSAGE_LENGTH_BYTES = 2;
+				static const word MESSAGE_MAX_SIZE = 0xFFFF + MESSAGE_LENGTH_BYTES;
 			
 				Socket connection;
 				TCPServer* owningServer; //null when this client is used to connect to a remote server
 				uint8 buffer[MESSAGE_MAX_SIZE];
-				uint16 bytesReceived;
+				word bytesReceived;
 				void* state;
 				bool connected;
-				std::vector< std::pair<const uint8*, uint16> > messageParts;
+				std::vector<Message> messageParts;
 				
 				TCPConnection(TCPServer* server, Socket& socket);
-				virtual void disconnect(bool callServerDisconnect = true);
 
 				bool ensureWrite(const uint8* toWrite, uint64 writeAmount);
-
-			private:
-				TCPConnection();
-				TCPConnection(const TCPConnection& other);
-				TCPConnection& operator=(const TCPConnection& other);
-
-				friend class TCPServer;
+				void close(bool callServerDisconnect = true);
 		};
 	}
 }
