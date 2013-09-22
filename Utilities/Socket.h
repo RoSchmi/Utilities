@@ -67,14 +67,14 @@ namespace Utilities {
 				 *
 				 * @returns Number of bytes read
 				 */
-				uint64 read(uint8* buffer, uint64 bufferSize);
+				word read(uint8* buffer, word bufferSize);
 
 				/**
 				 * Write @a writeAmount bytes from @a toWrite to the stream
 				 *
 				 * @returns Number of bytes written
 				 */
-				uint64 write(const uint8* toWrite, uint64 writeAmount);
+				word write(const uint8* toWrite, word writeAmount);
 
 				/**
 				 * @returns Address of the host on the other end of a socket
@@ -93,12 +93,15 @@ namespace Utilities {
 				 */
 				bool isDataAvailable() const;
 
+				Socket() = delete;
+				Socket(const Socket& other) = delete;
+				Socket& operator=(const Socket& other) = delete;
+
 			private:
 				Types type;
 				Families family;
 				bool connected;
-				uint8 lastError;
-				uint8 remoteEndpointAddress[ADDRESS_LENGTH];
+				uint8 remoteEndpointAddress[Socket::ADDRESS_LENGTH];
 			
 				#ifdef WINDOWS
 					uintptr rawSocket;
@@ -106,13 +109,7 @@ namespace Utilities {
 					int rawSocket;
 				#endif
 
-				bool prepareRawSocket(std::string address, std::string port, bool willListenOn, void** addressInfo);
-
 				Socket(Families family, Types type);
-			
-				Socket(const Socket& other);
-				Socket& operator=(const Socket& other);
-				Socket();
 		};
 
 		int16 hostToNetworkInt16(int16 value);

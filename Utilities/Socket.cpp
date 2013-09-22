@@ -2,6 +2,7 @@
 #include "Misc.h"
 #include <utility>
 #include <stdexcept>
+#include <memory>
 
 #ifdef WINDOWS
 	#define WIN32_LEAN_AND_MEAN
@@ -27,25 +28,28 @@
 using namespace Utilities::Net;
 using namespace std;
 
-bool Socket::prepareRawSocket(string address, string port, bool willListenOn, void** addressInfo) {
+#ifdef WINDOWS
+uintptr prepareRawSocket(Socket::Families family, Socket::Types type, string address, string port, bool isListener, addrinfo** addressInfo) {
+#elif defined POSIX
+int prepareRawSocket(Socket::Families family, Socket::Types type, string address, string port, bool isListener, addrinfo** addressInfo) {
+#endif
 	addrinfo serverHints;
 	addrinfo* serverAddrInfo;
 
 #ifdef WINDOWS
-	SOCKET rawSocket;
-
-	if (!winsockInitialized) {
+	if (!::winsockInitialized) {
 		WSADATA startupData;
-		WSAStartup(514, &startupData);
-		winsockInitialized = true;
+		::WSAStartup(514, &startupData);
+		::winsockInitialized = true;
 	}
+	uintptr rawSocket;
 #elif defined POSIX
 	int rawSocket;
 #endif
 
 	memset(&serverHints, 0, sizeof(addrinfo));
 
-	switch (this->family) {
+	switch (family) {
 		case Socket::Families::IPV4: serverHints.ai_family = AF_INET; break;
 		case Socket::Families::IPV6: serverHints.ai_family = AF_INET6; break;
 		#ifdef WINDOWS
@@ -53,56 +57,49 @@ bool Socket::prepareRawSocket(string address, string port, bool willListenOn, vo
 		#elif defined POSIX
 		case Socket::Families::IPAny: serverHints.ai_family = AF_UNSPEC; break;
 		#endif
-		default: return false;
+		default: throw runtime_error("Invalid Socket Family.");
 	}
 
-	switch (this->type) {
+	switch (type) {
 		case Socket::Types::TCP: serverHints.ai_socktype = SOCK_STREAM; break;
-		default: return false;
+		default: throw runtime_error("Invalid Socket Type.");
 	}
 
-	if (willListenOn)
+	if (isListener)
 		serverHints.ai_flags = AI_PASSIVE;
 		
-	if (getaddrinfo(address != "" ? address.c_str() : nullptr, port.c_str(), &serverHints, &serverAddrInfo) != 0) {
-		return false;
-	}
+	if (::getaddrinfo(address != "" ? address.c_str() : nullptr, port.c_str(), &serverHints, &serverAddrInfo) != 0 || serverAddrInfo == nullptr)
+		throw runtime_error("Unable to get socket address information.");
 
-	if (serverAddrInfo == nullptr) {
-		return false;
-	}
-	
-	rawSocket = socket(serverAddrInfo->ai_family, serverAddrInfo->ai_socktype, serverAddrInfo->ai_protocol);
+	rawSocket = ::socket(serverAddrInfo->ai_family, serverAddrInfo->ai_socktype, serverAddrInfo->ai_protocol);
 #ifdef WINDOWS
 	if (rawSocket == INVALID_SOCKET) {
-		closesocket(rawSocket); // It might be invalid, who cares?
-		freeaddrinfo(serverAddrInfo);
-		return false;
+		::closesocket(rawSocket);
+		::freeaddrinfo(serverAddrInfo);
+		throw runtime_error("Unable to create socket.");
 	}
 	else {
 		int opt = 0;
 		setsockopt(rawSocket, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&opt), sizeof(opt));
 	}
 #elif defined POSIX
-	if (rawSocket == -1) {
-		::close(rawSocket);
-		freeaddrinfo(serverAddrInfo);
-		return false;
+	if (this->rawSocket == -1) {
+		::close(this->rawSocket);
+		::freeaddrinfo(serverAddrInfo);
+		throw runtime_error("Unable to create socket.");
 	}
 #endif
 
-	this->rawSocket = rawSocket;
-	*(addrinfo**)addressInfo = serverAddrInfo;
+	*addressInfo = serverAddrInfo;
 
-	return true;
+	return rawSocket;
 }
 
 Socket::Socket(Families family, Types type) {
-	this->family = family;
 	this->type = type;
+	this->family = family;
 	this->connected = false;
-	this->lastError = 0;
-	memset(this->remoteEndpointAddress, 0, ADDRESS_LENGTH);
+	memset(this->remoteEndpointAddress, 0, Socket::ADDRESS_LENGTH);
 	#ifdef WINDOWS
 		this->rawSocket = INVALID_SOCKET;
 	#elif defined POSIX
@@ -110,44 +107,32 @@ Socket::Socket(Families family, Types type) {
 	#endif
 }
 
-Socket::Socket(Families family, Types type, string address, string port) {
-	this->family = family;
-	this->type = type;
-	this->connected = true;
-	this->lastError = 0;
-	memset(this->remoteEndpointAddress, 0, ADDRESS_LENGTH);
-
+Socket::Socket(Families family, Types type, string address, string port) : Socket(family, type) {
 	addrinfo* serverAddrInfo;
 	
-	if (!this->prepareRawSocket(address, port, false, (void**)&serverAddrInfo))
-		throw runtime_error("Can't create raw socket.");
+	this->rawSocket = prepareRawSocket(family, type, address, port, false, &serverAddrInfo);
 	
-	if (::connect(this->rawSocket, serverAddrInfo->ai_addr, (int)serverAddrInfo->ai_addrlen) != 0) {
+	if (::connect(this->rawSocket, serverAddrInfo->ai_addr, static_cast<int>(serverAddrInfo->ai_addrlen)) != 0) {
 		#ifdef WINDOWS
-			closesocket(this->rawSocket);
+			::closesocket(this->rawSocket);
 		#elif defined POSIX
 			::close(this->rawSocket);
 		#endif
 
-		freeaddrinfo(serverAddrInfo);
+		::freeaddrinfo(serverAddrInfo);
 		
 		throw runtime_error("Couldn't connect to server.");
 	}
+
+	this->connected = true;
 	
-	freeaddrinfo(serverAddrInfo);
+	::freeaddrinfo(serverAddrInfo);
 }
 
-Socket::Socket(Families family, Types type, string port) {
-	this->family = family;
-	this->type = type;
-	this->connected = true;
-	this->lastError = 0;
-	memset(this->remoteEndpointAddress, 0, ADDRESS_LENGTH);
-
+Socket::Socket(Families family, Types type, string port) : Socket(family, type) {
 	addrinfo* serverAddrInfo;
-	
-	if (!this->prepareRawSocket("", port, true, (void**)&serverAddrInfo))
-		throw runtime_error("Can't create raw socket.");
+
+	this->rawSocket = prepareRawSocket(family, type, "", port, true, &serverAddrInfo);
 
 	if (::bind(this->rawSocket, serverAddrInfo->ai_addr, (int)serverAddrInfo->ai_addrlen) != 0)
 		goto error;
@@ -155,16 +140,17 @@ Socket::Socket(Families family, Types type, string port) {
 	if (::listen(this->rawSocket, SOMAXCONN) != 0)
 		goto error;
 	
-	freeaddrinfo(serverAddrInfo);
+	::freeaddrinfo(serverAddrInfo);
 
 	return;
 
 error:
 #ifdef WINDOWS
-	closesocket(this->rawSocket);
+	::closesocket(this->rawSocket);
 #elif defined POSIX
 	::close(this->rawSocket);
 #endif
+
 	freeaddrinfo(serverAddrInfo);
 	
 	throw runtime_error("Couldn't listen on port.");
@@ -175,30 +161,31 @@ Socket::Socket(Socket&& other) {
 	*this = std::move(other);
 }
 
+Socket::~Socket() {
+	this->close();
+}
+
 Socket& Socket::operator=(Socket&& other) {
 	if (this->connected)
 		this->close();
 		
 	this->family = other.family;
 	this->type = other.type;
-	this->rawSocket = other.rawSocket;
-	this->connected = other.connected;
-	this->lastError = other.lastError;
 
-	memcpy(this->remoteEndpointAddress, other.remoteEndpointAddress, ADDRESS_LENGTH);
-	memset(other.remoteEndpointAddress, 0, ADDRESS_LENGTH);
+	this->connected = other.connected;
 	other.connected = false;
-	#ifdef WINDOWS
-		other.rawSocket = INVALID_SOCKET;
-	#elif defined POSIX
-		other.rawSocket = -1;
-	#endif
+
+	memcpy(this->remoteEndpointAddress, other.remoteEndpointAddress, Socket::ADDRESS_LENGTH);
+	memset(other.remoteEndpointAddress, 0, Socket::ADDRESS_LENGTH);
+
+	this->rawSocket = other.rawSocket;
+#ifdef WINDOWS
+	other.rawSocket = INVALID_SOCKET;
+#elif defined POSIX
+	other.rawSocket = -1;
+#endif
 
 	return *this;
-}
-
-Socket::~Socket() {
-	this->close();
 }
 
 void Socket::close() {
@@ -207,11 +194,11 @@ void Socket::close() {
 
 	this->connected = false;
 	#ifdef WINDOWS
-		shutdown(static_cast<SOCKET>(this->rawSocket), SD_BOTH);
-		closesocket(static_cast<SOCKET>(this->rawSocket));
+		::shutdown(this->rawSocket, SD_BOTH);
+		::closesocket(this->rawSocket);
 		this->rawSocket = INVALID_SOCKET;
 	#elif defined POSIX
-		shutdown(this->rawSocket, SHUT_RDWR);
+		::shutdown(this->rawSocket, SHUT_RDWR);
 		::close(this->rawSocket);
 		this->rawSocket = -1;
 	#endif
@@ -223,89 +210,63 @@ Socket Socket::accept() {
 
 	Socket socket(this->family, this->type);
 	sockaddr_storage remoteAddress;
-	sockaddr_in* ipv4Address;
-	sockaddr_in6* ipv6Address;
-	int addressLength = sizeof(remoteAddress);
+	size_t addressLength = sizeof(remoteAddress);
 
 #ifdef WINDOWS
-	SOCKET rawSocket;
-	
-	rawSocket = ::accept((SOCKET)this->rawSocket, (sockaddr*)&remoteAddress, &addressLength);
-	if (rawSocket == INVALID_SOCKET) {
+	socket.rawSocket = ::accept(this->rawSocket, reinterpret_cast<sockaddr*>(&remoteAddress), reinterpret_cast<int*>(&addressLength));
+	if (socket.rawSocket == INVALID_SOCKET)
 		return socket;
-	}
-
 #elif defined POSIX
-	int rawSocket;
-
-	rawSocket = ::accept(this->rawSocket, (sockaddr*)&remoteAddress, (socklen_t*)&addressLength);
-	if (rawSocket == -1) {
+	socket.rawSocket = ::accept(this->rawSocket, reinterpret_cast<sockaddr* > (&remoteAddress), reinterpret_cast<socklen_t*>(&addressLength));
+	if (socket.rawSocket == -1)
 		return socket;
-	}
-
 #endif
 	
-	socket.rawSocket = rawSocket;
 	socket.connected = true;
 
-	memset(socket.remoteEndpointAddress, 0, sizeof(socket.remoteEndpointAddress));
+	memset(socket.remoteEndpointAddress, 0, Socket::ADDRESS_LENGTH);
 
 	if (remoteAddress.ss_family == AF_INET) {
-		ipv4Address = reinterpret_cast<sockaddr_in*>(&remoteAddress);
+		sockaddr_in* ipv4Address = reinterpret_cast<sockaddr_in*>(&remoteAddress);
 		memset(socket.remoteEndpointAddress, 0, 10); //to copy the ipv4 address in ipv6 mapped format
 		memset(socket.remoteEndpointAddress + 10, 1, 2);
 		#ifdef WINDOWS
-				memcpy(socket.remoteEndpointAddress + 12, (uint8*)&ipv4Address->sin_addr.S_un.S_addr, 4);
+			memcpy(socket.remoteEndpointAddress + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.S_un.S_addr), 4);
 		#elif defined POSIX
-				memcpy(socket.remoteEndpointAddress + 12, (uint8*)&ipv4Address->sin_addr.s_addr, 4);
+			memcpy(socket.remoteEndpointAddress + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.s_addr), 4);
 		#endif
 	}
 	else if (remoteAddress.ss_family == AF_INET6) {
-		ipv6Address = reinterpret_cast<sockaddr_in6*>(&remoteAddress);
+		sockaddr_in6* ipv6Address = reinterpret_cast<sockaddr_in6*>(&remoteAddress);
 		#ifdef WINDOWS
-				memcpy(socket.remoteEndpointAddress, ipv6Address->sin6_addr.u.Byte, sizeof(ipv6Address->sin6_addr.u.Byte));
+			memcpy(socket.remoteEndpointAddress, ipv6Address->sin6_addr.u.Byte, sizeof(ipv6Address->sin6_addr.u.Byte));
 		#elif defined POSIX
-				memcpy(socket.remoteEndpointAddress, ipv6Address->sin6_addr.s6_addr, sizeof(ipv6Address->sin6_addr.s6_addr));
+			memcpy(socket.remoteEndpointAddress, ipv6Address->sin6_addr.s6_addr, sizeof(ipv6Address->sin6_addr.s6_addr));
 		#endif
 	}
 
 	return socket;
 }
 
-uint64 Socket::read(uint8* buffer, uint64 bufferSize) {
+word Socket::read(uint8* buffer, word bufferSize) {
 	if (!this->connected)
 		return 0;
 
-	int32 received;
-
-	#ifdef WINDOWS
-		received = recv(static_cast<SOCKET>(this->rawSocket), reinterpret_cast<int8*>(buffer), static_cast<int32>(bufferSize), 0);
-	#elif defined POSIX
-		received = recv(this->rawSocket, reinterpret_cast<int8*>(buffer), static_cast<int32>(bufferSize), 0);
-	#endif
-
+	int received = ::recv(this->rawSocket, reinterpret_cast<char*>(buffer), static_cast<int>(bufferSize), 0);
 	if (received <= 0)
 		return 0;
 
-	return received;
+	return static_cast<word>(received);
 }
 
-uint64 Socket::write(const uint8* toWrite, uint64 writeAmount) {
+word Socket::write(const uint8* toWrite, word writeAmount) {
 	if (!this->connected)
 		return 0;
-
-	int32 result;
 
 	if (writeAmount == 0)
 		return 0;
 
-	#ifdef WINDOWS
-		result = send(static_cast<SOCKET>(this->rawSocket), reinterpret_cast<const int8*>(toWrite), static_cast<int32>(writeAmount), 0);
-	#elif defined POSIX
-		result = send(this->rawSocket, reinterpret_cast<const int8*>(toWrite), static_cast<int32>(writeAmount), 0);
-	#endif
-
-	return (uint32)result;
+	return static_cast<uint64>(::send(this->rawSocket, reinterpret_cast<const char*>(toWrite), static_cast<int>(writeAmount), 0));
 }
 
 const uint8* Socket::getRemoteAddress() const {
@@ -330,12 +291,10 @@ bool Socket::isDataAvailable() const {
 	FD_SET(this->rawSocket, &readSet);
 	
 #ifdef WINDOWS
-	int readySockets = select(0, &readSet, nullptr, nullptr, &timeout);
+	return select(0, &readSet, nullptr, nullptr, &timeout) > 0;
 #elif defined POSIX
-	int readySockets = select(this->maxFD + 1, &readSet, nullptr, nullptr, &timeout);
+	return select(this->maxFD + 1, &readSet, nullptr, nullptr, &timeout) > 0;
 #endif
-
-	return readySockets > 0;
 }
 
 
@@ -348,11 +307,11 @@ int32 Utilities::Net::hostToNetworkInt32(int32 value) {
 }
 
 int64 Utilities::Net::hostToNetworkInt64(int64 value) {
-	#ifdef WINDOWS
-		return htonll(value);
-	#elif defined POSIX
-		return htobe64(value); // XXX: glibc only
-	#endif
+#ifdef WINDOWS
+	return htonll(value);
+#elif defined POSIX
+	return htobe64(value); // XXX: glibc only
+#endif
 }
 
 int16 Utilities::Net::networkToHostInt16(int16 value) {
@@ -364,9 +323,9 @@ int32 Utilities::Net::networkToHostInt32(int32 value) {
 }
 
 int64 Utilities::Net::networkToHostInt64(int64 value) {
-	#ifdef WINDOWS
-		return ntohll(value);
-	#elif defined POSIX
-		return be64toh(value); // XXX: glibc only
-	#endif
+#ifdef WINDOWS
+	return ntohll(value);
+#elif defined POSIX
+	return be64toh(value); // XXX: glibc only
+#endif
 }
