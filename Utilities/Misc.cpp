@@ -3,88 +3,57 @@
 using namespace std;
 
 string Utilities::Misc::base64Encode(const uint8* data, uint32 dataLength) {
-	static const char* characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	static int32 mask = 0x3F;
-	uint32 i, j, left, resultLength;
-	string sresult;
+	static cstr characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; 
+	static uint8 endTable[] = { 0, 2, 1 };
 
-	union {
-		uint8 bytes[4];
-		uint32 block;
-	} buffer;
+	string result;
+	result.resize(4 * ((dataLength + 2) / 3));
 
-	resultLength = dataLength + dataLength / 3 + static_cast<uint32>(dataLength % 3 != 0);
-	if (resultLength % 4)
-		resultLength += 4 - resultLength % 4;
+	for (uint32 i = 0, j = 0; i < dataLength;) {
+		uint32 a = i < dataLength ? data[i++] : 0;
+		uint32 b = i < dataLength ? data[i++] : 0;
+		uint32 c = i < dataLength ? data[i++] : 0;
+		uint32 triple = (a << 0x10) + (b << 0x08) + c;
 
-	int8* result = new int8[resultLength];
-
-	for(i = 0, j = 0, left = dataLength; i < dataLength; i += 3, j += 4, left -= 3) {
-		buffer.bytes[2] = data[i];
-		if(left > 1) {
-			buffer.bytes[1] = data[i + 1];
-			if(left > 2)
-				buffer.bytes[0] = data[i + 2];
-			else
-				buffer.bytes[0] = 0;
-		}
-		else {
-			buffer.bytes[1] = 0;
-			buffer.bytes[0] = 0;
-		}
-
-		result[j] = characters[(buffer.block >> 18 ) & mask];
-		result[j + 1] = characters[(buffer.block >> 12 ) & mask];
-		if(left > 1) {
-			result[ j + 2 ] = characters[(buffer.block >> 6) & mask];
-			if( left > 2 )
-				result[j + 3] = characters[buffer.block & mask];
-			else
-				result[j + 3] = '=';
-		}
-		else {
-			result[j + 2] = '=';
-			result[j + 3] = '=';
-		}
+		result[j++] = characters[(triple >> 3 * 6) & 0x3F];
+		result[j++] = characters[(triple >> 2 * 6) & 0x3F];
+		result[j++] = characters[(triple >> 1 * 6) & 0x3F];
+		result[j++] = characters[(triple >> 0 * 6) & 0x3F];
 	}
 
-	sresult = string(result, resultLength);
-	delete[] result;
-	return sresult;
+	for (uint8 i = 0; i < endTable[dataLength % 3]; i++)
+		result[result.size() - 1 - i] = '=';
+
+	return result;
 }
 
 bool Utilities::Misc::isStringUTF8(string str) {
-	uint16 length;
-	uint8 byte;
-	uint8 bytesToFind;
-	uint8 i;
-	const int8* bytes;
+	cstr bytes = str.data();
 
-	length = static_cast<uint16>(str.size());
-	bytesToFind = 0;
-	bytes = str.data();
-
-	for (byte = bytes[i = 0]; i < length; byte = bytes[++i])
-		if (bytesToFind == 0)
+	for (uint8 i = 0, toFind = 0, byte = bytes[0]; i < static_cast<uint8>(str.size()); byte = bytes[++i]) {
+		if (toFind == 0) {
 			if ((byte >> 1) == 126)
-				bytesToFind = 5;
+				toFind = 5;
 			else if ((byte >> 2) == 62)
-				bytesToFind = 4;
+				toFind = 4;
 			else if ((byte >> 3) == 30)
-				bytesToFind = 3;
+				toFind = 3;
 			else if ((byte >> 4) == 14)
-				bytesToFind = 2;
+				toFind = 2;
 			else if ((byte >> 5) == 6)
-				bytesToFind = 1;
-			else if ((byte >> 7) == 0) 
+				toFind = 1;
+			else if ((byte >> 7) == 0)
 				;
 			else
 				return false;
-		else
+		}
+		else {
 			if ((byte >> 6) == 2)
-				bytesToFind--;
+				toFind--;
 			else
 				return false;
+		}
+	}
 
 	return true;
 }
