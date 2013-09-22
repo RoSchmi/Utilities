@@ -17,15 +17,15 @@
 namespace Utilities {
 	class RequestServer {
 		public: 
-			struct Message {
+			struct exported Message {
 				Net::TCPConnection& connection;
 				uint8 currentAttempts;
 				DataStream data;
 
-				exported Message(Net::TCPConnection& connection, const uint8* data, word length);
-				exported Message(Net::TCPConnection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
+				Message(Net::TCPConnection& connection, const uint8* data, word length);
+				Message(Net::TCPConnection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
 
-				exported static void writeHeader(DataStream& stream, uint16 id, uint8 category, uint8 method);
+				static void writeHeader(DataStream& stream, uint16 id, uint8 category, uint8 method);
 			};
 
 			static const uint8 MAX_RETRIES = 5;

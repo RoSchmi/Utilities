@@ -10,14 +10,16 @@ using namespace std;
 
 TCPConnection::TCPConnection(std::string address, std::string port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
 	this->bytesReceived = 0;
-	this->state = state;
+	this->state = nullptr;
 	this->connected = true;
+	this->buffer = new uint8[TCPConnection::MESSAGE_MAX_SIZE];
 }
 
 TCPConnection::TCPConnection(Socket& socket) : connection(std::move(socket)) {
 	this->bytesReceived = 0;
 	this->state = nullptr;
 	this->connected = true;
+	this->buffer = new uint8[TCPConnection::MESSAGE_MAX_SIZE];
 }
 
 TCPConnection::TCPConnection(TCPConnection&& other) : connection(std::move(other.connection)) {
@@ -43,6 +45,7 @@ TCPConnection& TCPConnection::operator = (TCPConnection&& other) {
 
 TCPConnection::~TCPConnection() {
 	this->close();
+	delete [] this->buffer;
 }
 
 const uint8* TCPConnection::getAddress() const {

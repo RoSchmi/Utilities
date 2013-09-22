@@ -121,7 +121,7 @@ void Query::addParameter(const uint8* parameter, uint32 length) {
 }
 
 void Query::addParameter(const Utilities::DataStream& parameter) {
-	this->addParameter(parameter.getBuffer(), parameter.getLength());
+	this->addParameter(parameter.getBuffer(), static_cast<uint32>(parameter.getLength()));
 }
 
 void Query::addParameter(float64 parameter) {

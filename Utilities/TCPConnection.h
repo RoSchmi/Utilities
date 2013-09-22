@@ -65,7 +65,7 @@ namespace Utilities {
 				static const word MESSAGE_MAX_SIZE = 0xFFFF + MESSAGE_LENGTH_BYTES;
 			
 				Socket connection;
-				uint8 buffer[MESSAGE_MAX_SIZE];
+				uint8* buffer;
 				word bytesReceived;
 				bool connected;
 				std::vector<Message> messageParts;
