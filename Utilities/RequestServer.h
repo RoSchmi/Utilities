@@ -10,63 +10,54 @@
 #include <thread>
 #include <cstring>
 #include <mutex>
+#include <forward_list>
 #include <condition_variable>
 #include <memory>
 
 namespace Utilities {
 	class RequestServer {
 		public: 
-			struct Client {
-				uint64 id;
-				RequestServer& parent;
-				Net::TCPConnection connection;
-				uint8 ipAddress[Net::Socket::ADDRESS_LENGTH];
-				void* state;
-
-				exported Client(Net::TCPConnection connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]);
-			};
-			
 			struct Message {
-				Client& client;
-				DataStream data;
+				Net::TCPConnection& connection;
 				uint8 currentAttempts;
+				DataStream data;
 
-				exported Message(Client& client, const DataStream& message);
-				exported Message(Client& client, uint16 id, uint8 category = 0, uint8 method = 0);
+				exported Message(Net::TCPConnection& connection, const uint8* data, word length);
+				exported Message(Net::TCPConnection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
 
-				exported static void getHeader(DataStream& stream, uint16 id, uint8 category, uint8 method);
+				exported static void writeHeader(DataStream& stream, uint16 id, uint8 category, uint8 method);
 			};
 
 			static const uint8 MAX_RETRIES = 5;
 			
-			typedef bool (*RequestCallback)(uint8 workerNumber, Client& client, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response, void* state);
-			typedef void* (*ConnectCallback)(Client& client, void* state);
-			typedef void (*DisconnectCallback)(Client& client, void* state);
+			typedef bool(*RequestCallback)(Net::TCPConnection& connection, void* state, uint8 workerNumber, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response);
+			typedef void(*ConnectCallback)(Net::TCPConnection& connection, void* state);
+			typedef void(*DisconnectCallback)(Net::TCPConnection& connection, void* state);
 
-			exported RequestServer(std::string port, uint8 workers, bool usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
-			exported RequestServer(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
+			exported RequestServer(std::string port, bool usesWebSockets, uint8 workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
+			exported RequestServer(std::vector<std::string> ports, std::vector<bool> usesWebSockets, uint8 workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 			exported ~RequestServer();
 
-			exported void addToIncomingQueue(Message* message);
-			exported void addToOutgoingQueue(Message* message);
+			exported void addToIncomingQueue(Message message);
+			exported void addToOutgoingQueue(Message message);
+
+			RequestServer() = delete;
+			RequestServer(const RequestServer& other) = delete;
+			RequestServer& operator=(const RequestServer& other) = delete;
+			RequestServer(RequestServer&& other) = delete;
+			RequestServer& operator=(RequestServer&& other) = delete;
 
 	    private:
-			RequestServer();
-			RequestServer(const RequestServer& other);
-			RequestServer& operator=(const RequestServer& other);
-			RequestServer(RequestServer&& other);
-			RequestServer& operator=(RequestServer&& other);
-
-			std::vector<std::unique_ptr<Net::TCPServer>> servers;
-			std::map<uint64, Client*> clients;
+			Net::TCPServer server;
+			std::forward_list<Net::TCPConnection> clients;
 			std::mutex clientListLock;
 		
 			RequestCallback onRequest;
 			ConnectCallback onConnect;
 			DisconnectCallback onDisconnect;
 
-			std::queue<Message*> incomingQueue;
-			std::queue<Message*> outgoingQueue;
+			std::queue<Message> incomingQueue;
+			std::queue<Message> outgoingQueue;
 			std::mutex incomingLock;
 			std::mutex outgoingLock;
 			std::condition_variable incomingCV;
@@ -74,17 +65,16 @@ namespace Utilities {
 
 			uint16 retryCode;
 			void* state;
-			uint64 nextId;
 
+			std::thread ioWorker;
 			std::thread outgoingWorker;
 			std::vector<std::thread> incomingWorkers;
 			std::atomic<bool> running;
 			
 			void incomingWorkerRun(uint8 workerNumber);
 			void outgoingWorkerRun();
-			void shutdown();
+			void ioWorkerRun();
 	
 			static void onClientConnect(Utilities::Net::TCPConnection connection, void* serverState);
-			static void onRequestReceived(Utilities::Net::TCPConnection& connection, void* state, Utilities::Net::TCPConnection::Message& message);
 	};
 }

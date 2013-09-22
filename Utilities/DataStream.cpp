@@ -13,7 +13,7 @@ DataStream::DataStream() {
 	this->buffer = new uint8[DataStream::MINIMUM_SIZE];
 }
 
-DataStream::DataStream(const uint8* exisitingBuffer, uint32 length) {
+DataStream::DataStream(const uint8* exisitingBuffer, word length) {
 	this->cursor = 0;
 	this->farthestWrite = length;
 	this->allocation = length;
@@ -76,7 +76,7 @@ const uint8* DataStream::getBufferAtCursor() const {
 	return this->buffer + this->cursor;
 }
 
-uint32 DataStream::getLength() const {
+word DataStream::getLength() const {
 	return this->farthestWrite;
 }
 
@@ -84,8 +84,8 @@ bool DataStream::isEOF() const {
 	return this->cursor < this->farthestWrite;
 }
 
-void DataStream::resize(uint32 newSize) {
-	uint32 actualsize;
+void DataStream::resize(word newSize) {
+	word actualsize;
 	uint8* newData;
 
 	actualsize = DataStream::MINIMUM_SIZE;
@@ -109,14 +109,14 @@ void DataStream::reset() {
 	this->farthestWrite = 0;
 }
 
-void DataStream::seek(uint32 position) {
+void DataStream::seek(word position) {
 	if (position > this->farthestWrite)
 		throw DataStream::ReadPastEndException();
 
 	this->cursor = position;
 }
 
-void DataStream::adopt(uint8* buffer, uint32 length) {
+void DataStream::adopt(uint8* buffer, word length) {
 	if (this->buffer)
 		delete [] this->buffer;
 
@@ -126,7 +126,7 @@ void DataStream::adopt(uint8* buffer, uint32 length) {
 	this->buffer = buffer;
 }
 
-void DataStream::write(const uint8* data, uint32 count) {
+void DataStream::write(const uint8* data, word count) {
 	if (this->cursor + count >= this->allocation)
 		this->resize(this->cursor + count);
 
@@ -138,7 +138,7 @@ void DataStream::write(const uint8* data, uint32 count) {
 		this->farthestWrite = this->cursor;
 }
 
-void DataStream::write(const int8* data, uint32 count) {
+void DataStream::write(const int8* data, word count) {
 	this->write(reinterpret_cast<const uint8*>(data), count);
 }
 
@@ -172,7 +172,7 @@ void DataStream::read(uint8* buffer, uint32 count) {
 	this->cursor += count;
 }
 
-const uint8* DataStream::read(uint32 count) {
+const uint8* DataStream::read(word count) {
 	if (count + this->cursor > this->farthestWrite)
 		throw DataStream::ReadPastEndException();
 

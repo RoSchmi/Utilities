@@ -13,14 +13,14 @@ namespace Utilities {
 	 * Additionally, includes length-prefixed string parsing.
 	 */
 	class exported DataStream {
-		uint32 allocation;
-		uint32 cursor;
-		uint32 farthestWrite;
+		word allocation;
+		word cursor;
+		word farthestWrite;
 		uint8* buffer;
 		
-		static const uint32 MINIMUM_SIZE = 32;
+		static const word MINIMUM_SIZE = 32;
 
-		void resize(uint32 newSize);
+		void resize(word newSize);
 
 		public:
 			/**
@@ -29,7 +29,7 @@ namespace Utilities {
 			class ReadPastEndException { };
 
 			DataStream();
-			DataStream(const uint8* exisitingBuffer, uint32 length);
+			DataStream(const uint8* exisitingBuffer, word length);
 			DataStream(DataStream&& other);
 			DataStream(const DataStream& other);
 			~DataStream();
@@ -50,7 +50,7 @@ namespace Utilities {
 			/**
 			 * @returns farthest offset considered initialized
 			 */
-			uint32 getLength() const;
+			word getLength() const;
 
 			/**
 			 * @returns true if the cursor is past the end of initialized
@@ -67,25 +67,25 @@ namespace Utilities {
 			/**
 			 * Seek to @a position bytes from the start of the buffer
 			 */
-			void seek(uint32 position);
+			void seek(word position);
 
 			/**
 			 * Reinitialize stream to use @a buffer, considering it
 			 * initialized up to offset @a length
 			 */
-			void adopt(uint8* buffer, uint32 length);
+			void adopt(uint8* buffer, word length);
 
 			/**
 			 * Write @a count bytes from @a bytes to the current location in
 			 * the stream, reallocating a larger buffer if need be
 			 */
-			void write(const uint8* bytes, uint32 count);
+			void write(const uint8* bytes, word count);
 
 			/**
 			* Write @a count bytes from @a bytes to the current location in
 			* the stream, reallocating a larger buffer if need be
 			*/
-			void write(const int8* bytes, uint32 count);
+			void write(const int8* bytes, word count);
 
 			/**
 			* Write the C style string @data as bytes to the current location in
@@ -116,7 +116,7 @@ namespace Utilities {
 			/**
 			* Returns @a count bytes, starting at the cursor.
 			*/
-			const uint8* read(uint32 count);
+			const uint8* read(word count);
 
 			/**
 			 * Read a string from the stream. A string is considered two

@@ -53,6 +53,10 @@ const Socket& TCPConnection::getBaseSocket() const {
 	return this->connection;
 }
 
+const bool TCPConnection::isDataAvailable() const {
+	return this->connection.isDataAvailable();
+}
+
 vector<const TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor) {
 	vector<const TCPConnection::Message> messages;
 

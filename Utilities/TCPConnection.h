@@ -47,6 +47,7 @@ namespace Utilities {
 
 				exported const uint8* getAddress() const;
 				exported const Socket& getBaseSocket() const;
+				exported const bool isDataAvailable() const;
 				exported virtual std::vector<const Message> read(uint32 messagesToWaitFor = 0);
 				exported virtual bool send(const uint8* buffer, uint16 length);
 				exported void addPart(const uint8* buffer, uint16 length);
