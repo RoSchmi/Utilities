@@ -60,8 +60,8 @@ const Socket& TCPConnection::getBaseSocket() const {
 	return this->connection;
 }
 
-MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor) {
-	MovableList<TCPConnection::Message> messages;
+vector<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor) {
+	vector<TCPConnection::Message> messages;
 
 	if (!this->connected)
 		return messages;
@@ -72,7 +72,7 @@ MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor
 
 		if (received == 0) {
 			this->disconnect();
-			messages.insert(TCPConnection::Message(true));
+			messages.push_back(TCPConnection::Message(true));
 		}
 	
 		while (this->bytesReceived >= TCPConnection::MESSAGE_LENGTH_BYTES) {
@@ -80,7 +80,7 @@ MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor
 			int32 remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
 
 			if (remaining >= 0) {
-				messages.insert(TCPConnection::Message(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length));
+				messages.push_back(TCPConnection::Message(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length));
 				memcpy(this->buffer, this->buffer + this->bytesReceived - remaining, remaining);
 				this->bytesReceived = static_cast<uint16>(remaining);
 			}
@@ -88,7 +88,7 @@ MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor
 				break;
 			}
 		}
-	} while (messages.getCount() < messagesToWaitFor);
+	} while (messages.size() < messagesToWaitFor);
 
 	return messages;
 }

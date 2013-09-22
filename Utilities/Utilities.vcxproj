@@ -5,7 +5,6 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="Cryptography.h" />
     <ClInclude Include="DataStream.h" />
-    <ClInclude Include="MovableList.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="RequestServer.h" />
     <ClInclude Include="SQLDatabase.h" />

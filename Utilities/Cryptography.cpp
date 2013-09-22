@@ -73,18 +73,14 @@ void Utilities::Cryptography::randomBytes(uint8* buffer, uint32 count) {
 			*(reinterpret_cast<uint64*>((buffer + count - 8))) = distribution(generator);
 
 		for (; count > 0; count--)
-			*(buffer + count - 1) = (uint8)distribution(generator);
+			*(buffer + count - 1) = static_cast<uint8>(distribution(generator));
 	}
 }
 
 int64 Utilities::Cryptography::randomInt64(int64 floor, int64 ceiling) {
-	uniform_int_distribution<int64> distribution(floor, ceiling);
-
-	return distribution(generator);
+	return uniform_int_distribution<int64>(floor, ceiling)(generator);
 }
 
 float64 Utilities::Cryptography::randomFloat64(float64 floor, float64 ceiling) {
-	uniform_real_distribution<float64> distribution(floor, ceiling);
-
-	return distribution(generator);
+	return uniform_real_distribution<float64>(floor, ceiling)(generator);
 }

@@ -82,8 +82,8 @@ void WebSocketConnection::doHandshake() {
 	this->bytesReceived = 0;
 }
 
-MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFor) {
-	MovableList<TCPConnection::Message> messages;
+vector<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFor) {
+	vector<TCPConnection::Message> messages;
 
 	if (!this->connected)
 		return messages;
@@ -115,7 +115,7 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 	
 		if (this->bytesReceived == 0) {
 			TCPConnection::disconnect();
-			messages.insert(Message(true));
+			messages.push_back(Message(true));
 			goto error;
 		}
 
@@ -137,13 +137,13 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 
 				if (mask == false || RSV1 || RSV2 || RSV3) {
 					this->disconnect(CloseCodes::ProtocalError);
-					messages.insert(Message(true));
+					messages.push_back(Message(true));
 					goto error;
 				}
 
 				if (length == 126) {
 					if (this->bytesReceived < 4) {
-						messages.insert(Message(true));
+						messages.push_back(Message(true));
 						goto error;
 					}
 					length = Net::networkToHostInt16(*reinterpret_cast<uint16*>(dataBuffer + 2));
@@ -151,18 +151,18 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 				}
 				else if (length == 127) { //we don't support messages this big
 					this->disconnect(CloseCodes::MessageTooBig);
-					messages.insert(Message(true));
+					messages.push_back(Message(true));
 					goto error;
 				}
 
 				switch ((OpCodes)opCode) { //ping is handled by the application, not websocket
 					case OpCodes::Text: 
 						this->disconnect(CloseCodes::InvalidDataType);
-						messages.insert(Message(true));
+						messages.push_back(Message(true));
 						goto error;
 					case OpCodes::Close: 
 						this->disconnect(CloseCodes::Normal);
-						messages.insert(Message(true));
+						messages.push_back(Message(true));
 						goto error;
 					case OpCodes::Pong:
 						headerEnd += mask ? MASK_BYTES : 0;
@@ -174,7 +174,7 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 							bytes[0] = 128 | static_cast<uint8>(OpCodes::Pong);  
 							if (this->connection.ensureWrite(bytes, 2, 10) != 2 || this->connection.ensureWrite(dataBuffer + headerEnd, length + 4, 10) != length + 4) {
 								TCPConnection::disconnect();
-								messages.insert(Message(true));
+								messages.push_back(Message(true));
 								goto error;
 							} 
 							headerEnd += mask ? MASK_BYTES : 0;
@@ -184,7 +184,7 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 						}
 						else {
 							this->disconnect(CloseCodes::MessageTooBig);
-							messages.insert(Message(true));
+							messages.push_back(Message(true));
 							goto error;
 						}
 					case OpCodes::Continuation:
@@ -198,7 +198,7 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 							dataBuffer[i] = payloadBuffer[i] ^ maskBuffer[i % MASK_BYTES];
 
 						if (FIN) {
-							messages.insert(Message(this->buffer, this->messageLength + length));
+							messages.push_back(Message(this->buffer, this->messageLength + length));
 							memcpy(this->buffer, this->buffer + length + headerEnd, this->bytesReceived);
 							dataBuffer = this->buffer;
 							this->messageLength = 0;
@@ -211,12 +211,12 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 						continue;
 					default:
 						this->disconnect(CloseCodes::ProtocalError);
-						messages.insert(Message(true));
+						messages.push_back(Message(true));
 						goto error;
 				}
 			}
 		}
-	} while (messages.getCount() < messagesToWaitFor);
+	} while (messages.size() < messagesToWaitFor);
 
 	error:
 		return messages;

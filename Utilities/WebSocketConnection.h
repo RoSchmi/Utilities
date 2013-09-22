@@ -3,7 +3,6 @@
 #include "Common.h"
 #include "Socket.h"
 #include "TCPConnection.h"
-#include "MovableList.h"
 #include <vector>
 
 namespace Utilities {
@@ -42,7 +41,7 @@ namespace Utilities {
 				void doHandshake();
 				bool send(const uint8* data, uint16 length, OpCodes opCode);
 				void disconnect(CloseCodes code);
-				virtual MovableList<TCPConnection::Message> read(uint32 messagesToWaitFor = 0);
+				virtual std::vector<TCPConnection::Message> read(uint32 messagesToWaitFor = 0);
 			
 				friend class TCPServer;
 

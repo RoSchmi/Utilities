@@ -2,7 +2,6 @@
 
 #include "Common.h"
 #include "Socket.h"
-#include "MovableList.h"
 #include <vector>
 
 namespace Utilities {
@@ -48,7 +47,7 @@ namespace Utilities {
 
 				exported void* getState() const;
 				exported const Socket& getBaseSocket() const;
-				exported virtual MovableList<Message> read(uint32 messagesToWaitFor = 0);
+				exported virtual std::vector<Message> read(uint32 messagesToWaitFor = 0);
 				exported virtual bool send(const uint8* buffer, uint16 length);
 
 				/**
