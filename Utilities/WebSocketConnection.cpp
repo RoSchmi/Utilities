@@ -10,9 +10,21 @@ using namespace Utilities;
 using namespace Utilities::Net;
 using namespace std;
 
-WebSocketConnection::WebSocketConnection(TCPServer* server, Socket& socket) : TCPConnection(server, socket) {
+WebSocketConnection::WebSocketConnection(Socket& socket) : TCPConnection(socket) {
 	this->messageLength = 0;
 	this->ready = false;
+}
+
+WebSocketConnection::WebSocketConnection(WebSocketConnection&& other) : TCPConnection(std::move(other)) {
+	this->messageLength = other.messageLength;
+	this->ready = other.ready;
+}
+
+WebSocketConnection& WebSocketConnection::operator = (WebSocketConnection&& other) {
+	dynamic_cast<TCPConnection&>(*this) = std::move(dynamic_cast<TCPConnection&>(other));
+	this->messageLength = other.messageLength;
+	this->ready = other.ready;
+	return *this;
 }
 
 void WebSocketConnection::doHandshake() {

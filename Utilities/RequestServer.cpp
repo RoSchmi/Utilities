@@ -11,7 +11,7 @@ RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, ui
 	this->retryCode = retryCode;
 	this->state = state;
 	
-	this->servers.push_back(make_unique<Net::TCPServer>(port, usesWebSockets, this, onClientConnect, onRequestReceived));
+	this->servers.push_back(make_unique<Net::TCPServer>(port, usesWebSockets, onClientConnect, this));
 
 	for (uint8 i = 0; i < workers; i++)
 		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
@@ -28,7 +28,7 @@ RequestServer::RequestServer(vector<string> ports, uint8 workers, vector<bool> u
 	this->state = state;
 	
 	for (uint8 i = 0; i < ports.size(); i++)
-		this->servers.push_back(make_unique<Net::TCPServer>(ports[i], usesWebSockets[i], this, onClientConnect, onRequestReceived));
+		this->servers.push_back(make_unique<Net::TCPServer>(ports[i], usesWebSockets[i], onClientConnect, this));
 
 	for (uint8 i = 0; i < workers; i++)
 		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
@@ -48,9 +48,9 @@ RequestServer::~RequestServer() {
 		delete i.second;
 }
 
-void* RequestServer::onClientConnect(Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) {
+void RequestServer::onClientConnect(Net::TCPConnection connection, void* serverState) {
 	auto& requestServer = *reinterpret_cast<RequestServer*>(serverState);
-	auto client = new RequestServer::Client(connection, requestServer, clientAddress);
+	auto client = new RequestServer::Client(std::move(connection), requestServer, connection.getAddress());
 
 	requestServer.clientListLock.lock();
 	requestServer.clients[client->id] = client;
@@ -59,7 +59,6 @@ void* RequestServer::onClientConnect(Net::TCPConnection& connection, void* serve
 	if (requestServer.onConnect)
 		client->state = requestServer.onConnect(*client, requestServer.state);
 	
-	return client;
 }
 
 void RequestServer::onRequestReceived(Net::TCPConnection& connection, void* state, Net::TCPConnection::Message& message) {
@@ -159,7 +158,7 @@ void RequestServer::addToOutgoingQueue(Message* message) {
 	this->outgoingCV.notify_one();
 }
 
-RequestServer::Client::Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(connection) {
+RequestServer::Client::Client(Net::TCPConnection connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]) : parent(parent), connection(std::move(connection)) {
 	this->state = nullptr;
 	this->id = parent.nextId++;
 	memcpy(this->ipAddress, clientAddress, Net::Socket::ADDRESS_LENGTH);

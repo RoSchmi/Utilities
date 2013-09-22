@@ -9,25 +9,44 @@ using namespace Utilities;
 using namespace std;
 
 TCPConnection::TCPConnection(std::string address, std::string port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
-	this->owningServer = nullptr;
 	this->bytesReceived = 0;
 	this->state = state;
 	this->connected = true;
 }
 
-TCPConnection::TCPConnection(TCPServer* server, Socket& socket) : connection(std::move(socket)) {
-	this->owningServer = server;
+TCPConnection::TCPConnection(Socket& socket) : connection(std::move(socket)) {
 	this->bytesReceived = 0;
 	this->state = nullptr;
 	this->connected = true;
-} 
+}
+
+TCPConnection::TCPConnection(TCPConnection&& other) : connection(std::move(other.connection)) {
+	this->state = other.state;
+	this->connected = other.connected;
+	this->messageParts = std::move(other.messageParts);
+	this->bytesReceived = other.bytesReceived;
+	memcpy(this->buffer, other.buffer, this->bytesReceived);
+}
+
+TCPConnection& TCPConnection::operator = (TCPConnection&& other) {
+	this->close();
+
+	this->connection = std::move(other.connection);
+	this->state = other.state;
+	this->connected = other.connected;
+	this->messageParts = std::move(other.messageParts);
+	this->bytesReceived = other.bytesReceived;
+	memcpy(this->buffer, other.buffer, this->bytesReceived);
+
+	return *this;
+}
 
 TCPConnection::~TCPConnection() {
 	this->close();
 }
 
-void* TCPConnection::getState() const {
-	return this->state;
+const uint8* TCPConnection::getAddress() const {
+	return this->connection.getRemoteAddress();
 }
 
 const Socket& TCPConnection::getBaseSocket() const {
@@ -109,15 +128,11 @@ error:
 	return false;
 }
 
-void TCPConnection::close(bool callServerDisconnect) {
+void TCPConnection::close() {
 	if (!this->connected)
 		return;
 
 	this->connection.close();
-
-	if (this->owningServer && callServerDisconnect)
-		this->owningServer->onClientDisconnecting(this);
-
 	this->connected = false;
 }
 

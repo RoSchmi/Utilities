@@ -19,11 +19,11 @@ namespace Utilities {
 			struct Client {
 				uint64 id;
 				RequestServer& parent;
-				Net::TCPConnection& connection;
+				Net::TCPConnection connection;
 				uint8 ipAddress[Net::Socket::ADDRESS_LENGTH];
 				void* state;
 
-				exported Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]);
+				exported Client(Net::TCPConnection connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]);
 			};
 			
 			struct Message {
@@ -84,7 +84,7 @@ namespace Utilities {
 			void outgoingWorkerRun();
 			void shutdown();
 	
-			static void* onClientConnect(Utilities::Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Utilities::Net::Socket::ADDRESS_LENGTH]);
+			static void onClientConnect(Utilities::Net::TCPConnection connection, void* serverState);
 			static void onRequestReceived(Utilities::Net::TCPConnection& connection, void* state, Utilities::Net::TCPConnection::Message& message);
 	};
 }

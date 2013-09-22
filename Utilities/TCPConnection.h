@@ -38,40 +38,38 @@ namespace Utilities {
 					Message& operator=(const Message& other) = delete;
 				};
 
-				exported TCPConnection(std::string address, std::string port, void* state = nullptr);
-				exported virtual ~TCPConnection();
 
-				exported void* getState() const;
+				exported TCPConnection(Socket& socket);
+				exported TCPConnection(std::string address, std::string port, void* state = nullptr);
+				exported TCPConnection(TCPConnection&& other);
+				exported virtual ~TCPConnection();
+				exported TCPConnection& operator=(TCPConnection&& other);
+
+				exported const uint8* getAddress() const;
 				exported const Socket& getBaseSocket() const;
 				exported virtual std::vector<const Message> read(uint32 messagesToWaitFor = 0);
 				exported virtual bool send(const uint8* buffer, uint16 length);
 				exported void addPart(const uint8* buffer, uint16 length);
 				exported virtual bool sendParts();
+				exported void close();
 
 				TCPConnection() = delete;
 				TCPConnection(const TCPConnection& other) = delete;
 				TCPConnection& operator=(const TCPConnection& other) = delete;
-				TCPConnection(TCPConnection&& other) = delete;
-				TCPConnection& operator=(TCPConnection&& other) = delete;
 
-				friend class TCPServer;
+				void* state;
 
 			protected:
 				static const word MESSAGE_LENGTH_BYTES = 2;
 				static const word MESSAGE_MAX_SIZE = 0xFFFF + MESSAGE_LENGTH_BYTES;
 			
 				Socket connection;
-				TCPServer* owningServer; //null when this client is used to connect to a remote server
 				uint8 buffer[MESSAGE_MAX_SIZE];
 				word bytesReceived;
-				void* state;
 				bool connected;
 				std::vector<Message> messageParts;
-				
-				TCPConnection(TCPServer* server, Socket& socket);
 
 				bool ensureWrite(const uint8* toWrite, uint64 writeAmount);
-				void close(bool callServerDisconnect = true);
 		};
 	}
 }
