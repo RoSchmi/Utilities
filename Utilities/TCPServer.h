@@ -14,7 +14,7 @@ namespace Utilities {
 	namespace Net {
 		class TCPServer {
 			public:
-				typedef void (*OnConnectCallback)(TCPConnection client, void* state); /* return a pointer to a state object passed in to OnReceive */
+				typedef void (*OnConnectCallback)(TCPConnection client, void* state);
 			
 				exported TCPServer(std::string port, bool isWebSocket, OnConnectCallback connectCallback, void* onConnectState = nullptr);
 				exported ~TCPServer();
