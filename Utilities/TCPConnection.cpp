@@ -56,7 +56,7 @@ const Socket& TCPConnection::getBaseSocket() const {
 	return this->connection;
 }
 
-const bool TCPConnection::isDataAvailable() const {
+bool TCPConnection::isDataAvailable() const {
 	return this->connection.isDataAvailable();
 }
 
