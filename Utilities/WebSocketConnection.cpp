@@ -20,7 +20,7 @@ WebSocketConnection::~WebSocketConnection() {
 }
 
 void WebSocketConnection::doHandshake() {
-	uint16 i, start, end;
+	uint16 start = 0, end = 0;
 	DataStream keyAndMagic;
 	DataStream response;
 	uint8 hash[Cryptography::SHA1_LENGTH];
@@ -34,7 +34,7 @@ void WebSocketConnection::doHandshake() {
 		return;
 	}
 
-	for (i = 0; i < this->bytesReceived - 19U; i++) {
+	for (uint16 i = 0; i < this->bytesReceived - 19U; i++) {
 		if (memcmp("Sec-WebSocket-Key: ", this->buffer + i, 19) == 0) {
 			start = i + 19;
 			end = start;
