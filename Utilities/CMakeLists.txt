@@ -7,6 +7,7 @@ set(util_sources Cryptography.cpp DataStream.cpp Misc.cpp
 
 file(GLOB util_headers *.h)
 
+add_library(Utilities STATIC ${util_sources})
 add_library(Utilities SHARED ${util_sources})
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -pedantic -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
@@ -23,5 +24,6 @@ include_directories(${PostgreSQL_INCLUDE_DIRS})
 if(NOT WIN32)
 	target_link_libraries(Utilities rt)
 	install(FILES ${util_headers} DESTINATION include/Utilities)
+	install(FILES ${CMAKE_BINARY_DIR}/libUtilities.a DESTINATION lib)
 	install(FILES ${CMAKE_BINARY_DIR}/libUtilities.so DESTINATION lib)
 endif()

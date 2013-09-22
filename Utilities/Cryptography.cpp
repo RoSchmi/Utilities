@@ -1,5 +1,4 @@
 #include "Cryptography.h"
-#include "Time.h"
 
 #ifdef WINDOWS
 	#define WIN32_LEAN_AND_MEAN
@@ -38,7 +37,7 @@ void Utilities::Cryptography::SHA512(const uint8* source, uint32 length, uint8 h
 	EVP_DigestInit_ex(ctx, EVP_sha512(), nullptr);
 	EVP_DigestUpdate(ctx, const_cast<void*>(reinterpret_cast<const void*>(source)), length);
 	EVP_DigestFinal_ex(ctx, reinterpret_cast<unsigned char*>(hashOutput), nullptr);
-	
+
 	EVP_MD_CTX_destroy(ctx);
 #endif
 }
@@ -54,7 +53,7 @@ void Utilities::Cryptography::SHA1(const uint8* source, uint32 length, uint8 has
 	CryptHashData(hasher, source, length, 0);
 
 	CryptGetHashParam(hasher, HP_HASHVAL, hashOutput, &hashLength, 0);
-	
+
 	CryptDestroyHash(hasher);
 	CryptReleaseContext(provider, 0);
 #elif defined POSIX
@@ -80,12 +79,12 @@ void Utilities::Cryptography::randomBytes(uint8* buffer, uint32 count) {
 
 int64 Utilities::Cryptography::randomInt64(int64 floor, int64 ceiling) {
 	uniform_int_distribution<int64> distribution(floor, ceiling);
-	
+
 	return distribution(generator);
 }
 
 float64 Utilities::Cryptography::randomFloat64(float64 floor, float64 ceiling) {
 	uniform_real_distribution<float64> distribution(floor, ceiling);
-	
+
 	return distribution(generator);
 }
