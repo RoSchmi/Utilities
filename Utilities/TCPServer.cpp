@@ -8,27 +8,74 @@
 using namespace std;
 using namespace Utilities::Net;
 
-TCPServer::TCPServer(string port, bool isWebSocket, void* onConnectState, OnConnectCallback connectCallback, OnReceiveCallback receiveCallback) : listener(Socket::Families::IPAny, Socket::Types::TCP, port), asyncWorker(TCPServer::asyncReadCallback) {
+TCPServer::TCPServer() {
+	this->active = false;
+}
+
+TCPServer::TCPServer(string port, bool isWebSocket, void* onConnectState, OnConnectCallback connectCallback, OnReceiveCallback receiveCallback) : listener(Socket::Families::IPAny, Socket::Types::TCP, port) {
 	this->isWebSocket = isWebSocket;
 	this->active = true;
 	this->receiveCallback = receiveCallback;
 	this->connectCallback = connectCallback;
 	this->state = onConnectState;
 	this->acceptWorker = thread(&TCPServer::acceptWorkerRun, this);
-	this->asyncWorker.start();
+	this->asyncWorker = thread(&TCPServer::asyncWorkerRun, this);
 }
 
 TCPServer::~TCPServer() {
-	for (TCPConnection* i : this->clientList) {
-		i->disconnect(false);
-		this->asyncWorker.unregisterSocket(i->connection);
-		delete i;
+	this->shutdown();
+}
+
+TCPServer::TCPServer(TCPServer&& other) {
+	this->active = false;
+	*this = std::move(other);
+}
+
+TCPServer& TCPServer::operator=(TCPServer&& other) {
+	this->shutdown();
+
+	bool wasActive = other.active;
+	if (wasActive) {
+		other.active = false;
+		other.asyncWorker.join();
+		other.acceptWorker.join();
 	}
+
+	this->listener = std::move(other.listener);
+	this->isWebSocket = other.isWebSocket;
+	this->state = other.state;
+	this->connectCallback = other.connectCallback;
+	this->receiveCallback = other.receiveCallback;
+
+	this->active = wasActive;
+	if (wasActive) {
+		other.clientListLock.lock();
+		this->clientList = std::move(other.clientList);
+		other.clientListLock.unlock();
+
+		this->acceptWorker = thread(&TCPServer::acceptWorkerRun, this);
+		this->asyncWorker = thread(&TCPServer::asyncWorkerRun, this);
+	}
+
+	return *this;
+}
+
+void TCPServer::shutdown() {
+	if (!this->active)
+		return;
 
 	this->active = false;
 	this->listener.close();
+
+	while (!this->clientList.empty()) {
+		auto i = this->clientList.back();
+		this->clientList.pop_back();
+		i->disconnect(false);
+		delete i;
+	}
+
 	this->acceptWorker.join();
-	this->asyncWorker.shutdown();
+	this->asyncWorker.join();
 }
 
 void TCPServer::acceptWorkerRun() {
@@ -51,16 +98,21 @@ void TCPServer::acceptWorkerRun() {
 			this->clientListLock.lock();
 			this->clientList.push_back(newClient);
 			this->clientListLock.unlock();
-
-			this->asyncWorker.registerSocket(newSocket, newClient);
 		}
 	}
 }
 
-void TCPServer::asyncReadCallback(const Socket& socket, void* state) {
-	TCPConnection& connection = *reinterpret_cast<TCPConnection*>(state);
-	for (auto& i : connection.read())
-		connection.owningServer->receiveCallback(connection, connection.state, i);
+void TCPServer::asyncWorkerRun() {
+	while (this->active) {
+		this->clientListLock.lock();
+
+		for (auto i : this->clientList)
+			if (i->getBaseSocket().isDataAvailable())
+				for (auto& j : i->read())
+					this->receiveCallback(*i, i->state, j);
+
+		this->clientListLock.unlock();
+	}
 }
 
 void TCPServer::onClientDisconnecting(TCPConnection* client) {
@@ -71,6 +123,4 @@ void TCPServer::onClientDisconnecting(TCPConnection* client) {
 		this->clientList.erase(position, position + 1);
 
 	this->clientListLock.unlock();
-		
-	this->asyncWorker.unregisterSocket(client->connection);
 }

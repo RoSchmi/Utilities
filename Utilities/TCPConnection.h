@@ -38,10 +38,14 @@ namespace Utilities {
 						Message(const Message& other);
 						Message& operator=(const Message& other);
 				};
-				
+
+				exported TCPConnection();
 				exported TCPConnection(std::string address, std::string port, void* state);
 				exported virtual ~TCPConnection();
-		 
+
+				exported TCPConnection(TCPConnection&& other);
+				exported TCPConnection& operator=(TCPConnection&& other);
+
 				exported void* getState() const;
 				exported const Socket& getBaseSocket() const;
 				exported virtual MovableList<Message> read(uint32 messagesToWaitFor = 0);
@@ -75,8 +79,6 @@ namespace Utilities {
 			private:
 				TCPConnection(const TCPConnection& other);
 				TCPConnection& operator=(const TCPConnection& other);
-				TCPConnection(TCPConnection&& other);
-				TCPConnection& operator=(TCPConnection&& other);
 
 				friend class TCPServer;
 		};

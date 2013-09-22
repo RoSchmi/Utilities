@@ -2,6 +2,7 @@
 
 #include "Common.h"
 #include <map>
+#include <vector>
 #include <thread>
 #include <condition_variable>
 #include <mutex>
@@ -28,6 +29,8 @@ namespace Utilities {
 		 * foo.accept();
 		 */
 		class exported Socket {
+			class TCPConnection;
+
 			public:	
 				static const uint16 ADDRESS_LENGTH = 16;
 
@@ -40,7 +43,8 @@ namespace Utilities {
 					IPV6,
 					IPAny
 				};
-			
+
+				Socket();
 				Socket(Families family, Types type, std::string address, std::string port);
 				Socket(Families family, Types type, std::string port);
 				Socket(Socket&& other);
@@ -96,6 +100,11 @@ namespace Utilities {
 				 */
 				bool isConnected() const;
 
+				/**
+				 * @returns true if there is data available to be read on the socket, false otherwise.
+				 */
+				bool isDataAvailable() const;
+
 			private:
 				Types type;
 				Families family;
@@ -115,39 +124,6 @@ namespace Utilities {
 			
 				Socket(const Socket& other);
 				Socket& operator=(const Socket& other);
-
-				friend class SocketAsyncWorker;
-		};
-	
-		class SocketAsyncWorker {
-			public:
-				typedef void (*ReadCallback)(const Socket& socket, void* state);
-			
-				exported SocketAsyncWorker(ReadCallback callback);
-				exported ~SocketAsyncWorker();
-
-				exported void registerSocket(const Socket& socket, void* state);
-				exported void unregisterSocket(const Socket& socket);
-				exported void shutdown();
-				exported void start();
-
-			private:
-				ReadCallback callback;
-				std::atomic<bool> running;
-				std::thread worker;
-				std::recursive_mutex listLock;
-				std::map<const Socket*, void*> list;
-
-				SocketAsyncWorker(const SocketAsyncWorker& other);
-				SocketAsyncWorker& operator=(const SocketAsyncWorker& other);
-				SocketAsyncWorker(SocketAsyncWorker&& other);
-				SocketAsyncWorker& operator=(SocketAsyncWorker&& other);
-
-				#ifdef POSIX
-					int maxFD;
-				#endif
-
-				void run();
 		};
 
 		int16 hostToNetworkInt16(int16 value);

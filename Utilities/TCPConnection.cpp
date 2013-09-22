@@ -8,6 +8,13 @@ using namespace Utilities::Net;
 using namespace Utilities;
 using namespace std;
 
+TCPConnection::TCPConnection() {
+	this->owningServer = nullptr;
+	this->bytesReceived = 0;
+	this->state = nullptr;
+	this->connected = true;
+}
+
 TCPConnection::TCPConnection(std::string address, std::string port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
 	this->owningServer = nullptr;
 	this->bytesReceived = 0;
@@ -26,6 +33,25 @@ TCPConnection::~TCPConnection() {
 	this->disconnect();
 }
 
+TCPConnection::TCPConnection(TCPConnection&& other) {
+	this->connected = false;
+	*this = std::move(other);
+}
+
+TCPConnection& TCPConnection::operator = (TCPConnection&& other) {
+	this->disconnect();
+
+	this->connection = std::move(other.connection);
+	this->owningServer = other.owningServer;
+	this->state = other.state;
+	this->connected = other.connected;
+	this->messageParts = std::move(other.messageParts);
+	this->bytesReceived = other.bytesReceived;
+	memcpy(this->buffer, other.buffer, this->bytesReceived);
+
+	return *this;
+}
+
 void* TCPConnection::getState() const {
 	return this->state;
 }
@@ -36,6 +62,9 @@ const Socket& TCPConnection::getBaseSocket() const {
 
 MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor) {
 	MovableList<TCPConnection::Message> messages;
+
+	if (!this->connected)
+		return messages;
 
 	do {
 		uint16 received = static_cast<uint16>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
@@ -65,6 +94,9 @@ MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor
 }
 
 bool TCPConnection::send(const uint8* buffer, uint16 length) {
+	if (!this->connected)
+		return false;
+
 	if (this->connection.ensureWrite(reinterpret_cast<uint8*>(&length), sizeof(length), 10) != sizeof(length))
 		return false;
 
@@ -79,6 +111,9 @@ void TCPConnection::addPart(const uint8* buffer, uint16 length) {
 }
 
 bool TCPConnection::sendParts() {
+	if (!this->connected)
+		return false;
+
 	uint16 totalLength = 0;
 
 	for (auto i : this->messageParts)

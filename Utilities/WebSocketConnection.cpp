@@ -20,6 +20,9 @@ WebSocketConnection::~WebSocketConnection() {
 }
 
 void WebSocketConnection::doHandshake() {
+	if (!this->connected)
+		return;
+
 	uint16 start = 0, end = 0;
 	DataStream keyAndMagic;
 	DataStream response;
@@ -81,6 +84,9 @@ void WebSocketConnection::doHandshake() {
 
 MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFor) {
 	MovableList<TCPConnection::Message> messages;
+
+	if (!this->connected)
+		return messages;
 
 	do {
 		uint8 bytes[2];
@@ -217,10 +223,16 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 }
 
 bool WebSocketConnection::send(const uint8* data, uint16 length) {
+	if (!this->connected)
+		return false;
+
 	return this->send(data, length, OpCodes::Binary);
 }
 
 bool WebSocketConnection::send(const uint8* data, uint16 length, OpCodes opCode) {
+	if (!this->connected)
+		return false;
+
 	uint8 bytes[4];
 	uint8 sendLength;
 
@@ -249,6 +261,9 @@ sendFailed:
 }
 
 bool WebSocketConnection::sendParts() {
+	if (!this->connected)
+		return false;
+
 	uint8 bytes[4];
 	uint8 sendLength;
 	vector<pair<uint8 const*, uint16>>::iterator i;
@@ -290,6 +305,9 @@ sendFailed:
 }
 
 void WebSocketConnection::disconnect(CloseCodes code) {
+	if (!this->connected)
+		return;
+
 	this->send(reinterpret_cast<uint8*>(&code), sizeof(uint16), OpCodes::Close);
 	
 	TCPConnection::disconnect();

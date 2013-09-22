@@ -3,6 +3,10 @@
 using namespace Utilities;
 using namespace std;
 
+RequestServer::RequestServer() {
+	this->running = false;
+}
+
 RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) {
 	this->running = true;
 	this->onConnect = onConnect;
@@ -14,7 +18,7 @@ RequestServer::RequestServer(string port, uint8 workers, bool usesWebSockets, ui
 	this->servers.push_back(new Net::TCPServer(port, usesWebSockets, this, onClientConnect, onRequestReceived));
 
 	for (uint8 i = 0; i < workers; i++)
-		this->workers.push_back(thread(&RequestServer::workerRun, this, i));
+		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
 
 	this->outgoingWorker = thread(&RequestServer::outgoingWorkerRun, this);
 }
@@ -31,7 +35,7 @@ RequestServer::RequestServer(vector<string> ports, uint8 workers, vector<bool> u
 		this->servers.push_back(new Net::TCPServer(ports[i], usesWebSockets[i], this, onClientConnect, onRequestReceived));
 
 	for (uint8 i = 0; i < workers; i++)
-		this->workers.push_back(thread(&RequestServer::workerRun, this, i));
+		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
 
 	this->outgoingWorker = thread(&RequestServer::outgoingWorkerRun, this);
 }
@@ -39,13 +43,13 @@ RequestServer::RequestServer(vector<string> ports, uint8 workers, vector<bool> u
 RequestServer::~RequestServer() {
 	this->running = false;
 
-	for (auto& i : this->workers)
+	for (auto& i : this->incomingWorkers)
 		i.join();
 
 	this->outgoingWorker.join();
 
 	for (auto& i : this->clients)
-			delete i.second;
+		delete i.second;
 
 	for (auto& i : this->servers)
 		delete i;
@@ -81,7 +85,7 @@ void RequestServer::onRequestReceived(Net::TCPConnection& connection, void* stat
 	}
 }
 
-void RequestServer::workerRun(uint8 workerNumber) {
+void RequestServer::incomingWorkerRun(uint8 workerNumber) {
 	uint16 requestId;
 	uint8 requestCategory;
 	uint8 requestMethod;
@@ -145,12 +149,18 @@ void RequestServer::outgoingWorkerRun() {
 }
 
 void RequestServer::addToIncomingQueue(Message* message) {
+	if (!this->running)
+		return;
+
 	unique_lock<mutex> lock(this->incomingLock);
 	this->incomingQueue.push(message);
 	this->incomingCV.notify_one();
 }
 
 void RequestServer::addToOutgoingQueue(Message* message) {
+	if (!this->running)
+		return;
+
 	unique_lock<mutex> lock(this->outgoingLock);
 	this->outgoingQueue.push(message);
 	this->outgoingCV.notify_one();

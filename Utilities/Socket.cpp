@@ -170,13 +170,18 @@ error:
 	throw runtime_error("Couldn't listen on port.");
 }
 
+Socket::Socket() {
+	this->connected = false;
+}
+
 Socket::Socket(Socket&& other) {
+	this->connected = false;
 	*this = std::move(other);
 }
 
 Socket& Socket::operator=(Socket&& other) {
-	if (this == &other)
-		return *this;
+	if (this->connected)
+		this->close();
 		
 	this->family = other.family;
 	this->type = other.type;
@@ -217,6 +222,9 @@ void Socket::close() {
 }
 
 Socket Socket::accept() {
+	if (!this->connected)
+		throw exception("Socket not constructed.");
+
 	Socket socket(this->family, this->type);
 	sockaddr_storage remoteAddress;
 	sockaddr_in* ipv4Address;
@@ -269,6 +277,9 @@ Socket Socket::accept() {
 }
 
 uint64 Socket::read(uint8* buffer, uint64 bufferSize) {
+	if (!this->connected)
+		return 0;
+
 	int32 received;
 
 	#ifdef WINDOWS
@@ -280,10 +291,13 @@ uint64 Socket::read(uint8* buffer, uint64 bufferSize) {
 	if (received <= 0)
 		return 0;
 
-	return (uint32)received;
+	return received;
 }
 
 uint64 Socket::write(const uint8* toWrite, uint64 writeAmount) {
+	if (!this->connected)
+		return 0;
+
 	int32 result;
 
 	if (writeAmount == 0)
@@ -299,6 +313,9 @@ uint64 Socket::write(const uint8* toWrite, uint64 writeAmount) {
 }
 
 uint64 Socket::ensureWrite(const uint8* toWrite, uint64 writeAmount, uint8 maxAttempts) {
+	if (!this->connected)
+		return 0;
+
 	uint64 sentSoFar;
 	int32 result;
 	uint8 tries;
@@ -339,111 +356,27 @@ bool Socket::isConnected() const {
 	return this->connected;
 }
 
+bool Socket::isDataAvailable() const {
+	if (!this->connected)
+		return false;
 
+	static fd_set readSet;
+	FD_ZERO(&readSet);
 
-SocketAsyncWorker::SocketAsyncWorker(ReadCallback callback) {
-	#ifdef POSIX
-		this->maxFD = 0;
-	#endif
-	this->running = true;
-	this->callback = callback;
-}
-
-SocketAsyncWorker::~SocketAsyncWorker() {
-	this->shutdown();
-}
-
-void SocketAsyncWorker::start() {
-	this->worker = thread(&SocketAsyncWorker::run, this);
-}
-
-void SocketAsyncWorker::shutdown() {
-	if (!this->running)
-		return;
-
-	this->running = false;
-	this->worker.join();
-}
-
-void SocketAsyncWorker::run() {
-	fd_set readSet;
-	int readySockets;
-	map<const Socket*, void*>::iterator listPosition;
-	struct timeval selectTimeout;
-	uint64 i;
-
-	selectTimeout.tv_usec = 250;
-	selectTimeout.tv_sec = 0;
-	listPosition = this->list.begin();
-		
-	while (this->running) {
-		FD_ZERO(&readSet);
-
-		this_thread::sleep_for(chrono::milliseconds(25));
-
-		this->listLock.lock();
-		
-		if (listPosition == this->list.end())
-			listPosition = this->list.begin();
-
-		for (i = 0; i < FD_SETSIZE && listPosition != this->list.end(); i++, listPosition++) {
-			if (listPosition->second != nullptr) {
-				#ifdef WINDOWS
-					FD_SET(static_cast<SOCKET>(listPosition->first->rawSocket), &readSet);
-				#elif defined POSIX
-					FD_SET(listPosition->first->rawSocket, &readSet);
-				#endif
-			}
-		}
-		
-		if (i != 0) {
-			#ifdef WINDOWS
-				readySockets = select(0, &readSet, nullptr, nullptr, &selectTimeout);
-			#elif defined POSIX
-				readySockets = select(this->maxFD + 1, &readSet, nullptr, nullptr, &selectTimeout);
-			#endif
-		
-			if (readySockets > 0) {
-				for (pair<const Socket*, void*> i : this->list) {
-					const Socket* socket = i.first;
-					void* state = i.second;
-
-					if (this->callback && state && FD_ISSET(socket->rawSocket, &readSet)) {
-						this->callback(*socket, state);
-				
-						if (--readySockets == 0)
-							break;
-
-					}
-				}
-			}
-		}
-
-		this->listLock.unlock();
-	}
-
-	return;
-}
-
-void SocketAsyncWorker::registerSocket(const Socket& socket, void* state) {
-	this->listLock.lock();
-	#ifdef POSIX
-		this->maxFD = max(socket.rawSocket, this->maxFD);
-	#endif
-	this->list[&socket] = state;
-	this->listLock.unlock();
-}
+	timeval timeout;
+	timeout.tv_usec = 250;
+	timeout.tv_sec = 0;
 	
-void SocketAsyncWorker::unregisterSocket(const Socket& socket) {
-	this->listLock.lock();
-	#ifdef POSIX
-		for (pair<const Socket*, void*> i : this->list)
-			this->maxFD = max(i.first->rawSocket, this->maxFD);
-	#endif
-	this->list.erase(&socket);
-	this->listLock.unlock();
-}
+	FD_SET(this->rawSocket, &readSet);
+	
+#ifdef WINDOWS
+	int readySockets = select(0, &readSet, nullptr, nullptr, &timeout);
+#elif defined POSIX
+	int readySockets = select(this->maxFD + 1, &readSet, nullptr, nullptr, &timeout);
+#endif
 
+	return readySockets > 0;
+}
 
 
 int16 Utilities::Net::hostToNetworkInt16(int16 value) {

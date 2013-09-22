@@ -19,7 +19,7 @@ namespace Utilities {
 				uint64 id;
 				RequestServer& parent;
 				Net::TCPConnection& connection;
-				uint8 ipAddress[Utilities::Net::Socket::ADDRESS_LENGTH];
+				uint8 ipAddress[Net::Socket::ADDRESS_LENGTH];
 				void* state;
 
 				exported Client(Net::TCPConnection& connection, RequestServer& parent, const uint8 clientAddress[Net::Socket::ADDRESS_LENGTH]);
@@ -42,17 +42,18 @@ namespace Utilities {
 			typedef void* (*ConnectCallback)(Client& client, void* state);
 			typedef void (*DisconnectCallback)(Client& client, void* state);
 
+			exported RequestServer();
 			exported RequestServer(std::string port, uint8 workers, bool usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 			exported RequestServer(std::vector<std::string> ports, uint8 workers, std::vector<bool> usesWebSockets, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 			exported ~RequestServer();
-			
+
 			exported void addToIncomingQueue(Message* message);
 			exported void addToOutgoingQueue(Message* message);
 
 		private:
 			RequestServer(const RequestServer& other);
-			RequestServer(RequestServer&& other);
 			RequestServer& operator=(const RequestServer& other);
+			RequestServer(RequestServer&& other);
 			RequestServer& operator=(RequestServer&& other);
 
 			std::vector<Net::TCPServer*> servers;
@@ -75,11 +76,12 @@ namespace Utilities {
 			uint64 nextId;
 
 			std::thread outgoingWorker;
-			std::vector<std::thread> workers;
+			std::vector<std::thread> incomingWorkers;
 			std::atomic<bool> running;
 			
-			void workerRun(uint8 workerNumber);
+			void incomingWorkerRun(uint8 workerNumber);
 			void outgoingWorkerRun();
+			void shutdown();
 	
 			static void* onClientConnect(Utilities::Net::TCPConnection& connection, void* serverState, const uint8 clientAddress[Utilities::Net::Socket::ADDRESS_LENGTH]);
 			static void onRequestReceived(Utilities::Net::TCPConnection& connection, void* state, Utilities::Net::TCPConnection::Message& message);
