@@ -138,7 +138,7 @@ void RequestServer::outgoingWorkerRun() {
 		message = this->outgoingQueue.front();
 		this->outgoingQueue.pop();
 			
-		message->client.connection.send(message->data.getBuffer(), message->data.getLength());
+		message->client.connection.send(message->data.getBuffer(), static_cast<uint16>(message->data.getLength()));
 
 		delete message;
 	}

@@ -38,7 +38,7 @@ MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor
 	MovableList<TCPConnection::Message> messages;
 
 	do {
-		uint32 received = static_cast<uint32>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
+		uint16 received = static_cast<uint16>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
 		this->bytesReceived += received;
 
 		if (received == 0) {
@@ -53,7 +53,7 @@ MovableList<TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor
 			if (remaining >= 0) {
 				messages.insert(TCPConnection::Message(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length));
 				memcpy(this->buffer, this->buffer + this->bytesReceived - remaining, remaining);
-				this->bytesReceived = remaining;
+				this->bytesReceived = static_cast<uint16>(remaining);
 			}
 			else {
 				break;

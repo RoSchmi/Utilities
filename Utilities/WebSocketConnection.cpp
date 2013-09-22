@@ -27,7 +27,7 @@ void WebSocketConnection::doHandshake() {
 	string base64;
 	bool found;
 	
-	this->bytesReceived = static_cast<uint32>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
+	this->bytesReceived = static_cast<uint16>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
 
 	if (this->bytesReceived == 0) {
 		TCPConnection::disconnect();
@@ -92,7 +92,7 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 		uint8 mask;
 		uint16 length;
 		uint32 i;
-		uint32 received;
+		uint16 received;
 		uint8 headerEnd;
 		uint8 maskBuffer[MASK_BYTES];
 		uint8* payloadBuffer;
@@ -104,7 +104,7 @@ MovableList<TCPConnection::Message> WebSocketConnection::read(uint32 messagesToW
 		}
 
 		dataBuffer = this->buffer + this->messageLength;
-		received = static_cast<uint32>(this->connection.read(dataBuffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived - this->messageLength));
+		received = static_cast<uint16>(this->connection.read(dataBuffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived - this->messageLength));
 		this->bytesReceived += received;
 	
 		if (this->bytesReceived == 0) {

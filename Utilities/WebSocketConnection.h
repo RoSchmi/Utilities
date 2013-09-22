@@ -29,7 +29,7 @@ namespace Utilities {
 				static const uint8 HEADER_LINES = 25;
 				static const uint8 MASK_BYTES = 4;
 
-				uint32 messageLength;
+				uint16 messageLength;
 				bool ready;
 
 				WebSocketConnection(const WebSocketConnection& other);
