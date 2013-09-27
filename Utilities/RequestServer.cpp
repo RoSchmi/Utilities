@@ -1,9 +1,16 @@
 #include "RequestServer.h"
 
-using namespace Utilities;
-using namespace std;
+#include <utility>
 
-RequestServer::RequestServer(string port, bool usesWebSockets, uint8 workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) : server(port, RequestServer::onClientConnect, this, usesWebSockets) {
+using namespace std;
+using namespace Utilities;
+using namespace Utilities::Net;
+
+RequestServer::RequestServer(string port, bool usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) : RequestServer(vector<string>{ port }, vector<bool>{ usesWebSockets }, workers, retryCode, onRequest, onConnect, onDisconnect, state) {
+	
+}
+
+RequestServer::RequestServer(vector<string> ports, vector<bool> usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) {
 	this->running = true;
 	this->onConnect = onConnect;
 	this->onDisconnect = onDisconnect;
@@ -11,11 +18,14 @@ RequestServer::RequestServer(string port, bool usesWebSockets, uint8 workers, ui
 	this->retryCode = retryCode;
 	this->state = state;
 
-	for (uint8 i = 0; i < workers; i++)
+	for (word i = 0; i < workers; i++)
 		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
 
 	this->outgoingWorker = thread(&RequestServer::outgoingWorkerRun, this);
 	this->ioWorker = thread(&RequestServer::ioWorkerRun, this);
+
+	for (word i = 0; i < ports.size(); i++)
+		this->servers.emplace_back(ports[i], RequestServer::onClientConnect, this, usesWebSockets[i]);
 }
 
 RequestServer::~RequestServer() {
@@ -34,28 +44,30 @@ void RequestServer::onClientConnect(Net::TCPConnection&& connection, void* serve
 
 	self.clientListLock.lock();
 
-	self.clients.push_front(std::move(connection));
+	self.clients.push_back(std::move(connection));
 	if (self.onConnect)
-		self.onConnect(self.clients.front(), self.state);
+		self.onConnect(self.clients.back(), self.state);
 
 	self.clientListLock.unlock();
 }
 
-void RequestServer::incomingWorkerRun(uint8 workerNumber) {
+void RequestServer::incomingWorkerRun(word workerNumber) {
 	while (this->running) {
+		this_thread::sleep_for(chrono::microseconds(500));
+
 		unique_lock<mutex> lock(this->incomingLock);
 
 		while (this->incomingQueue.empty())
 			if (this->incomingCV.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
 				continue;
 		
-		Message request = this->incomingQueue.front();
+		Message request(std::move(this->incomingQueue.front()));
 		this->incomingQueue.pop();
 
 		lock.unlock();
 
 		if (request.data.getLength() < 4)
-			continue; //maybe we should return an error?
+			continue;
 
 		uint16 requestId = request.data.read<uint16>();
 		uint8 requestCategory = request.data.read<uint8>();
@@ -67,29 +79,28 @@ void RequestServer::incomingWorkerRun(uint8 workerNumber) {
 				response.data.write(this->retryCode);
 			}
 			else {
-				this->addToIncomingQueue(request);
+				this->addToIncomingQueue(std::move(request));
 				continue;
 			}
 		}
 
-		this->addToOutgoingQueue(response);
+		this->addToOutgoingQueue(std::move(response));
 	}
 }
 
 void RequestServer::outgoingWorkerRun() {
 	while (this->running) {
+		this_thread::sleep_for(chrono::microseconds(500));
+
 		unique_lock<mutex> lock(this->outgoingLock);
 
 		while (this->outgoingQueue.empty())
 			if (this->outgoingCV.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
 				continue;
 
-		Message message = this->outgoingQueue.front();
-		this->outgoingQueue.pop();
-
-		lock.unlock();
-			
+		auto& message = this->outgoingQueue.front();
 		message.connection.send(message.data.getBuffer(), static_cast<uint16>(message.data.getLength()));
+		this->outgoingQueue.pop();
 	}
 }
 
@@ -108,21 +119,21 @@ void RequestServer::ioWorkerRun() {
 	}
 }
 
-void RequestServer::addToIncomingQueue(Message message) {
+void RequestServer::addToIncomingQueue(Message&& message) {
 	if (!this->running)
 		return;
 
 	unique_lock<mutex> lock(this->incomingLock);
-	this->incomingQueue.push(message);
+	this->incomingQueue.push(std::move(message));
 	this->incomingCV.notify_one();
 }
 
-void RequestServer::addToOutgoingQueue(Message message) {
+void RequestServer::addToOutgoingQueue(Message&& message) {
 	if (!this->running)
 		return;
 
 	unique_lock<mutex> lock(this->outgoingLock);
-	this->outgoingQueue.push(message);
+	this->outgoingQueue.push(std::move(message));
 	this->outgoingCV.notify_one();
 }
 
@@ -133,6 +144,10 @@ RequestServer::Message::Message(Net::TCPConnection& connection, const uint8* dat
 RequestServer::Message::Message(Net::TCPConnection& connection, uint16 id, uint8 category, uint8 method) : connection(connection) {
 	RequestServer::Message::writeHeader(this->data, id, category, method);
 	this->currentAttempts = 0;
+}
+
+RequestServer::Message::Message(RequestServer::Message&& other) : connection(other.connection), data(std::move(other.data)) {
+	this->currentAttempts = other.currentAttempts;
 }
 
 void RequestServer::Message::writeHeader(DataStream& stream, uint16 id, uint8 category, uint8 method) {
