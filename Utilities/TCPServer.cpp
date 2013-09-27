@@ -31,6 +31,6 @@ void TCPServer::acceptWorkerRun() {
 	while (this->active) {
 		Socket acceptedSocket = this->listener.accept();
 		if (acceptedSocket.isConnected())
-			this->connectCallback(!this->isWebSocket ? TCPConnection(acceptedSocket) : WebSocketConnection(acceptedSocket), this->state);
+			this->connectCallback(!this->isWebSocket ? TCPConnection(std::move(acceptedSocket)) : WebSocketConnection(std::move(acceptedSocket)), this->state);
 	}
 }

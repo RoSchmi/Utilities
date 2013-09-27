@@ -38,7 +38,7 @@ namespace Utilities {
 				void close(CloseCodes code);
 
 				public:
-					exported WebSocketConnection(Socket& socket);
+					exported WebSocketConnection(Socket&& socket);
 					exported WebSocketConnection(WebSocketConnection&& other);
 					exported virtual ~WebSocketConnection();
 					exported WebSocketConnection& operator=(WebSocketConnection&& other);

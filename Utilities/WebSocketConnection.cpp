@@ -11,7 +11,7 @@ using namespace std;
 using namespace Utilities;
 using namespace Utilities::Net;
 
-WebSocketConnection::WebSocketConnection(Socket& socket) : TCPConnection(socket) {
+WebSocketConnection::WebSocketConnection(Socket&& socket) : TCPConnection(std::move(socket)) {
 	this->messageLength = 0;
 	this->ready = false;
 }

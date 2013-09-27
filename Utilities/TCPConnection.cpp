@@ -15,7 +15,7 @@ TCPConnection::TCPConnection(std::string address, std::string port, void* state)
 	this->buffer = new uint8[TCPConnection::MESSAGE_MAX_SIZE];
 }
 
-TCPConnection::TCPConnection(Socket& socket) : connection(std::move(socket)) {
+TCPConnection::TCPConnection(Socket&& socket) : connection(std::move(socket)) {
 	this->bytesReceived = 0;
 	this->state = nullptr;
 	this->connected = true;
