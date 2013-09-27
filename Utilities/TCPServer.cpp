@@ -1,13 +1,12 @@
 #include "TCPServer.h"
+
 #include "WebSocketConnection.h"
 
-#include <utility>
-#include <algorithm>
-
 using namespace std;
+using namespace Utilities;
 using namespace Utilities::Net;
 
-TCPServer::TCPServer(string port, bool isWebSocket, OnConnectCallback connectCallback, void* onConnectState) : listener(Socket::Families::IPAny, Socket::Types::TCP, port) {
+TCPServer::TCPServer(string port, OnConnectCallback connectCallback, void* onConnectState, bool isWebSocket) : listener(Socket::Families::IPAny, Socket::Types::TCP, port) {
 	this->isWebSocket = isWebSocket;
 	this->active = true;
 	this->connectCallback = connectCallback;
@@ -16,6 +15,10 @@ TCPServer::TCPServer(string port, bool isWebSocket, OnConnectCallback connectCal
 }
 
 TCPServer::~TCPServer() {
+	this->close();
+}
+
+void TCPServer::close() {
 	if (!this->active)
 		return;
 

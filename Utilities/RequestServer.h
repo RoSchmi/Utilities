@@ -75,6 +75,6 @@ namespace Utilities {
 			void outgoingWorkerRun();
 			void ioWorkerRun();
 	
-			static void onClientConnect(Utilities::Net::TCPConnection connection, void* serverState);
+			static void onClientConnect(Utilities::Net::TCPConnection&& connection, void* serverState);
 	};
 }

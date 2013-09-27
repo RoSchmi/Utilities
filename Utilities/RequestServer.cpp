@@ -3,7 +3,7 @@
 using namespace Utilities;
 using namespace std;
 
-RequestServer::RequestServer(string port, bool usesWebSockets, uint8 workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) : server(port, usesWebSockets, RequestServer::onClientConnect, this) {
+RequestServer::RequestServer(string port, bool usesWebSockets, uint8 workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) : server(port, RequestServer::onClientConnect, this, usesWebSockets) {
 	this->running = true;
 	this->onConnect = onConnect;
 	this->onDisconnect = onDisconnect;
@@ -29,7 +29,7 @@ RequestServer::~RequestServer() {
 	this->outgoingWorker.join();
 }
 
-void RequestServer::onClientConnect(Net::TCPConnection connection, void* serverState) {
+void RequestServer::onClientConnect(Net::TCPConnection&& connection, void* serverState) {
 	auto& self = *reinterpret_cast<RequestServer*>(serverState);
 
 	self.clientListLock.lock();
