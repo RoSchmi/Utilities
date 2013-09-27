@@ -1,26 +1,31 @@
 #include "SQLDatabase.h"
-#include "Socket.h"
-#include <cstring>
 
+#include "Socket.h"
+
+#include <cstring>
+#include <stdexcept>
+
+using namespace std;
+using namespace Utilities;
 using namespace Utilities::SQLDatabase;
 
-Connection::Connection(const int8* host, const int8* port, const int8* database, const int8* username, const int8* password) {
-	const int8* keywords[] = {"host", "port", "dbname", "user", "password", nullptr};
-	const int8* values[] = {host, port, database, username, password, nullptr};
+Connection::Connection(string host, string port, string database, string username, string password) {
+	cstr keywords[] = { "host", "port", "dbname", "user", "password", nullptr };
+	cstr values[] = { host.c_str(), port.c_str(), database.c_str(), username.c_str(), password.c_str(), nullptr };
 	
 	this->baseConnection = PQconnectdbParams(keywords, values, false);
 
 	if (PQstatus(this->baseConnection) != CONNECTION_OK) {
 		std::string error = PQerrorMessage(this->baseConnection);
 		PQfinish(this->baseConnection);
-		throw Exception(error);
+		throw runtime_error(error);
 	}
 	else {
 		this->isConnected = true;
 	}
 }
 
-Connection::Connection(const Parameters& parameters) : Connection(parameters.host.c_str(), parameters.port.c_str(), parameters.database.c_str(), parameters.username.c_str(), parameters.password.c_str()) {
+Connection::Connection(const Parameters& parameters) : Connection(parameters.host, parameters.port, parameters.database, parameters.username, parameters.password) {
 
 }
 
@@ -58,7 +63,7 @@ Query::Query(Query&& other) {
 	this->currentRow = other.currentRow;
 	this->currentColumn = other.currentColumn;
 
-	for (uint8 i = 0; i < other.currentParameterIndex; i++) {
+	for (word i = 0; i < other.currentParameterIndex; i++) {
 		this->parameterValues[i] = other.parameterValues[i];
 		this->parameterLengths[i] = other.parameterLengths[i];
 		this->parameterFormats[i] = other.parameterFormats[i];
@@ -164,7 +169,7 @@ uint32 Query::execute(const Connection* connection) {
 		this->rowCount = atoi(PQcmdTuples(this->baseResult));
 	}
 	else {
-		throw Exception(PQresultErrorField(this->baseResult, PG_DIAG_SQLSTATE));
+		throw runtime_error(PQresultErrorField(this->baseResult, PG_DIAG_SQLSTATE));
 	}
 
 	return this->rowCount;
@@ -207,7 +212,7 @@ float64 Query::getFloat64(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
-	uint64 hostInt = Utilities::Net::networkToHostInt64( *(uint64*)location );
+	uint64 hostInt = Utilities::Net::networkToHostInt64( *reinterpret_cast<uint64*>(location));
 	return *(float64*)&hostInt;
 }
 
@@ -215,21 +220,21 @@ uint64 Query::getUInt64(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
-	return Utilities::Net::networkToHostInt64( *(uint64*)location );
+	return Utilities::Net::networkToHostInt64(*reinterpret_cast<uint64*>(location));
 }
 
 uint32 Query::getUInt32(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
-	return Utilities::Net::networkToHostInt32( *(uint32*)location );
+	return Utilities::Net::networkToHostInt32(*reinterpret_cast<uint32*>(location));
 }
 
 uint16 Query::getUInt16(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
-	return Utilities::Net::networkToHostInt16( *(uint16*)location );
+	return Utilities::Net::networkToHostInt16(*reinterpret_cast<uint16*>(location));
 }
 
 bool Query::getBool(int32 column) {

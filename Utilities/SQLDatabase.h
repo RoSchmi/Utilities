@@ -2,6 +2,7 @@
 
 #include "Common.h"
 #include "DataStream.h"
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -21,18 +22,12 @@ namespace Utilities {
 	namespace SQLDatabase {
 		class Connection;
 
-		struct Exception {
-			std::string what;
-
-			exported Exception(std::string what) : what(what) {}
-		};
-
 		class Query {
-			static const uint8 MAX_PARAMETERS = 25;
+			static const word MAX_PARAMETERS = 25;
 
 			const Connection* parentConnection;
 			std::string queryString;
-			uint8 currentParameterIndex;
+			word currentParameterIndex;
 			int8* parameterValues[MAX_PARAMETERS];
 			int32 parameterLengths[MAX_PARAMETERS];
 			int32 parameterFormats[MAX_PARAMETERS];
@@ -54,6 +49,11 @@ namespace Utilities {
 				exported void setQueryString(std::string query);
 				exported void resetParameters();
 				exported void resetResult();
+				exported uint32 execute(const Connection* connection = nullptr);
+				exported uint32 getRowCount() const;
+				exported bool advanceToNextRow();
+				exported bool isCurrentColumnNull() const;
+
 				exported void addParameter(std::string& parameter);
 				exported void addParameter(const uint8* parameter, uint32 length);
 				exported void addParameter(const Utilities::DataStream& parameter);
@@ -62,10 +62,7 @@ namespace Utilities {
 				exported void addParameter(uint32 parameter);
 				exported void addParameter(uint16 parameter);
 				exported void addParameter(bool parameter);
-				exported uint32 execute(const Connection* connection = nullptr);
-				exported uint32 getRowCount() const;
-				exported bool advanceToNextRow();
-				exported bool isCurrentColumnNull() const;
+
 				exported std::string getString(int32 column);
 				exported Utilities::DataStream getDataStream(int32 column);
 				exported uint8* getBytes(int32 column, uint8* buffer, uint32 bufferSize);
@@ -74,6 +71,7 @@ namespace Utilities {
 				exported uint32 getUInt32(int32 column);
 				exported uint16 getUInt16(int32 column);
 				exported bool getBool(int32 column);
+
 				exported std::string getString(std::string columnName);
 				exported Utilities::DataStream getDataStream(std::string columnName);
 				exported uint8* getBytes(std::string columnName, uint8* buffer, uint32 bufferSize);
@@ -82,6 +80,7 @@ namespace Utilities {
 				exported uint32 getUInt32(std::string columnName);
 				exported uint16 getUInt16(std::string columnName);
 				exported bool getBool(std::string columnName);
+
 				exported std::string getString();
 				exported Utilities::DataStream getDataStream();
 				exported uint8* getBytes(uint8* buffer, uint32 bufferSize);
@@ -112,9 +111,10 @@ namespace Utilities {
 
 				friend class Query;
 
-				exported Connection(const int8* host, const int8* port, const int8* database, const int8* username, const int8* password);
+				exported Connection(std::string host, std::string port, std::string database, std::string username, std::string password);
 				exported Connection(const Parameters& parameters);
 				exported ~Connection();
+
 				exported bool getIsConnected() const;
 				exported Query newQuery(std::string queryString = "") const;
 		};
