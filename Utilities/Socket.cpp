@@ -43,7 +43,7 @@ int prepareRawSocket(Socket::Families family, Socket::Types type, string address
 	if (!::winsockInitialized) {
 		WSADATA startupData;
 		if (::WSAStartup(514, &startupData) != 0)
-			throw runtime_error("WinSocket failed to initialize.");
+			throw runtime_error("WinSock failed to initialize.");
 		::winsockInitialized = true;
 	}
 	uintptr rawSocket;
