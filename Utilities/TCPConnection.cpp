@@ -84,7 +84,7 @@ vector<const TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFo
 	
 		while (this->bytesReceived >= TCPConnection::MESSAGE_LENGTH_BYTES) {
 			uint16 length = reinterpret_cast<uint16*>(this->buffer)[0];
-			word remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
+			sword remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
 
 			if (remaining >= 0) {
 				messages.emplace_back(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length);

@@ -34,16 +34,20 @@ namespace Utilities {
 
 #if defined _WIN64	
 typedef uint64 word;
+typedef int64 sword;
 #else
 typedef uint32 word;
+typedef int32 sword;
 #endif
 
 #elif defined POSIX
 
 #if defined __X86_64__
 typedef uint64 word;
+typedef int64 sword;
 #else
 typedef uint32 word;
+typedef int32 sword;
 #endif
 
 #endif
