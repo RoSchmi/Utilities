@@ -8,119 +8,119 @@
 
 namespace Utilities {
 	namespace Net {
-		///<summary>An abstraction over a socket. Uses minimal framing with two leading length bytes.</summary>
+		///An abstraction over a socket. Uses minimal framing with two leading length bytes.
 		class TCPConnection {
 			public:
-				///<summary>The number of bytes used to determine the message length.</summary>
+				///The number of bytes used to determine the message length.
 				static const word MESSAGE_LENGTH_BYTES = 2;
 
-				///<summary>The maximum length a message may be including the leading length bytes.</summary>
+				///The maximum length a message may be including the leading length bytes.
 				static const word MESSAGE_MAX_SIZE = 0xFFFF + MESSAGE_LENGTH_BYTES;
 
-				///<summary>Represents a message that is generated when reading from the connection.</summary>
+				///Represents a message that is generated when reading from the connection.
 				struct exported Message {
-					///<summary>The length of the message excluding the length bytes themselves.</summary>
+					///The length of the message excluding the length bytes themselves.
 					word length;
 
-					///<summary>The actual message data excluding the length bytes themselves.</summary>
+					///The actual message data excluding the length bytes themselves.
 					uint8* data;
 
-					///<summary>A flag signaling that the connection was closed.</summary>
+					///A flag signaling that the connection was closed.
 					bool wasClosed;
 
-					///<summary>Copies an existing message into this message.</summary>
-					///<param name="other">The message copied from.</param>
-					///<returns>This message.</returns>
+					///Copies an existing message into this message.
+					///@param other The message copied from. 
+					///@return This message.
 					Message& operator=(const Message& other);
 
-					///<summary>Moves an existing message into this message.</summary>
-					///<param name="other">The message to move.</param>
-					///<returns>This message.</returns>
+					///Moves an existing message into this message.
+					///@param other The message to move. 
+					///@return This message.
 					Message& operator=(Message&& other);
 
-					///<summary>Constructs this message by moving from another message.</summary>
-					///<param name="other">The message to move from.</param>
-					///<returns>This message.</returns>
+					///Constructs this message by moving from another message.
+					///@param other The message to move from. 
+					///@return This message.
 					Message(Message&& other);
 
 
-					///<summary>Constructs a new message with no data and the given closed flag.</summary>
-					///<param name="closed">Whether or not the connection was closed.</param>
+					///Constructs a new message with no data and the given closed flag.
+					///@param closed Whether or not the connection was closed. 
 					Message(bool closed);
 
-					///<summary>Constructs a new message using the given buffer and length.</summary>
-					///<param name="buffer">The received data.</param>
-					///<param name="length">The number of bytes received.</param>
+					///Constructs a new message using the given buffer and length.
+					///@param buffer The received data. 
+					///@param length The number of bytes received. 
 					Message(const uint8* buffer, word length);
 
-					///<summary>Constructs this message by copying from another message.</summary>
-					///<param name="other">The message to copy from.</param>
+					///Constructs this message by copying from another message.
+					///@param other The message to copy from. 
 					Message(const Message& other);
 
+					///Destructs the instance.
 					~Message();
-
-					Message() = delete;
 				};
 
-				///<summary>State to be stored with this connection.</summary>
-				///<remarks>Not used in any way by this class</remarks>
+				///State to be stored with this connection.
+				///Not used in any way by this class
 				void* state;
 				
-				///<summary>Constructs a new TCPConnection by using an existing socket.</summary>
-				///<remarks>Takes ownership of the socket.</remarks>
+				///Constructs a new TCPConnection by using an existing socket.
+				///Takes ownership of the socket.
 				exported TCPConnection(Socket&& socket);
 
-				///<summary>Constructs a new TCPConnection by establishing a new connection to the specified address and port.</summary>
-				///<param name="address">The address to connect to.</param>
-				///<param name="port">The port to connect to.</param>
-				///<param name="state">The state to store in this instance.</param>
+				///Constructs a new TCPConnection by establishing a new connection to the specified address and port.
+				///@param address The address to connect to. 
+				///@param port The port to connect to. 
+				///@param state The state to store in this instance. 
 				exported TCPConnection(std::string address, std::string port, void* state = nullptr);
 
-				///<summary>Constructs this connection by moving from another connection.</summary>
-				///<param name="other">The message to move from.</param>
+				///Constructs this connection by moving from another connection.
+				///@param other The message to move from. 
 				exported TCPConnection(TCPConnection&& other);
 
-				///<summary>Moves an existing connection into this connection.</summary>
-				///<param name="other">The connection to move.</param>
-				///<returns>This connection.</returns>
+				///Moves an existing connection into this connection.
+				///@param other The connection to move. 
+				///@return This connection.
 				exported TCPConnection& operator=(TCPConnection&& other);
 
-				///<summary>Gets the IP address of the underlying socket.</summary>
-				///<returns>The IP address.</returns>
+				///Gets the IP address of the underlying socket.
+				///@return The IP address.
 				exported std::array<uint8, Socket::ADDRESS_LENGTH> getAddress() const;
 
-				///<summary>Gets the underlying socket.</summary>
-				///<returns>The socket.</returns>
+				///Gets the underlying socket.
+				///@return The socket.
 				exported const Socket& getBaseSocket() const;
 
-				///<summary>Gets whether or not data is available to be read.</summary>
-				///<returns>True if data is available, false otherwise.</returns>
+				///Gets whether or not data is available to be read.
+				///@return True if data is available, false otherwise.
 				exported bool isDataAvailable() const;
 
-				///<summary>Gets a list of messages that are available and complete.</summary>
-				///<param name="messagesToWaitFor">The number of messages to wait for. Defaults to zero.</param>
-				///<returns>A vector of possible zero messages that were read.</returns>
+				///Gets a list of messages that are available and complete.
+				///@param messagesToWaitFor The number of messages to wait for. Defaults to zero. 
+				///@return A vector of possible zero messages that were read.
 				exported virtual std::vector<const Message> read(word messagesToWaitFor = 0);
 
-				///<summary>Sends the given data over the connection.</summary>
-				///<param name="buffer">The data to send.</param>
-				///<param name="length">The number of bytes to be sent.</param>
-				///<returns>True if all the data was sent, false otherwise.</returns>
+				///Sends the given data over the connection.
+				///@param buffer The data to send. 
+				///@param length The number of bytes to be sent. 
+				///@return True if all the data was sent, false otherwise.
 				exported virtual bool send(const uint8* buffer, word length);
 
-				///<summary>Adds the data to the internal pending queue.</summary>
-				///<remarks>Call <see cref="sendParts" /> to send all the data queued with this message as one contiguous message</remarks>
-				///<param name="buffer">The data to send.</param>
-				///<param name="length">The number of bytes to be sent.</param>
+				///Adds the data to the internal pending queue.
+				///Call sendParts to send all the data queued with this message as one contiguous message
+				///@param buffer The data to send. 
+				///@param length The number of bytes to be sent. 
 				exported void addPart(const uint8* buffer, word length);
 
-				///<summary>Sends all the data queued with <see cref="addPart" /> as one contiguous message.</summary>
-				///<returns>True if all the data was sent, false otherwise.</returns>
+				///Sends all the data queued with addPart as one contiguous message.
+				///@return True if all the data was sent, false otherwise.
 				exported virtual bool sendParts();
 
-				///<summary>Closes the underlying connection.</summary>
+				///Closes the underlying connection.
 				exported virtual void close();
 
+				///Destructs the instance.
 				exported virtual ~TCPConnection();
 
 				TCPConnection(const TCPConnection& other) = delete;
