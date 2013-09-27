@@ -14,10 +14,6 @@
 #include <libpq-fe.h>
 #endif
 
-/*
-this should probably be changed to an interface with a specific postgres implementation later.
-*/
-
 namespace Utilities {
 	namespace SQLDatabase {
 		class Connection;
@@ -34,7 +30,7 @@ namespace Utilities {
 
 			const Connection* parentConnection;
 			std::string queryString;
-			int currentParameterIndex;
+			int32 currentParameterIndex;
 			int8* parameterValues[MAX_PARAMETERS];
 			int32 parameterLengths[MAX_PARAMETERS];
 			int32 parameterFormats[MAX_PARAMETERS];
@@ -56,13 +52,13 @@ namespace Utilities {
 				exported void setQueryString(std::string query);
 				exported void resetParameters();
 				exported void resetResult();
-				exported uint32 execute(const Connection* connection = nullptr);
-				exported uint32 getRowCount() const;
+				exported word execute(const Connection* connection = nullptr);
+				exported word getRowCount() const;
 				exported bool advanceToNextRow();
 				exported bool isCurrentColumnNull() const;
 
 				exported void addParameter(std::string& parameter);
-				exported void addParameter(const uint8* parameter, uint32 length);
+				exported void addParameter(const uint8* parameter, int32 length);
 				exported void addParameter(const Utilities::DataStream& parameter);
 				exported void addParameter(float64 parameter);
 				exported void addParameter(uint64 parameter);
@@ -72,7 +68,7 @@ namespace Utilities {
 
 				exported std::string getString(int32 column);
 				exported Utilities::DataStream getDataStream(int32 column);
-				exported uint8* getBytes(int32 column, uint8* buffer, uint32 bufferSize);
+				exported uint8* getBytes(int32 column, uint8* buffer, word bufferSize);
 				exported float64 getFloat64(int32 column);
 				exported uint64 getUInt64(int32 column);
 				exported uint32 getUInt32(int32 column);
@@ -81,7 +77,7 @@ namespace Utilities {
 
 				exported std::string getString(std::string columnName);
 				exported Utilities::DataStream getDataStream(std::string columnName);
-				exported uint8* getBytes(std::string columnName, uint8* buffer, uint32 bufferSize);
+				exported uint8* getBytes(std::string columnName, uint8* buffer, word bufferSize);
 				exported float64 getFloat64(std::string columnName);
 				exported uint64 getUInt64(std::string columnName);
 				exported uint32 getUInt32(std::string columnName);
@@ -90,7 +86,7 @@ namespace Utilities {
 
 				exported std::string getString();
 				exported Utilities::DataStream getDataStream();
-				exported uint8* getBytes(uint8* buffer, uint32 bufferSize);
+				exported uint8* getBytes(uint8* buffer, word bufferSize);
 				exported float64 getFloat64();
 				exported uint64 getUInt64();
 				exported uint32 getUInt32();
@@ -142,13 +138,13 @@ namespace Utilities {
 					public:
 						enum class DataType {
 							UInt64,
-								UInt32,
-								UInt16,
-								Float64,
-								Boolean,
-								String,
-								DateTime,
-								DataStream
+							UInt32,
+							UInt16,
+							Float64,
+							Boolean,
+							String,
+							DateTime,
+							DataStream
 						};
 
 						exported ColumnDefinition(std::string name, bool updatable, uint64 T::*uint64Type) : name(name), updatable(updatable), type(DataType::UInt64) { this->value.uint64Type = uint64Type; };
@@ -331,7 +327,7 @@ namespace Utilities {
 					query << ") VALUES (";
 					isFirst = true;
 
-					uint32 columnIndex = 0;
+					word columnIndex = 0;
 					for (auto i : this->columnDefinitions) {
 						if (!isFirst)
 							query << ", ";
@@ -349,7 +345,7 @@ namespace Utilities {
 					std::stringstream query;
 					query << "UPDATE " << this->name << " SET ";
 
-					uint32 columnIndex = 0;
+					word columnIndex = 0;
 					bool isFirst = true;
 					for (auto i : this->columnDefinitions) {
 						if (i.updatable) {

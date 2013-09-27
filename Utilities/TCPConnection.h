@@ -22,13 +22,16 @@ namespace Utilities {
 		 */
 		class TCPConnection {
 			public:
+				static const word MESSAGE_LENGTH_BYTES = 2;
+				static const word MESSAGE_MAX_SIZE = 0xFFFF + MESSAGE_LENGTH_BYTES;
+
 				struct exported Message {
-					uint16 length;
+					word length;
 					uint8* data;
 					bool wasClosed;
 					
 					Message(bool closed);
-					Message(const uint8* buffer, uint16 length);
+					Message(const uint8* buffer, word length);
 					Message(const Message& other);
 					Message(Message&& other);
 					~Message();
@@ -47,9 +50,9 @@ namespace Utilities {
 				exported std::array<uint8, Socket::ADDRESS_LENGTH> getAddress() const;
 				exported const Socket& getBaseSocket() const;
 				exported bool isDataAvailable() const;
-				exported virtual std::vector<const Message> read(uint32 messagesToWaitFor = 0);
-				exported virtual bool send(const uint8* buffer, uint16 length);
-				exported void addPart(const uint8* buffer, uint16 length);
+				exported virtual std::vector<const Message> read(word messagesToWaitFor = 0);
+				exported virtual bool send(const uint8* buffer, word length);
+				exported void addPart(const uint8* buffer, word length);
 				exported virtual bool sendParts();
 				exported virtual void close();
 
@@ -59,8 +62,6 @@ namespace Utilities {
 				void* state;
 
 			protected:
-				static const word MESSAGE_LENGTH_BYTES = 2;
-				static const word MESSAGE_MAX_SIZE = 0xFFFF + MESSAGE_LENGTH_BYTES;
 			
 				Socket connection;
 				uint8* buffer;
@@ -68,7 +69,7 @@ namespace Utilities {
 				bool connected;
 				std::vector<Message> messageParts;
 
-				bool ensureWrite(const uint8* toWrite, uint64 writeAmount);
+				bool ensureWrite(const uint8* toWrite, word writeAmount);
 		};
 	}
 }

@@ -66,7 +66,7 @@ bool TCPConnection::isDataAvailable() const {
 	return this->connection.isDataAvailable();
 }
 
-vector<const TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFor) {
+vector<const TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
 	vector<const TCPConnection::Message> messages;
 
 	if (!this->connected)
@@ -83,7 +83,7 @@ vector<const TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFo
 		}
 	
 		while (this->bytesReceived >= TCPConnection::MESSAGE_LENGTH_BYTES) {
-			uint16 length = reinterpret_cast<uint16*>(this->buffer)[0];
+			sword length = reinterpret_cast<uint16*>(this->buffer)[0];
 			sword remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
 
 			if (remaining >= 0) {
@@ -100,11 +100,11 @@ vector<const TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFo
 	return messages;
 }
 
-bool TCPConnection::send(const uint8* buffer, uint16 length) {
+bool TCPConnection::send(const uint8* buffer, word length) {
 	if (!this->connected)
 		return false;
 
-	if (!this->ensureWrite(reinterpret_cast<uint8*>(&length), sizeof(length)))
+	if (!this->ensureWrite(reinterpret_cast<uint8*>(&length), TCPConnection::MESSAGE_LENGTH_BYTES))
 		return false;
 
 	if (!this->ensureWrite(buffer, length))
@@ -113,7 +113,7 @@ bool TCPConnection::send(const uint8* buffer, uint16 length) {
 	return true;
 }
 
-void TCPConnection::addPart(const uint8* buffer, uint16 length) {
+void TCPConnection::addPart(const uint8* buffer, word length) {
 	this->messageParts.emplace_back(buffer, length);
 }
 
@@ -121,12 +121,12 @@ bool TCPConnection::sendParts() {
 	if (!this->connected)
 		return false;
 
-	uint16 totalLength = 0;
+	word totalLength = 0;
 
 	for (auto& i : this->messageParts)
 		totalLength += i.length;
 
-	if (!this->ensureWrite(reinterpret_cast<uint8*>(&totalLength), sizeof(totalLength)))
+	if (!this->ensureWrite(reinterpret_cast<uint8*>(&totalLength), TCPConnection::MESSAGE_LENGTH_BYTES))
 		goto error;
 			
 	for (auto& i : this->messageParts)
@@ -151,12 +151,12 @@ void TCPConnection::close() {
 	this->connected = false;
 }
 
-bool TCPConnection::ensureWrite(const uint8* toWrite, uint64 writeAmount) {
+bool TCPConnection::ensureWrite(const uint8* toWrite, word writeAmount) {
 	if (writeAmount == 0)
 		return true;
 
-	uint64 sentSoFar = 0;
-	for (uint8 i = 0; i < 10 && sentSoFar < writeAmount; i++) {
+	word sentSoFar = 0;
+	for (word i = 0; i < 10 && sentSoFar < writeAmount; i++) {
 		sentSoFar += this->connection.write(toWrite + sentSoFar, writeAmount - sentSoFar);
 
 		this_thread::sleep_for(chrono::milliseconds(i * 50));
@@ -171,7 +171,7 @@ TCPConnection::Message::Message(bool closed) {
 	this->data = nullptr;
 }
 
-TCPConnection::Message::Message(const uint8* buffer, uint16 length) {
+TCPConnection::Message::Message(const uint8* buffer, word length) {
 	this->wasClosed = false;
 	this->length = length;
 	this->data = new uint8[length];

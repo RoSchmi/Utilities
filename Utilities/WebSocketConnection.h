@@ -18,7 +18,7 @@ namespace Utilities {
 					Pong = 0xA
 				};
 
-				enum class CloseCodes {
+				enum class CloseCodes : uint16 {
 					Normal = 1000,
 					ServerShutdown = 1001,
 					ProtocalError = 1002,
@@ -26,15 +26,15 @@ namespace Utilities {
 					MessageTooBig = 1009
 				};
 	
-				static const uint8 HEADER_LINES = 25;
-				static const uint8 MASK_BYTES = 4;
+				static const word HEADER_LINES = 25;
+				static const word MASK_BYTES = 4;
 
-				uint16 messageLength;
+				word messageLength;
 				bool ready;
 			
 
 				void doHandshake();
-				bool send(const uint8* data, uint16 length, OpCodes opCode);
+				bool send(const uint8* data, word length, OpCodes opCode);
 				void close(CloseCodes code);
 
 				public:
@@ -43,8 +43,8 @@ namespace Utilities {
 					exported virtual ~WebSocketConnection();
 					exported WebSocketConnection& operator=(WebSocketConnection&& other);
 
-					exported virtual std::vector<const TCPConnection::Message> read(uint32 messagesToWaitFor = 0);
-					exported virtual bool send(const uint8* data, uint16 length);
+					exported virtual std::vector<const TCPConnection::Message> read(word messagesToWaitFor = 0);
+					exported virtual bool send(const uint8* data, word length);
 					exported virtual bool sendParts();
 					exported virtual void close();
 

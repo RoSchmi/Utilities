@@ -36,7 +36,7 @@ void WebSocketConnection::doHandshake() {
 	if (!this->connected)
 		return;
 
-	uint16 start = 0, end = 0;
+	word start = 0, end = 0;
 	DataStream keyAndMagic;
 	DataStream response;
 	uint8 hash[Cryptography::SHA1_LENGTH];
@@ -95,7 +95,7 @@ void WebSocketConnection::doHandshake() {
 	this->bytesReceived = 0;
 }
 
-vector<const TCPConnection::Message> WebSocketConnection::read(uint32 messagesToWaitFor) {
+vector<const TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor) {
 	vector<const TCPConnection::Message> messages;
 
 	if (!this->connected)
@@ -233,22 +233,22 @@ close:
 	return messages;
 }
 
-bool WebSocketConnection::send(const uint8* data, uint16 length) {
+bool WebSocketConnection::send(const uint8* data, word length) {
 	if (!this->connected)
 		return false;
 
 	return this->send(data, length, OpCodes::Binary);
 }
 
-bool WebSocketConnection::send(const uint8* data, uint16 length, OpCodes opCode) {
+bool WebSocketConnection::send(const uint8* data, word length, OpCodes opCode) {
 	if (!this->connected)
 		return false;
 
 	uint8 bytes[4];
-	uint8 sendLength;
+	word sendLength;
 
 	bytes[0] = 128 | static_cast<uint8>(opCode);
-	sendLength = sizeof(length);
+	sendLength = 2;
 
 	if (length <= 125) {
 		bytes[1] = static_cast<uint8>(length);
@@ -277,18 +277,17 @@ bool WebSocketConnection::sendParts() {
 		return false;
 
 	uint8 bytes[4];
-	uint8 sendLength;
-	vector<pair<uint8 const*, uint16>>::iterator i;
-	uint32 totalLength = 0;
+	word sendLength;
+	word totalLength = 0;
 	
 	for (auto& i : this->messageParts)
 		totalLength += i.length;
 
 	bytes[0] = 128 | static_cast<uint8>(OpCodes::Binary);
-	sendLength = sizeof(uint16);
+	sendLength = 2;
 
 	if (totalLength <= 125) {
-		bytes[1] = (uint8)totalLength;
+		bytes[1] = static_cast<uint8>(totalLength);
 		reinterpret_cast<uint16*>(bytes + 2)[0] = 0;
 	}
 	else if (totalLength <= 65536) {

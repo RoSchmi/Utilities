@@ -120,7 +120,7 @@ void Query::addParameter(std::string& parameter) {
 	this->currentParameterIndex++;
 }
 
-void Query::addParameter(const uint8* parameter, uint32 length) {
+void Query::addParameter(const uint8* parameter, int32 length) {
 	this->parameterLengths[this->currentParameterIndex] = length; 
 	this->parameterFormats[this->currentParameterIndex] = 1; //binary type
 	this->parameterValues[this->currentParameterIndex] = new int8[length];
@@ -157,7 +157,7 @@ void Query::addParameter(bool parameter) {
 	this->addParameter((uint8*)&parameter, sizeof(parameter));
 }
 
-uint32 Query::execute(const Connection* connection) {
+word Query::execute(const Connection* connection) {
 	PGconn* toUse = connection ? connection->baseConnection : this->parentConnection->baseConnection;
 
 	this->resetResult();
@@ -176,11 +176,11 @@ uint32 Query::execute(const Connection* connection) {
 		throw runtime_error(PQresultErrorField(this->baseResult, PG_DIAG_SQLSTATE));
 	}
 
-	return this->rowCount;
+	return static_cast<word>(this->rowCount);
 }
 
-uint32 Query::getRowCount() const {
-	return this->rowCount;
+word Query::getRowCount() const {
+	return static_cast<word>(this->rowCount);
 }
 
 bool Query::advanceToNextRow() {
@@ -205,8 +205,8 @@ Utilities::DataStream Query::getDataStream(int32 column) {
 	return DataStream(reinterpret_cast<uint8*>(PQgetvalue(this->baseResult, this->currentRow, column)), PQgetlength(this->baseResult, this->currentRow, column));
 }
 
-uint8* Query::getBytes(int32 column, uint8* buffer, uint32 bufferSize) {
-	uint32 length = static_cast<uint32>(PQgetlength(this->baseResult, this->currentRow, column));
+uint8* Query::getBytes(int32 column, uint8* buffer, word bufferSize) {
+	int32 length = PQgetlength(this->baseResult, this->currentRow, column);
 	int8* temporary = PQgetvalue(this->baseResult, this->currentRow, column);
 	memcpy(buffer, temporary, bufferSize > length ? length : bufferSize);
 	return buffer;
@@ -256,7 +256,7 @@ Utilities::DataStream Query::getDataStream(std::string columnName) {
 	return this->getDataStream(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-uint8* Query::getBytes(std::string columnName, uint8* buffer, uint32 bufferSize) {
+uint8* Query::getBytes(std::string columnName, uint8* buffer, word bufferSize) {
 	return this->getBytes(PQfnumber(this->baseResult, columnName.c_str()), buffer, bufferSize);
 }
 
@@ -288,7 +288,7 @@ Utilities::DataStream Query::getDataStream() {
 	return this->getDataStream(this->currentColumn++);
 }
 
-uint8* Query::getBytes(uint8* buffer, uint32 bufferSize) {
+uint8* Query::getBytes(uint8* buffer, word bufferSize) {
 	return this->getBytes(this->currentColumn++, buffer, bufferSize);
 }
 

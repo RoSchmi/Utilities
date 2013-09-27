@@ -2,14 +2,14 @@
 
 using namespace std;
 
-string Utilities::Misc::base64Encode(const uint8* data, uint32 dataLength) {
+string Utilities::Misc::base64Encode(const uint8* data, word dataLength) {
 	static cstr characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; 
 	static uint8 endTable[] = { 0, 2, 1 };
 
 	string result;
 	result.resize(4 * ((dataLength + 2) / 3));
 
-	for (uint32 i = 0, j = 0; i < dataLength;) {
+	for (word i = 0, j = 0; i < dataLength;) {
 		uint32 a = i < dataLength ? data[i++] : 0;
 		uint32 b = i < dataLength ? data[i++] : 0;
 		uint32 c = i < dataLength ? data[i++] : 0;
