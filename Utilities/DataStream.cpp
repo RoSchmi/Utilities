@@ -164,7 +164,7 @@ void DataStream::write(const datetime& toWrite) {
 	this->write(chrono::duration_cast<chrono::milliseconds>(epoch - toWrite).count());
 }
 
-void DataStream::read(uint8* buffer, uint32 count) {
+void DataStream::read(uint8* buffer, word count) {
 	if (count + this->cursor > this->farthestWrite)
 		throw DataStream::ReadPastEndException();
 

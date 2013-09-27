@@ -111,7 +111,7 @@ namespace Utilities {
 			/**
 			 * Read @a count bytes, starting at the cursor, into @a buffer.
 			 */
-			void read(uint8* buffer, uint32 count);
+			void read(uint8* buffer, word count);
 
 			/**
 			* Returns @a count bytes, starting at the cursor.

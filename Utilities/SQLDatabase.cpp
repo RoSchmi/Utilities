@@ -9,6 +9,10 @@ using namespace std;
 using namespace Utilities;
 using namespace Utilities::SQLDatabase;
 
+Exception::Exception(string what) {
+	this->what = what;
+}
+
 Connection::Connection(string host, string port, string database, string username, string password) {
 	cstr keywords[] = { "host", "port", "dbname", "user", "password", nullptr };
 	cstr values[] = { host.c_str(), port.c_str(), database.c_str(), username.c_str(), password.c_str(), nullptr };

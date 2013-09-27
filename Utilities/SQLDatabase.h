@@ -22,6 +22,13 @@ namespace Utilities {
 	namespace SQLDatabase {
 		class Connection;
 
+		class Exception {
+			public:
+				std::string what;
+
+				exported Exception(std::string what);
+		};
+
 		class Query {
 			static const word MAX_PARAMETERS = 25;
 
