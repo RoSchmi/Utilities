@@ -1,5 +1,7 @@
 #include "Cryptography.h"
 
+#include <random>
+
 #ifdef WINDOWS
 	#define WIN32_LEAN_AND_MEAN
 	#include <Windows.h>
@@ -8,16 +10,14 @@
 	#include <openssl/evp.h>
 #endif
 
-#include <math.h>
-#include <random>
-
 using namespace std;
+using namespace Utilities;
 using namespace Utilities::Cryptography;
 
 static random_device device;
 static mt19937_64 generator(device());
 
-void Utilities::Cryptography::SHA512(const uint8* source, uint32 length, uint8 hashOutput[SHA512_LENGTH]) {
+void Utilities::Cryptography::SHA512(const uint8* source, word length, uint8 hashOutput[SHA512_LENGTH]) {
 #ifdef WINDOWS
 	HCRYPTPROV provider = 0;
 	HCRYPTHASH hasher = 0;
@@ -25,7 +25,7 @@ void Utilities::Cryptography::SHA512(const uint8* source, uint32 length, uint8 h
 
 	CryptAcquireContext(&provider, nullptr, nullptr, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
 	CryptCreateHash(provider, CALG_SHA_512, 0, 0, &hasher);
-	CryptHashData(hasher, source, length, 0);
+	CryptHashData(hasher, source, static_cast<DWORD>(length), 0);
 
 	CryptGetHashParam(hasher, HP_HASHVAL, hashOutput, &hashLength, 0);
 
@@ -42,7 +42,7 @@ void Utilities::Cryptography::SHA512(const uint8* source, uint32 length, uint8 h
 #endif
 }
 
-void Utilities::Cryptography::SHA1(const uint8* source, uint32 length, uint8 hashOutput[SHA1_LENGTH]) {
+void Utilities::Cryptography::SHA1(const uint8* source, word length, uint8 hashOutput[SHA1_LENGTH]) {
 #ifdef WINDOWS
 	HCRYPTPROV provider = 0;
 	HCRYPTHASH hasher = 0;
@@ -50,7 +50,7 @@ void Utilities::Cryptography::SHA1(const uint8* source, uint32 length, uint8 has
 
 	CryptAcquireContext(&provider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
 	CryptCreateHash(provider, CALG_SHA1, 0, 0, &hasher);
-	CryptHashData(hasher, source, length, 0);
+	CryptHashData(hasher, source, static_cast<DWORD>(length), 0);
 
 	CryptGetHashParam(hasher, HP_HASHVAL, hashOutput, &hashLength, 0);
 
@@ -65,12 +65,12 @@ void Utilities::Cryptography::SHA1(const uint8* source, uint32 length, uint8 has
 #endif
 }
 
-void Utilities::Cryptography::randomBytes(uint8* buffer, uint32 count) {
+void Utilities::Cryptography::randomBytes(uint8* buffer, word count) {
 	uniform_int_distribution<uint64> distribution(0, 0xFFFFFFFFFFFFFFFF);
 
 	if (count > 0) {
 		for (; count > 7; count -= 8)
-			*(reinterpret_cast<uint64*>((buffer + count - 8))) = distribution(generator);
+			*reinterpret_cast<uint64*>(buffer + count - 8) = distribution(generator);
 
 		for (; count > 0; count--)
 			*(buffer + count - 1) = static_cast<uint8>(distribution(generator));
@@ -80,6 +80,11 @@ void Utilities::Cryptography::randomBytes(uint8* buffer, uint32 count) {
 int64 Utilities::Cryptography::randomInt64(int64 floor, int64 ceiling) {
 	return uniform_int_distribution<int64>(floor, ceiling)(generator);
 }
+
+uint64 Utilities::Cryptography::randomUInt64(uint64 floor, uint64 ceiling) {
+	return uniform_int_distribution<uint64>(floor, ceiling)(generator);
+}
+
 
 float64 Utilities::Cryptography::randomFloat64(float64 floor, float64 ceiling) {
 	return uniform_real_distribution<float64>(floor, ceiling)(generator);

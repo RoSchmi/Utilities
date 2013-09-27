@@ -27,7 +27,7 @@ namespace Utilities {
 
 			const Connection* parentConnection;
 			std::string queryString;
-			word currentParameterIndex;
+			int currentParameterIndex;
 			int8* parameterValues[MAX_PARAMETERS];
 			int32 parameterLengths[MAX_PARAMETERS];
 			int32 parameterFormats[MAX_PARAMETERS];
