@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <memory>
 #include <algorithm>
+#include <cstring>
 
 #ifdef WINDOWS
 	#define WIN32_LEAN_AND_MEAN
@@ -26,8 +27,9 @@
 	#include <endian.h>
 #endif
 
-using namespace Utilities::Net;
 using namespace std;
+using namespace Utilities;
+using namespace Utilities::Net;
 
 #ifdef WINDOWS
 uintptr prepareRawSocket(Socket::Families family, Socket::Types type, string address, string port, bool isListener, addrinfo** addressInfo) {

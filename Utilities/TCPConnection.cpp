@@ -1,12 +1,12 @@
 #include "TCPConnection.h"
-#include "TCPServer.h"
-#include <mutex>
+
 #include <cstring>
 #include <stdexcept>
+#include <thread>
 
-using namespace Utilities::Net;
-using namespace Utilities;
 using namespace std;
+using namespace Utilities;
+using namespace Utilities::Net;
 
 TCPConnection::TCPConnection(std::string address, std::string port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
 	this->bytesReceived = 0;
@@ -27,7 +27,9 @@ TCPConnection::TCPConnection(TCPConnection&& other) : connection(std::move(other
 	this->connected = other.connected;
 	this->messageParts = std::move(other.messageParts);
 	this->bytesReceived = other.bytesReceived;
-	memcpy(this->buffer, other.buffer, this->bytesReceived);
+	this->buffer = other.buffer;
+	other.buffer = nullptr;
+	other.connected = false;
 }
 
 TCPConnection& TCPConnection::operator = (TCPConnection&& other) {
@@ -38,14 +40,18 @@ TCPConnection& TCPConnection::operator = (TCPConnection&& other) {
 	this->connected = other.connected;
 	this->messageParts = std::move(other.messageParts);
 	this->bytesReceived = other.bytesReceived;
-	memcpy(this->buffer, other.buffer, this->bytesReceived);
+	this->buffer = other.buffer;
+	other.buffer = nullptr;
+	other.connected = false;
 
 	return *this;
 }
 
 TCPConnection::~TCPConnection() {
 	this->close();
-	delete [] this->buffer;
+
+	if (this->buffer)
+		delete[] this->buffer;
 }
 
 array<uint8, Socket::ADDRESS_LENGTH> TCPConnection::getAddress() const {
@@ -72,7 +78,7 @@ vector<const TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFo
 
 		if (received == 0) {
 			this->close();
-			messages.push_back(TCPConnection::Message(true));
+			messages.emplace_back(true);
 			return messages;
 		}
 	
@@ -81,7 +87,7 @@ vector<const TCPConnection::Message> TCPConnection::read(uint32 messagesToWaitFo
 			word remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
 
 			if (remaining >= 0) {
-				messages.push_back(TCPConnection::Message(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length));
+				messages.emplace_back(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length);
 				memcpy(this->buffer, this->buffer + this->bytesReceived - remaining, remaining);
 				this->bytesReceived = remaining;
 			}
@@ -108,7 +114,7 @@ bool TCPConnection::send(const uint8* buffer, uint16 length) {
 }
 
 void TCPConnection::addPart(const uint8* buffer, uint16 length) {
-	this->messageParts.push_back(TCPConnection::Message(buffer, length));
+	this->messageParts.emplace_back(buffer, length);
 }
 
 bool TCPConnection::sendParts() {
@@ -128,10 +134,12 @@ bool TCPConnection::sendParts() {
 			goto error;
 
 	this->messageParts.clear();
+
 	return true;
 
 error:
 	this->messageParts.clear();
+
 	return false;
 }
 
@@ -157,6 +165,12 @@ bool TCPConnection::ensureWrite(const uint8* toWrite, uint64 writeAmount) {
 	return sentSoFar == writeAmount;
 }
 
+TCPConnection::Message::Message(bool closed) {
+	this->wasClosed = closed;
+	this->length = 0;
+	this->data = nullptr;
+}
+
 TCPConnection::Message::Message(const uint8* buffer, uint16 length) {
 	this->wasClosed = false;
 	this->length = length;
@@ -164,21 +178,34 @@ TCPConnection::Message::Message(const uint8* buffer, uint16 length) {
 	memcpy(this->data, buffer, length);
 }
 
-TCPConnection::Message::Message(bool closed) {
-	this->wasClosed = closed;
-	this->length = 0;
-	this->data = nullptr;
-}
-
 TCPConnection::Message::~Message() {
 	if (this->data)
 		delete[] this->data;
+}
+
+TCPConnection::Message::Message(const TCPConnection::Message& other) {
+	this->data = nullptr;
+	*this = other;
 }
 
 TCPConnection::Message::Message(TCPConnection::Message&& other) {
 	this->data = nullptr;
 	*this = std::move(other);
 }
+
+TCPConnection::Message& TCPConnection::Message::operator=(const TCPConnection::Message& other) {
+	if (this->data)
+		delete[] this->data;
+
+	this->data = other.data;
+	this->length = other.length;
+	this->wasClosed = other.wasClosed;
+
+	memcpy(this->data, other.data, this->length);
+
+	return *this;
+}
+
 
 TCPConnection::Message& TCPConnection::Message::operator=(TCPConnection::Message&& other) {
 	if (this->data)

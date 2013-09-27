@@ -2,13 +2,12 @@
 
 #include "Common.h"
 #include "Socket.h"
+
 #include <vector>
 #include <array>
 
 namespace Utilities {
 	namespace Net {
-		class TCPServer;
-
 		/**
 		 * An abstraction over a Socket, providing the illusion of asynchronicity
 		 * by using threads. Also provides minimal framing, of the format:
@@ -30,15 +29,14 @@ namespace Utilities {
 					
 					Message(bool closed);
 					Message(const uint8* buffer, uint16 length);
+					Message(const Message& other);
 					Message(Message&& other);
 					~Message();
+					Message& operator=(const Message& other);
 					Message& operator=(Message&& other);
 
 					Message() = delete;
-					Message(const Message& other) = delete;
-					Message& operator=(const Message& other) = delete;
 				};
-
 
 				exported TCPConnection(Socket& socket);
 				exported TCPConnection(std::string address, std::string port, void* state = nullptr);
@@ -53,7 +51,7 @@ namespace Utilities {
 				exported virtual bool send(const uint8* buffer, uint16 length);
 				exported void addPart(const uint8* buffer, uint16 length);
 				exported virtual bool sendParts();
-				exported void close();
+				exported virtual void close();
 
 				TCPConnection() = delete;
 				TCPConnection(const TCPConnection& other) = delete;
