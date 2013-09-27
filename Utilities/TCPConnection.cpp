@@ -48,7 +48,7 @@ TCPConnection::~TCPConnection() {
 	delete [] this->buffer;
 }
 
-const uint8* TCPConnection::getAddress() const {
+array<uint8, Socket::ADDRESS_LENGTH> TCPConnection::getAddress() const {
 	return this->connection.getRemoteAddress();
 }
 

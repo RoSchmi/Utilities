@@ -2,14 +2,8 @@
 
 #include "Common.h"
 
-#include <map>
-#include <vector>
-#include <thread>
-#include <condition_variable>
-#include <mutex>
 #include <string>
-#include <atomic>
-#include <algorithm>
+#include <array>
 
 namespace Utilities {
 	namespace Net {
@@ -81,7 +75,7 @@ namespace Utilities {
 				 * returned from @a accept(). Is always an IPv6 address (for now),
 				 * but will sometimes be an IPv4 mapped address
 				 */
-				const uint8* getRemoteAddress() const;
+				std::array<uint8, Socket::ADDRESS_LENGTH> getRemoteAddress() const;
 
 				/**
 				 * @returns true if socket is connected, false otherwise
@@ -101,7 +95,7 @@ namespace Utilities {
 				Types type;
 				Families family;
 				bool connected;
-				uint8 remoteEndpointAddress[Socket::ADDRESS_LENGTH];
+				std::array<uint8, Socket::ADDRESS_LENGTH> remoteEndpointAddress;
 			
 				#ifdef WINDOWS
 					uintptr rawSocket;

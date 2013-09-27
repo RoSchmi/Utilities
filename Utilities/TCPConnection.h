@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "Socket.h"
 #include <vector>
+#include <array>
 
 namespace Utilities {
 	namespace Net {
@@ -45,7 +46,7 @@ namespace Utilities {
 				exported virtual ~TCPConnection();
 				exported TCPConnection& operator=(TCPConnection&& other);
 
-				exported const uint8* getAddress() const;
+				exported std::array<uint8, Socket::ADDRESS_LENGTH> getAddress() const;
 				exported const Socket& getBaseSocket() const;
 				exported bool isDataAvailable() const;
 				exported virtual std::vector<const Message> read(uint32 messagesToWaitFor = 0);

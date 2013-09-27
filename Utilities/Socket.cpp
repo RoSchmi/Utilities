@@ -1,8 +1,9 @@
 #include "Socket.h"
-#include "Misc.h"
+
 #include <utility>
 #include <stdexcept>
 #include <memory>
+#include <algorithm>
 
 #ifdef WINDOWS
 	#define WIN32_LEAN_AND_MEAN
@@ -99,7 +100,8 @@ Socket::Socket(Families family, Types type) {
 	this->type = type;
 	this->family = family;
 	this->connected = false;
-	memset(this->remoteEndpointAddress, 0, Socket::ADDRESS_LENGTH);
+	this->remoteEndpointAddress.fill(0x00);
+
 	#ifdef WINDOWS
 		this->rawSocket = INVALID_SOCKET;
 	#elif defined POSIX
@@ -169,14 +171,13 @@ Socket& Socket::operator=(Socket&& other) {
 	if (this->connected)
 		this->close();
 		
-	this->family = other.family;
 	this->type = other.type;
+	this->family = other.family;
 
 	this->connected = other.connected;
 	other.connected = false;
 
-	memcpy(this->remoteEndpointAddress, other.remoteEndpointAddress, Socket::ADDRESS_LENGTH);
-	memset(other.remoteEndpointAddress, 0, Socket::ADDRESS_LENGTH);
+	this->remoteEndpointAddress = other.remoteEndpointAddress;
 
 	this->rawSocket = other.rawSocket;
 #ifdef WINDOWS
@@ -193,20 +194,21 @@ void Socket::close() {
 		return;
 
 	this->connected = false;
-	#ifdef WINDOWS
-		::shutdown(this->rawSocket, SD_BOTH);
-		::closesocket(this->rawSocket);
-		this->rawSocket = INVALID_SOCKET;
-	#elif defined POSIX
-		::shutdown(this->rawSocket, SHUT_RDWR);
-		::close(this->rawSocket);
-		this->rawSocket = -1;
-	#endif
+
+#ifdef WINDOWS
+	::shutdown(this->rawSocket, SD_BOTH);
+	::closesocket(this->rawSocket);
+	this->rawSocket = INVALID_SOCKET;
+#elif defined POSIX
+	::shutdown(this->rawSocket, SHUT_RDWR);
+	::close(this->rawSocket);
+	this->rawSocket = -1;
+#endif
 }
 
 Socket Socket::accept() {
 	if (!this->connected)
-		throw runtime_error("Socket not constructed.");
+		throw runtime_error("Socket was closed.");
 
 	Socket socket(this->family, this->type);
 	sockaddr_storage remoteAddress;
@@ -224,24 +226,22 @@ Socket Socket::accept() {
 	
 	socket.connected = true;
 
-	memset(socket.remoteEndpointAddress, 0, Socket::ADDRESS_LENGTH);
-
 	if (remoteAddress.ss_family == AF_INET) {
 		sockaddr_in* ipv4Address = reinterpret_cast<sockaddr_in*>(&remoteAddress);
-		memset(socket.remoteEndpointAddress, 0, 10); //to copy the ipv4 address in ipv6 mapped format
-		memset(socket.remoteEndpointAddress + 10, 1, 2);
+		memset(socket.remoteEndpointAddress.data(), 0, 10); //to copy the ipv4 address in ipv6 mapped format
+		memset(socket.remoteEndpointAddress.data() + 10, 1, 2);
 		#ifdef WINDOWS
-			memcpy(socket.remoteEndpointAddress + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.S_un.S_addr), 4);
+		memcpy(socket.remoteEndpointAddress.data() + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.S_un.S_addr), 4);
 		#elif defined POSIX
-			memcpy(socket.remoteEndpointAddress + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.s_addr), 4);
+		memcpy(socket.remoteEndpointAddress.data() + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.s_addr), 4);
 		#endif
 	}
 	else if (remoteAddress.ss_family == AF_INET6) {
 		sockaddr_in6* ipv6Address = reinterpret_cast<sockaddr_in6*>(&remoteAddress);
 		#ifdef WINDOWS
-			memcpy(socket.remoteEndpointAddress, ipv6Address->sin6_addr.u.Byte, sizeof(ipv6Address->sin6_addr.u.Byte));
+		memcpy(socket.remoteEndpointAddress.data(), ipv6Address->sin6_addr.u.Byte, sizeof(ipv6Address->sin6_addr.u.Byte));
 		#elif defined POSIX
-			memcpy(socket.remoteEndpointAddress, ipv6Address->sin6_addr.s6_addr, sizeof(ipv6Address->sin6_addr.s6_addr));
+		memcpy(socket.remoteEndpointAddress.data(), ipv6Address->sin6_addr.s6_addr, sizeof(ipv6Address->sin6_addr.s6_addr));
 		#endif
 	}
 
@@ -260,16 +260,13 @@ word Socket::read(uint8* buffer, word bufferSize) {
 }
 
 word Socket::write(const uint8* toWrite, word writeAmount) {
-	if (!this->connected)
+	if (!this->connected || writeAmount == 0)
 		return 0;
 
-	if (writeAmount == 0)
-		return 0;
-
-	return static_cast<uint64>(::send(this->rawSocket, reinterpret_cast<const char*>(toWrite), static_cast<int>(writeAmount), 0));
+	return static_cast<word>(::send(this->rawSocket, reinterpret_cast<const char*>(toWrite), static_cast<int>(writeAmount), 0));
 }
 
-const uint8* Socket::getRemoteAddress() const {
+array<uint8, Socket::ADDRESS_LENGTH> Socket::getRemoteAddress() const {
 	return this->remoteEndpointAddress;
 }
 
@@ -290,7 +287,11 @@ bool Socket::isDataAvailable() const {
 	
 	FD_SET(this->rawSocket, &readSet);
 	
-	return select(this->rawSocket + 1, &readSet, nullptr, nullptr, &timeout) > 0;
+#ifdef WINDOWS
+	return ::select(0, &readSet, nullptr, nullptr, &timeout) > 0;
+#elif defined POSIX
+	return ::select(this->rawSocket + 1, &readSet, nullptr, nullptr, &timeout) > 0;
+#endif
 }
 
 
