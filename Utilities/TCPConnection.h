@@ -53,7 +53,6 @@ namespace Utilities {
 				exported virtual bool sendParts();
 				exported virtual void close();
 
-				TCPConnection() = delete;
 				TCPConnection(const TCPConnection& other) = delete;
 				TCPConnection& operator=(const TCPConnection& other) = delete;
 

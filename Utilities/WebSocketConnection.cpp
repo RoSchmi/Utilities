@@ -2,13 +2,13 @@
 #include "Misc.h"
 #include "Cryptography.h"
 #include "DataStream.h"
-#include <mutex>
+
 #include <cstring>
 #include <stdexcept>
 
+using namespace std;
 using namespace Utilities;
 using namespace Utilities::Net;
-using namespace std;
 
 WebSocketConnection::WebSocketConnection(Socket& socket) : TCPConnection(socket) {
 	this->messageLength = 0;
@@ -25,6 +25,10 @@ WebSocketConnection& WebSocketConnection::operator = (WebSocketConnection&& othe
 	this->messageLength = other.messageLength;
 	this->ready = other.ready;
 	return *this;
+}
+
+WebSocketConnection::~WebSocketConnection() {
+
 }
 
 void WebSocketConnection::doHandshake() {
@@ -200,7 +204,7 @@ vector<const TCPConnection::Message> WebSocketConnection::read(uint32 messagesTo
 							dataBuffer[i] = payloadBuffer[i] ^ maskBuffer[i % MASK_BYTES];
 
 						if (FIN) {
-							messages.push_back(Message(this->buffer, this->messageLength + length));
+							messages.emplace_back(this->buffer, this->messageLength + length);
 							memcpy(this->buffer, this->buffer + length + headerEnd, this->bytesReceived);
 							dataBuffer = this->buffer;
 							this->messageLength = 0;
@@ -224,7 +228,7 @@ vector<const TCPConnection::Message> WebSocketConnection::read(uint32 messagesTo
 	return messages;
 
 close:
-	messages.push_back(Message(true));
+	messages.emplace_back(true);
 	return messages;
 }
 
@@ -319,4 +323,8 @@ void WebSocketConnection::close(CloseCodes code) {
 	this->send(reinterpret_cast<uint8*>(&code), sizeof(uint16), OpCodes::Close);
 	
 	TCPConnection::close();
+}
+
+void WebSocketConnection::close() {
+	this->close(CloseCodes::ServerShutdown);
 }

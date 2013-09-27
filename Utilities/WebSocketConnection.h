@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "Socket.h"
 #include "TCPConnection.h"
+
 #include <vector>
 
 namespace Utilities {
@@ -31,24 +32,24 @@ namespace Utilities {
 				uint16 messageLength;
 				bool ready;
 			
-				WebSocketConnection(Socket& socket);
 
 				void doHandshake();
 				bool send(const uint8* data, uint16 length, OpCodes opCode);
 				void close(CloseCodes code);
 
 				public:
+					exported WebSocketConnection(Socket& socket);
 					exported WebSocketConnection(WebSocketConnection&& other);
+					exported virtual ~WebSocketConnection();
 					exported WebSocketConnection& operator=(WebSocketConnection&& other);
 
 					exported virtual std::vector<const TCPConnection::Message> read(uint32 messagesToWaitFor = 0);
 					exported virtual bool send(const uint8* data, uint16 length);
 					exported virtual bool sendParts();
+					exported virtual void close();
 
 					WebSocketConnection(const WebSocketConnection& other) = delete;
 					WebSocketConnection& operator=(const WebSocketConnection& other) = delete;
-
-					friend class TCPServer;
 		};
 	}
 }
