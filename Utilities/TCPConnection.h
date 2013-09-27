@@ -60,11 +60,6 @@ namespace Utilities {
 					~Message();
 
 					Message() = delete;
-
-					private:
-
-						friend class TCPConnection;
-						friend class WebSocketConnection;
 				};
 
 				///<summary>State to be stored with this connection.</summary>
