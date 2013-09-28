@@ -13,6 +13,13 @@ DataStream::DataStream() {
 	this->buffer = new uint8[DataStream::MINIMUM_SIZE];
 }
 
+DataStream::DataStream(uint8* exisitingBuffer, word length) {
+	this->cursor = 0;
+	this->farthestWrite = length;
+	this->allocation = length;
+	this->buffer = exisitingBuffer;
+}
+
 DataStream::DataStream(const uint8* exisitingBuffer, word length) {
 	this->cursor = 0;
 	this->farthestWrite = length;

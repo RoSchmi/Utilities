@@ -29,6 +29,7 @@ namespace Utilities {
 			class ReadPastEndException { };
 
 			DataStream();
+			DataStream(uint8* exisitingBuffer, word length);
 			DataStream(const uint8* exisitingBuffer, word length);
 			DataStream(DataStream&& other);
 			DataStream(const DataStream& other);
