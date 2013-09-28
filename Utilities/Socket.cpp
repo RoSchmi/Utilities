@@ -112,6 +112,10 @@ Socket::Socket(Families family, Types type) {
 	#endif
 }
 
+Socket::Socket() {
+	this->connected = false;
+}
+
 Socket::Socket(Families family, Types type, string address, string port) : Socket(family, type) {
 	addrinfo* serverAddrInfo;
 	
@@ -211,7 +215,7 @@ void Socket::close() {
 
 Socket Socket::accept() {
 	if (!this->connected)
-		throw runtime_error("Socket was closed.");
+		throw runtime_error("Socket is not open.");
 
 	Socket socket(this->family, this->type);
 	sockaddr_storage remoteAddress;
@@ -253,7 +257,7 @@ Socket Socket::accept() {
 
 word Socket::read(uint8* buffer, word bufferSize) {
 	if (!this->connected)
-		return 0;
+		throw runtime_error("Socket is not open.");
 
 	int received = ::recv(this->rawSocket, reinterpret_cast<char*>(buffer), static_cast<int>(bufferSize), 0);
 	if (received <= 0)
@@ -263,23 +267,32 @@ word Socket::read(uint8* buffer, word bufferSize) {
 }
 
 word Socket::write(const uint8* toWrite, word writeAmount) {
-	if (!this->connected || writeAmount == 0)
+	if (!this->connected)
+		throw runtime_error("Socket is not open.");
+
+	if (writeAmount == 0)
 		return 0;
 
 	return static_cast<word>(::send(this->rawSocket, reinterpret_cast<const char*>(toWrite), static_cast<int>(writeAmount), 0));
 }
 
 array<uint8, Socket::ADDRESS_LENGTH> Socket::getRemoteAddress() const {
+	if (!this->connected)
+		throw runtime_error("Socket is not open.");
+
 	return this->remoteEndpointAddress;
 }
 
 bool Socket::isConnected() const {
+	if (!this->connected)
+		throw runtime_error("Socket is not open.");
+
 	return this->connected;
 }
 
 bool Socket::isDataAvailable() const {
 	if (!this->connected)
-		return false;
+		throw runtime_error("Socket is not open.");
 
 	static fd_set readSet;
 	FD_ZERO(&readSet);

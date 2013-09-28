@@ -40,17 +40,21 @@ namespace Utilities {
 				typedef void(*ConnectCallback)(TCPConnection& connection, void* state);
 				typedef void(*DisconnectCallback)(TCPConnection& connection, void* state);
 
+				exported RequestServer();
 				exported RequestServer(std::string port, bool usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 				exported RequestServer(std::vector<std::string> ports, std::vector<bool> usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
+				exported RequestServer(RequestServer&& other);
+				exported RequestServer& operator=(RequestServer&& other); 
 				exported ~RequestServer();
 
 				exported void addToIncomingQueue(Message&& message);
 				exported void addToOutgoingQueue(Message&& message);
 
+				exported void start();
+				exported void stop();
+
 				RequestServer(const RequestServer& other) = delete;
 				RequestServer& operator=(const RequestServer& other) = delete;
-				RequestServer(RequestServer&& other) = delete;
-				RequestServer& operator=(RequestServer&& other) = delete;
 
 			private:
 				std::list<TCPServer> servers;
@@ -70,11 +74,13 @@ namespace Utilities {
 
 				uint16 retryCode;
 				void* state;
+				word workers;
 
 				std::thread ioWorker;
 				std::thread outgoingWorker;
 				std::vector<std::thread> incomingWorkers;
 				std::atomic<bool> running;
+				std::atomic<bool> valid;
 
 				void incomingWorkerRun(word workerNumber);
 				void outgoingWorkerRun();

@@ -8,6 +8,13 @@ using namespace std;
 using namespace Utilities;
 using namespace Utilities::Net;
 
+TCPConnection::TCPConnection() {
+	this->bytesReceived = 0;
+	this->state = nullptr;
+	this->connected = false;
+	this->buffer = nullptr;
+}
+
 TCPConnection::TCPConnection(std::string address, std::string port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
 	this->bytesReceived = 0;
 	this->state = nullptr;
@@ -55,18 +62,30 @@ TCPConnection::~TCPConnection() {
 }
 
 array<uint8, Socket::ADDRESS_LENGTH> TCPConnection::getAddress() const {
+	if (!this->connected)
+		throw runtime_error("Not connected.");
+
 	return this->connection.getRemoteAddress();
 }
 
 const Socket& TCPConnection::getBaseSocket() const {
+	if (!this->connected)
+		throw runtime_error("Not connected.");
+
 	return this->connection;
 }
 
 bool TCPConnection::isDataAvailable() const {
+	if (!this->connected)
+		throw runtime_error("Not connected.");
+
 	return this->connection.isDataAvailable();
 }
 
 vector<TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
+	if (!this->connected)
+		throw runtime_error("Not connected.");
+
 	vector<TCPConnection::Message> messages;
 
 	if (!this->connected)
@@ -102,7 +121,7 @@ vector<TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
 
 bool TCPConnection::send(const uint8* buffer, word length) {
 	if (!this->connected)
-		return false;
+		throw runtime_error("Not connected.");
 
 	if (!this->ensureWrite(reinterpret_cast<uint8*>(&length), TCPConnection::MESSAGE_LENGTH_BYTES))
 		return false;
@@ -114,12 +133,15 @@ bool TCPConnection::send(const uint8* buffer, word length) {
 }
 
 void TCPConnection::addPart(const uint8* buffer, word length) {
+	if (!this->connected)
+		throw runtime_error("Not connected.");
+
 	this->messageParts.emplace_back(buffer, length);
 }
 
 bool TCPConnection::sendParts() {
 	if (!this->connected)
-		return false;
+		throw runtime_error("Not connected.");
 
 	word totalLength = 0;
 

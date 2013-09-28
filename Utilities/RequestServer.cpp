@@ -1,34 +1,88 @@
 #include "RequestServer.h"
 
 #include <utility>
+#include <stdexcept>
 
 using namespace std;
 using namespace Utilities;
 using namespace Utilities::Net;
+
+RequestServer::RequestServer() {
+	this->running = false;
+	this->valid = false;
+}
 
 RequestServer::RequestServer(string port, bool usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) : RequestServer(vector<string>{ port }, vector<bool>{ usesWebSockets }, workers, retryCode, onRequest, onConnect, onDisconnect, state) {
 	
 }
 
 RequestServer::RequestServer(vector<string> ports, vector<bool> usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) {
-	this->running = true;
+	this->running = false;
+	this->valid = true;
 	this->onConnect = onConnect;
 	this->onDisconnect = onDisconnect;
 	this->onRequest = onRequest;
 	this->retryCode = retryCode;
 	this->state = state;
-
-	for (word i = 0; i < workers; i++)
-		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
-
-	this->outgoingWorker = thread(&RequestServer::outgoingWorkerRun, this);
-	this->ioWorker = thread(&RequestServer::ioWorkerRun, this);
+	this->workers = workers;
 
 	for (word i = 0; i < ports.size(); i++)
 		this->servers.emplace_back(ports[i], RequestServer::onClientConnect, this, usesWebSockets[i]);
 }
 
+RequestServer::RequestServer(RequestServer&& other) {
+	if (other.running)
+		throw runtime_error("Cannot move a running RequestServer.");
+
+	this->running = false;
+	*this = std::move(other);
+}
+
+RequestServer& RequestServer::operator = (RequestServer&& other) {
+	if (other.running || this->running)
+		throw runtime_error("Cannot move to or from a running RequestServer.");
+
+	this->valid = other.valid.load();
+	this->onConnect = other.onConnect;
+	this->onDisconnect = other.onDisconnect;
+	this->onRequest = other.onRequest;
+	this->retryCode = other.retryCode;
+	this->state = other.state;
+	this->workers = other.workers;
+	this->running = false;
+	this->servers = std::move(other.servers);
+
+	return *this;
+}
+
 RequestServer::~RequestServer() {
+	this->stop();
+}
+
+void RequestServer::start() {
+	if (!this->valid)
+		throw runtime_error("Default-Constructed RequestServers cannot be started.");
+
+	if (this->running)
+		return;
+
+	for (word i = 0; i < this->workers; i++)
+		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
+
+	this->outgoingWorker = thread(&RequestServer::outgoingWorkerRun, this);
+	this->ioWorker = thread(&RequestServer::ioWorkerRun, this);
+
+	for (auto& i : this->servers)
+		i.start();
+}
+
+void RequestServer::stop() {
+	if (!this->running)
+		return;
+
+	for (auto& i : this->servers)
+		i.stop();
+
 	this->running = false;
 
 	this->ioWorker.join();

@@ -63,6 +63,10 @@ namespace Utilities {
 				///State to be stored with this connection.
 				///Not used in any way by this class
 				void* state;
+
+				///Constructs an unconnected instance.
+				///You must move assign to make use of it.
+				exported TCPConnection();
 				
 				///Constructs a new TCPConnection by using an existing socket.
 				///Takes ownership of the socket.

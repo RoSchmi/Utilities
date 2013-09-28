@@ -39,6 +39,7 @@ namespace Utilities {
 				Socket(Families family, Types type, std::string address, std::string port);
 				Socket(Families family, Types type, std::string port);
 				Socket(Socket&& other);
+				Socket();
 				Socket& operator=(Socket&& other);
 				~Socket();
 
@@ -87,7 +88,6 @@ namespace Utilities {
 				 */
 				bool isDataAvailable() const;
 
-				Socket() = delete;
 				Socket(const Socket& other) = delete;
 				Socket& operator=(const Socket& other) = delete;
 
