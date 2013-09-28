@@ -67,7 +67,7 @@ Query::Query(Query&& other) {
 	this->currentRow = other.currentRow;
 	this->currentColumn = other.currentColumn;
 
-	for (word i = 0; i < other.currentParameterIndex; i++) {
+	for (int32 i = 0; i < other.currentParameterIndex; i++) {
 		this->parameterValues[i] = other.parameterValues[i];
 		this->parameterLengths[i] = other.parameterLengths[i];
 		this->parameterFormats[i] = other.parameterFormats[i];
@@ -208,7 +208,7 @@ Utilities::DataStream Query::getDataStream(int32 column) {
 uint8* Query::getBytes(int32 column, uint8* buffer, word bufferSize) {
 	int32 length = PQgetlength(this->baseResult, this->currentRow, column);
 	int8* temporary = PQgetvalue(this->baseResult, this->currentRow, column);
-	memcpy(buffer, temporary, bufferSize > length ? length : bufferSize);
+	memcpy(buffer, temporary, static_cast<int32>(bufferSize) > length ? length : bufferSize);
 	return buffer;
 }
 
