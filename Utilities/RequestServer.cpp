@@ -93,6 +93,10 @@ void RequestServer::stop() {
 	this->outgoingWorker.join();
 }
 
+void RequestServer::adoptConnection(TCPConnection&& connection) {
+	RequestServer::onClientConnect(std::move(connection), this);
+}
+
 void RequestServer::onClientConnect(TCPConnection&& connection, void* serverState) {
 	auto& self = *reinterpret_cast<RequestServer*>(serverState);
 

@@ -44,14 +44,15 @@ namespace Utilities {
 				exported RequestServer(std::string port, bool usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 				exported RequestServer(std::vector<std::string> ports, std::vector<bool> usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 				exported RequestServer(RequestServer&& other);
-				exported RequestServer& operator=(RequestServer&& other); 
 				exported ~RequestServer();
+				exported RequestServer& operator=(RequestServer&& other); 
 
 				exported void addToIncomingQueue(Message&& message);
 				exported void addToOutgoingQueue(Message&& message);
 
 				exported void start();
 				exported void stop();
+				exported void adoptConnection(TCPConnection&& connection);
 
 				RequestServer(const RequestServer& other) = delete;
 				RequestServer& operator=(const RequestServer& other) = delete;
