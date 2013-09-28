@@ -99,7 +99,7 @@ namespace Utilities {
 				///Gets a list of messages that are available and complete.
 				///@param messagesToWaitFor The number of messages to wait for. Defaults to zero. 
 				///@return A vector of possible zero messages that were read.
-				exported virtual std::vector<const Message> read(word messagesToWaitFor = 0);
+				exported virtual std::vector<Message> read(word messagesToWaitFor = 0);
 
 				///Sends the given data over the connection.
 				///@param buffer The data to send. 

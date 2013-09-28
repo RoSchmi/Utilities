@@ -43,7 +43,7 @@ namespace Utilities {
 					exported virtual ~WebSocketConnection();
 					exported WebSocketConnection& operator=(WebSocketConnection&& other);
 
-					exported virtual std::vector<const TCPConnection::Message> read(word messagesToWaitFor = 0);
+					exported virtual std::vector<TCPConnection::Message> read(word messagesToWaitFor = 0);
 					exported virtual bool send(const uint8* data, word length);
 					exported virtual bool sendParts();
 					exported virtual void close();

@@ -66,8 +66,8 @@ bool TCPConnection::isDataAvailable() const {
 	return this->connection.isDataAvailable();
 }
 
-vector<const TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
-	vector<const TCPConnection::Message> messages;
+vector<TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
+	vector<TCPConnection::Message> messages;
 
 	if (!this->connected)
 		return messages;

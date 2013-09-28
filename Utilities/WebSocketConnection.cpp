@@ -95,8 +95,8 @@ void WebSocketConnection::doHandshake() {
 	this->bytesReceived = 0;
 }
 
-vector<const TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor) {
-	vector<const TCPConnection::Message> messages;
+vector<TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor) {
+	vector<TCPConnection::Message> messages;
 
 	if (!this->connected)
 		return messages;
