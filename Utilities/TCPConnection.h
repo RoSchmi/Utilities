@@ -43,7 +43,6 @@ namespace Utilities {
 					///@return This message.
 					Message(Message&& other);
 
-
 					///Constructs a new message with no data and the given closed flag.
 					///@param closed Whether or not the connection was closed. 
 					Message(bool closed);
