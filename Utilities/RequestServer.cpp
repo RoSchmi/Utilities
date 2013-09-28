@@ -39,7 +39,7 @@ RequestServer::~RequestServer() {
 	this->outgoingWorker.join();
 }
 
-void RequestServer::onClientConnect(Net::TCPConnection&& connection, void* serverState) {
+void RequestServer::onClientConnect(TCPConnection&& connection, void* serverState) {
 	auto& self = *reinterpret_cast<RequestServer*>(serverState);
 
 	self.clientListLock.lock();
@@ -111,7 +111,7 @@ void RequestServer::ioWorkerRun() {
 		for (auto& i : this->clients)
 			if (i.isDataAvailable()) 
 				for (auto& k : i.read())
-					this->addToIncomingQueue(Message(i, k.data, k.length));
+					this->addToIncomingQueue(Message(i, std::move(k)));
 
 		this->clientListLock.unlock();
 
@@ -137,11 +137,15 @@ void RequestServer::addToOutgoingQueue(Message&& message) {
 	this->outgoingCV.notify_one();
 }
 
-RequestServer::Message::Message(Net::TCPConnection& connection, const uint8* data, uint64 length) : connection(connection), data(data, length) {
+RequestServer::Message::Message(TCPConnection& connection, TCPConnection::Message&& message) : connection(connection), data(message.data, message.length) {
 	this->currentAttempts = 0;
 }
 
-RequestServer::Message::Message(Net::TCPConnection& connection, uint16 id, uint8 category, uint8 method) : connection(connection) {
+RequestServer::Message::Message(TCPConnection& connection, const uint8* data, word length) : connection(connection), data(data, length) {
+	this->currentAttempts = 0;
+}
+
+RequestServer::Message::Message(TCPConnection& connection, uint16 id, uint8 category, uint8 method) : connection(connection) {
 	RequestServer::Message::writeHeader(this->data, id, category, method);
 	this->currentAttempts = 0;
 }

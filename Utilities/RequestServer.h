@@ -17,12 +17,13 @@ namespace Utilities {
 		class RequestServer {
 			public:
 				struct exported Message {
-					Net::TCPConnection& connection;
+					TCPConnection& connection;
 					word currentAttempts;
 					DataStream data;
 
-					Message(Net::TCPConnection& connection, const uint8* data, word length);
-					Message(Net::TCPConnection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
+					Message(TCPConnection& connection, TCPConnection::Message&& message);
+					Message(TCPConnection& connection, const uint8* data, word length);
+					Message(TCPConnection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
 					Message(Message&& other);
 
 					static void writeHeader(DataStream& stream, uint16 id, uint8 category, uint8 method);
@@ -34,9 +35,9 @@ namespace Utilities {
 
 				static const word MAX_RETRIES = 5;
 
-				typedef bool(*RequestCallback)(Net::TCPConnection& connection, void* state, word workerNumber, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response);
-				typedef void(*ConnectCallback)(Net::TCPConnection& connection, void* state);
-				typedef void(*DisconnectCallback)(Net::TCPConnection& connection, void* state);
+				typedef bool(*RequestCallback)(TCPConnection& connection, void* state, word workerNumber, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response);
+				typedef void(*ConnectCallback)(TCPConnection& connection, void* state);
+				typedef void(*DisconnectCallback)(TCPConnection& connection, void* state);
 
 				exported RequestServer(std::string port, bool usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
 				exported RequestServer(std::vector<std::string> ports, std::vector<bool> usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
@@ -51,8 +52,8 @@ namespace Utilities {
 				RequestServer& operator=(RequestServer&& other) = delete;
 
 			private:
-				std::list<Net::TCPServer> servers;
-				std::vector<Net::TCPConnection> clients;
+				std::list<TCPServer> servers;
+				std::vector<TCPConnection> clients;
 				std::mutex clientListLock;
 
 				RequestCallback onRequest;
@@ -78,7 +79,7 @@ namespace Utilities {
 				void outgoingWorkerRun();
 				void ioWorkerRun();
 
-				static void onClientConnect(Net::TCPConnection&& connection, void* serverState);
+				static void onClientConnect(TCPConnection&& connection, void* serverState);
 		};
 	}
 }
