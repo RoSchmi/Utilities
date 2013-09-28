@@ -22,6 +22,7 @@ namespace Utilities {
 					DataStream data;
 
 					Message(TCPConnection& connection, TCPConnection::Message&& message);
+					Message(TCPConnection& connection, DataStream&& data);
 					Message(TCPConnection& connection, const uint8* data, word length);
 					Message(TCPConnection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
 					Message(Message&& other);

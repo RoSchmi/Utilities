@@ -141,6 +141,10 @@ RequestServer::Message::Message(TCPConnection& connection, TCPConnection::Messag
 	this->currentAttempts = 0;
 }
 
+RequestServer::Message::Message(TCPConnection& connection, DataStream&& data) : connection(connection), data(std::move(data)) {
+	this->currentAttempts = 0;
+}
+
 RequestServer::Message::Message(TCPConnection& connection, const uint8* data, word length) : connection(connection), data(data, length) {
 	this->currentAttempts = 0;
 }
