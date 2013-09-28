@@ -13,7 +13,7 @@ add_library(Utilities SHARED $<TARGET_OBJECTS:UtilitiesObjects>)
 add_library(UtilitiesStatic STATIC $<TARGET_OBJECTS:UtilitiesObjects>)
 
 # requires clang
-set(CMAKE_CXX_FLAGS "-std=c++17 -fPIC -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-cast-align -Wno-exit-time-destructors -Wno-global-constructors ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -stdlib=libc++ -lc++abi -fPIC -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-cast-align -Wno-exit-time-destructors -Wno-global-constructors")
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
