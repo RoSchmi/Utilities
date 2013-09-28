@@ -42,7 +42,7 @@ void WebSocketConnection::doHandshake() {
 	uint8 hash[Cryptography::SHA1_LENGTH];
 	string base64;
 	bool found;
-	
+
 	this->bytesReceived = static_cast<uint16>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
 
 	if (this->bytesReceived == 0) {
@@ -85,7 +85,7 @@ void WebSocketConnection::doHandshake() {
 	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ");
 	response.write(base64.c_str());
 	response.write("\r\n\r\n");
-	
+
 	if (!this->ensureWrite(response.getBuffer(), response.getLength())) {
 		TCPConnection::close();
 		return;
@@ -95,8 +95,8 @@ void WebSocketConnection::doHandshake() {
 	this->bytesReceived = 0;
 }
 
-vector<const TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor) {
-	vector<const TCPConnection::Message> messages;
+vector<TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor) {
+	vector<TCPConnection::Message> messages;
 
 	if (!this->connected)
 		return messages;
@@ -121,7 +121,7 @@ vector<const TCPConnection::Message> WebSocketConnection::read(word messagesToWa
 		dataBuffer = this->buffer + this->messageLength;
 		received = this->connection.read(dataBuffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived - this->messageLength);
 		this->bytesReceived += received;
-	
+
 		if (this->bytesReceived == 0) {
 			TCPConnection::close();
 			goto close;
@@ -130,7 +130,7 @@ vector<const TCPConnection::Message> WebSocketConnection::read(word messagesToWa
 		while (this->bytesReceived > 0) {
 			if (this->bytesReceived >= 2) {
 				headerEnd = 2;
-		
+
 				FIN = dataBuffer[0] >> 7 & 0x1;
 				RSV1 = dataBuffer[0] >> 6 & 0x1;
 				RSV2 = dataBuffer[0] >> 5 & 0x1;
@@ -155,11 +155,11 @@ vector<const TCPConnection::Message> WebSocketConnection::read(word messagesToWa
 				}
 
 				switch ((OpCodes)opCode) { //ping is handled by the application, not websocket
-					case OpCodes::Text: 
+					case OpCodes::Text:
 						this->close(CloseCodes::InvalidDataType);
 						goto close;
 
-					case OpCodes::Close: 
+					case OpCodes::Close:
 						this->close(CloseCodes::Normal);
 						goto close;
 
@@ -170,14 +170,14 @@ vector<const TCPConnection::Message> WebSocketConnection::read(word messagesToWa
 
 						continue;
 
-					case OpCodes::Ping: 
+					case OpCodes::Ping:
 						if (length <= 125) {
-							dataBuffer[0] = 128 | static_cast<uint8>(OpCodes::Pong);  
+							dataBuffer[0] = 128 | static_cast<uint8>(OpCodes::Pong);
 
 							if (!this->ensureWrite(dataBuffer, 2) || !this->ensureWrite(dataBuffer + headerEnd, length)) {
 								TCPConnection::close();
 								goto close;
-							} 
+							}
 
 							headerEnd += mask ? MASK_BYTES : 0;
 							this->bytesReceived -= headerEnd;
@@ -198,7 +198,7 @@ vector<const TCPConnection::Message> WebSocketConnection::read(word messagesToWa
 						memcpy(maskBuffer, dataBuffer + headerEnd, MASK_BYTES);
 						headerEnd += MASK_BYTES;
 						payloadBuffer = dataBuffer + headerEnd;
-					
+
 						this->bytesReceived -= length + headerEnd;
 
 						for (word i = 0; i < length; i++)
@@ -260,7 +260,7 @@ bool WebSocketConnection::send(const uint8* data, word length, OpCodes opCode) {
 		reinterpret_cast<int16*>(bytes + 2)[0] = Net::hostToNetworkInt16(static_cast<int16>(length));
 	}
 
-	if (!this->ensureWrite(bytes, sendLength)) 
+	if (!this->ensureWrite(bytes, sendLength))
 		goto sendFailed;
 	if (!this->ensureWrite(data, length))
 		goto sendFailed;
@@ -279,7 +279,7 @@ bool WebSocketConnection::sendParts() {
 	uint8 bytes[4];
 	word sendLength;
 	word totalLength = 0;
-	
+
 	for (auto& i : this->messageParts)
 		totalLength += i.length;
 
@@ -297,12 +297,12 @@ bool WebSocketConnection::sendParts() {
 	}
 	else { // we dont support longer messages
 		this->close(CloseCodes::MessageTooBig);
-		return false;	
+		return false;
 	}
 
-	if (!this->ensureWrite(bytes, sendLength)) 
+	if (!this->ensureWrite(bytes, sendLength))
 		goto sendFailed;
-		
+
 	for (auto& i : this->messageParts)
 		if (!this->ensureWrite(i.data, i.length))
 			goto sendFailed;
@@ -321,7 +321,7 @@ void WebSocketConnection::close(CloseCodes code) {
 		return;
 
 	this->send(reinterpret_cast<uint8*>(&code), sizeof(uint16), OpCodes::Close);
-	
+
 	TCPConnection::close();
 }
 

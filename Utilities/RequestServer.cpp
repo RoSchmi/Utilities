@@ -7,7 +7,7 @@ using namespace Utilities;
 using namespace Utilities::Net;
 
 RequestServer::RequestServer(string port, bool usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) : RequestServer(vector<string>{ port }, vector<bool>{ usesWebSockets }, workers, retryCode, onRequest, onConnect, onDisconnect, state) {
-	
+
 }
 
 RequestServer::RequestServer(vector<string> ports, vector<bool> usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) {
@@ -60,7 +60,7 @@ void RequestServer::incomingWorkerRun(word workerNumber) {
 		while (this->incomingQueue.empty())
 			if (this->incomingCV.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
 				continue;
-		
+
 		Message request(std::move(this->incomingQueue.front()));
 		this->incomingQueue.pop();
 
@@ -109,7 +109,7 @@ void RequestServer::ioWorkerRun() {
 		this->clientListLock.lock();
 
 		for (auto& i : this->clients)
-			if (i.isDataAvailable()) 
+			if (i.isDataAvailable())
 				for (auto& k : i.read())
 					this->addToIncomingQueue(Message(i, k.data, k.length));
 
@@ -137,7 +137,7 @@ void RequestServer::addToOutgoingQueue(Message&& message) {
 	this->outgoingCV.notify_one();
 }
 
-RequestServer::Message::Message(Net::TCPConnection& connection, const uint8* data, uint64 length) : connection(connection), data(data, length) {
+RequestServer::Message::Message(Net::TCPConnection& connection, const uint8* data, word length) : connection(connection), data(data, length) {
 	this->currentAttempts = 0;
 }
 

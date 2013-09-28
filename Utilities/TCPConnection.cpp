@@ -66,8 +66,8 @@ bool TCPConnection::isDataAvailable() const {
 	return this->connection.isDataAvailable();
 }
 
-vector<const TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
-	vector<const TCPConnection::Message> messages;
+vector<TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
+	vector<TCPConnection::Message> messages;
 
 	if (!this->connected)
 		return messages;
@@ -81,7 +81,7 @@ vector<const TCPConnection::Message> TCPConnection::read(word messagesToWaitFor)
 			messages.emplace_back(true);
 			return messages;
 		}
-	
+
 		while (this->bytesReceived >= TCPConnection::MESSAGE_LENGTH_BYTES) {
 			sword length = reinterpret_cast<uint16*>(this->buffer)[0];
 			sword remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
@@ -128,7 +128,7 @@ bool TCPConnection::sendParts() {
 
 	if (!this->ensureWrite(reinterpret_cast<uint8*>(&totalLength), TCPConnection::MESSAGE_LENGTH_BYTES))
 		goto error;
-			
+
 	for (auto& i : this->messageParts)
 		if (!this->ensureWrite(i.data, i.length))
 			goto error;
