@@ -9,7 +9,6 @@
 #include <sstream>
 #include <chrono>
 
-
 namespace Utilities {
 	namespace SQLDatabase {
 		template<typename T> class TableBinder {
