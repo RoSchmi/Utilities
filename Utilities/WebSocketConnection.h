@@ -26,13 +26,10 @@ namespace Utilities {
 					MessageTooBig = 1009
 				};
 	
-				static const word HEADER_LINES = 25;
-				static const word MASK_BYTES = 4;
-
-				word messageLength;
+				uint8* currentBufferStart;
 				bool ready;
 
-				void doHandshake();
+				bool doHandshake();
 				bool send(const uint8* data, word length, OpCodes opCode);
 				void close(CloseCodes code);
 

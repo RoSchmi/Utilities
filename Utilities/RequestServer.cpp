@@ -145,6 +145,7 @@ void RequestServer::incomingWorkerRun(word workerNumber) {
 		switch (this->onRequest(request.connection, this->state, workerNumber, requestCategory, requestMethod, request.data, response.data)) {
 			case RequestResult::SUCCESS:
 				this->addToOutgoingQueue(std::move(response));
+
 				break;
 			case RequestResult::RETRY_LATER:
 				if (++request.currentAttempts >= RequestServer::MAX_RETRIES)

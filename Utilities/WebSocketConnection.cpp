@@ -12,19 +12,19 @@ using namespace Utilities;
 using namespace Utilities::Net;
 
 WebSocketConnection::WebSocketConnection(Socket&& socket) : TCPConnection(std::move(socket)) {
-	this->messageLength = 0;
 	this->ready = false;
+	this->currentBufferStart = this->buffer;
 }
 
 WebSocketConnection::WebSocketConnection(WebSocketConnection&& other) : TCPConnection(std::move(other)) {
-	this->messageLength = other.messageLength;
 	this->ready = other.ready;
+	this->currentBufferStart = other.currentBufferStart;
 }
 
 WebSocketConnection& WebSocketConnection::operator = (WebSocketConnection&& other) {
 	dynamic_cast<TCPConnection&>(*this) = std::move(dynamic_cast<TCPConnection&>(other));
-	this->messageLength = other.messageLength;
 	this->ready = other.ready;
+	this->currentBufferStart = other.currentBufferStart;
 	return *this;
 }
 
@@ -32,129 +32,113 @@ WebSocketConnection::~WebSocketConnection() {
 
 }
 
-void WebSocketConnection::doHandshake() {
-	if (!this->connected)
-		return;
+bool WebSocketConnection::doHandshake() {
+	word received = this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived);
+	this->bytesReceived += received;
 
-	word start = 0, end = 0;
+	if (received == 0)
+		return true;
+
+	word i = 0, keyPos = 0, keyEnd = 0;
+	for (; i < this->bytesReceived - 4; i++) {
+		if (i < this->bytesReceived - 18 && memcmp("Sec-WebSocket-Key:", this->buffer + i, 18) == 0)
+			keyPos = 18;
+
+		if (keyPos != 0 && keyEnd == 0 && this->buffer[i] == '\r' && this->buffer[i + 1] == '\n')
+			keyEnd = i - 1;
+
+		if (this->buffer[i] == '\r' && this->buffer[i + 1] == '\n' && this->buffer[i + 2] == '\r' && this->buffer[i + 2] == '\n' && keyPos != 0)
+			goto complete;
+	}
+
+	return false;
+
+complete:
+	while (this->buffer[keyPos] == ' ' && keyPos < this->bytesReceived)
+		keyPos++;
+	while (this->buffer[keyEnd] == ' ')
+		keyEnd--;
+
 	DataStream keyAndMagic;
 	DataStream response;
 	uint8 hash[Cryptography::SHA1_LENGTH];
 	string base64;
-	bool found;
+
+	keyAndMagic.write(this->buffer + keyPos, keyEnd - keyPos);
+	keyAndMagic.write("258EAFA5-E914-47DA-95CA-C5AB0DC85B11", 36);
+	Cryptography::SHA1(keyAndMagic.getBuffer(), keyAndMagic.getLength(), hash);
+	base64 = Misc::base64Encode(hash, Cryptography::SHA1_LENGTH);
+
+	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 57);
+	response.write(base64.c_str(), base64.size());
+	response.write("\r\n\r\n", 4);
 	
-	this->bytesReceived = static_cast<uint16>(this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived));
-
-	if (this->bytesReceived == 0) {
-		TCPConnection::close();
-		return;
-	}
-
-	for (uint16 i = 0; i < this->bytesReceived - 19U; i++) {
-		if (memcmp("Sec-WebSocket-Key: ", this->buffer + i, 19) == 0) {
-			start = i + 19;
-			end = start;
-
-			while ((this->buffer[end] != '\r' || this->buffer[end + 1] != '\n') && end < this->bytesReceived)
-				end++;
-
-			if (end == this->bytesReceived) {
-				TCPConnection::close();
-				return;
-			}
-
-			found = true;
-
-			break;
-		}
-		else {
-			found = false;
-		}
-	}
-
-	if (end == this->bytesReceived) {
-		TCPConnection::close();
-		return;
-	}
-
-	keyAndMagic.write(this->buffer + start, end - start);
-	keyAndMagic.write("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
-	Cryptography::SHA1(keyAndMagic.getBuffer(), 60, hash);
-	base64 = Misc::base64Encode(hash, 20);
-
-	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ");
-	response.write(base64.c_str());
-	response.write("\r\n\r\n");
-	
-	if (!this->ensureWrite(response.getBuffer(), response.getLength())) {
-		TCPConnection::close();
-		return;
-	}
+	if (!this->ensureWrite(response.getBuffer(), response.getLength()))
+		return true;
 
 	this->ready = true;
-	this->bytesReceived = 0;
+	this->bytesReceived -= i + 4;
+
+	return false;
 }
 
 vector<TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor) {
+	if (!this->connected)
+		throw runtime_error("Not connected.");
+
 	vector<TCPConnection::Message> messages;
 
-	if (!this->connected)
-		return messages;
-
-	do {
-		uint8 FIN;
-		uint8 RSV1;
-		uint8 RSV2;
-		uint8 RSV3;
-		uint16 opCode;
-		uint8 mask;
-		uint16 length;
-		word received;
-		uint8 headerEnd;
-		uint8* dataBuffer; //used for websocket's framing. The unmasked data from the current frame is copied to the start of connection.buffer. connection.messageLength is then used to point to the end of the data copied to the start of connection.buffer.
-
-		if (this->ready == false) {
-			this->doHandshake();
-			return messages;
-		}
-
-		dataBuffer = this->buffer + this->messageLength;
-		received = this->connection.read(dataBuffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived - this->messageLength);
-		this->bytesReceived += received;
-	
-		if (this->bytesReceived == 0) {
+	if (this->ready == false) {
+		if (this->doHandshake()) {
 			TCPConnection::close();
 			goto close;
 		}
 
+		return messages;
+	}
+
+	do {
 		while (this->bytesReceived > 0) {
+			word received = this->connection.read(this->currentBufferStart + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived);
+			this->bytesReceived += received;
+
+			if (received == 0) {
+				TCPConnection::close();
+				goto close;
+			}
+
 			if (this->bytesReceived >= 2) {
-				headerEnd = 2;
-		
-				FIN = dataBuffer[0] >> 7 & 0x1;
-				RSV1 = dataBuffer[0] >> 6 & 0x1;
-				RSV2 = dataBuffer[0] >> 5 & 0x1;
-				RSV3 = dataBuffer[0] >> 4 & 0x1;
-				opCode = dataBuffer[0] & 0xF;
+				bool RSV1 = (this->currentBufferStart[0] >> 6 & 0x1) != 0;
+				bool RSV2 = (this->currentBufferStart[0] >> 5 & 0x1) != 0;
+				bool RSV3 = (this->currentBufferStart[0] >> 4 & 0x1) != 0;
+				bool FIN = (this->currentBufferStart[0] >> 7 & 0x1) != 0;
+				bool mask = (this->currentBufferStart[1] >> 7 & 0x1) != 0;
+				uint8 opCode = this->currentBufferStart[0] & 0xF;
+				uint16 length = this->currentBufferStart[1] & 0x7F;
+				word headerEnd = 2;
 
-				mask = dataBuffer[1] >> 7 & 0x1;
-				length = dataBuffer[1] & 0x7F;
-
-				if (mask == false || RSV1 || RSV2 || RSV3) {
+				if (!mask || RSV1 || RSV2 || RSV3) {
 					this->close(CloseCodes::ProtocalError);
 					goto close;
 				}
 
 				if (length == 126) {
-					length = Net::networkToHostInt16(reinterpret_cast<uint16*>(dataBuffer + 2)[0]);
+					length = Net::networkToHostInt16(reinterpret_cast<uint16*>(this->currentBufferStart)[1]);
 					headerEnd += 2;
 				}
-				else if (length == 127) { //we don't support messages this big
+				else if (length == 127) {
 					this->close(CloseCodes::MessageTooBig);
 					goto close;
 				}
 
-				switch ((OpCodes)opCode) { //ping is handled by the application, not websocket
+				auto maskBuffer = this->currentBufferStart + headerEnd;
+				auto payloadBuffer = this->currentBufferStart + headerEnd + 4;
+				headerEnd += 4;
+
+				if (this->bytesReceived < headerEnd + length)
+					break;
+
+				switch (static_cast<OpCodes>(opCode)) {
 					case OpCodes::Text: 
 						this->close(CloseCodes::InvalidDataType);
 						goto close;
@@ -164,56 +148,36 @@ vector<TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor)
 						goto close;
 
 					case OpCodes::Pong:
-						headerEnd += mask ? MASK_BYTES : 0;
-						this->bytesReceived -= headerEnd;
-						dataBuffer = this->buffer + headerEnd;
-
 						continue;
 
 					case OpCodes::Ping: 
-						if (length <= 125) {
-							dataBuffer[0] = 128 | static_cast<uint8>(OpCodes::Pong);  
-
-							if (!this->ensureWrite(dataBuffer, 2) || !this->ensureWrite(dataBuffer + headerEnd, length)) {
-								TCPConnection::close();
-								goto close;
-							} 
-
-							headerEnd += mask ? MASK_BYTES : 0;
-							this->bytesReceived -= headerEnd;
-							dataBuffer = this->buffer + headerEnd;
-
-							continue;
-						}
-						else {
+						if (length > 125) {
 							this->close(CloseCodes::MessageTooBig);
 							goto close;
 						}
 
+						this->buffer[0] = 128 | static_cast<uint8>(OpCodes::Pong);
+
+						if (!this->ensureWrite(this->currentBufferStart, headerEnd + length)) {
+							TCPConnection::close();
+							goto close;
+						} 
+
+						continue;
+
 					case OpCodes::Continuation:
-					case OpCodes::Binary:
-						uint8 maskBuffer[MASK_BYTES];
-						uint8* payloadBuffer;
-
-						memcpy(maskBuffer, dataBuffer + headerEnd, MASK_BYTES);
-						headerEnd += MASK_BYTES;
-						payloadBuffer = dataBuffer + headerEnd;
-					
-						this->bytesReceived -= length + headerEnd;
-
+					case OpCodes::Binary:					
 						for (word i = 0; i < length; i++)
-							dataBuffer[i] = payloadBuffer[i] ^ maskBuffer[i % MASK_BYTES];
+							payloadBuffer[i] ^= maskBuffer[i % 4];
 
 						if (FIN) {
-							messages.emplace_back(this->buffer, this->messageLength + length);
-							memcpy(this->buffer, this->buffer + length + headerEnd, this->bytesReceived);
-							dataBuffer = this->buffer;
-							this->messageLength = 0;
+							messages.emplace_back(payloadBuffer, length);
+							memcpy(payloadBuffer + length, this->buffer, this->bytesReceived - length - headerEnd);
+							this->currentBufferStart = this->buffer;
 						}
 						else {
-							this->messageLength += length;
-							dataBuffer = this->buffer + this->messageLength;
-							memcpy(dataBuffer, payloadBuffer + length, this->bytesReceived);
+							memcpy(this->currentBufferStart, this->currentBufferStart + headerEnd, this->bytesReceived - headerEnd);
+							this->currentBufferStart += headerEnd;
 						}
 
 						continue;
@@ -235,69 +199,56 @@ close:
 
 bool WebSocketConnection::send(const uint8* data, word length) {
 	if (!this->connected)
-		return false;
+		throw runtime_error("Not connected.");
 
 	return this->send(data, length, OpCodes::Binary);
 }
 
 bool WebSocketConnection::send(const uint8* data, word length, OpCodes opCode) {
 	if (!this->connected)
-		return false;
+		throw runtime_error("Not connected.");
 
+	word sendLength = 2;
 	uint8 bytes[4];
-	word sendLength;
-
 	bytes[0] = 128 | static_cast<uint8>(opCode);
-	sendLength = 2;
 
 	if (length <= 125) {
 		bytes[1] = static_cast<uint8>(length);
-		reinterpret_cast<uint16*>(bytes + 2)[0] = 0;
 	}
 	else {
 		bytes[1] = 126;
 		sendLength += 2;
-		reinterpret_cast<int16*>(bytes + 2)[0] = Net::hostToNetworkInt16(static_cast<int16>(length));
+		reinterpret_cast<int16*>(bytes)[1] = Net::hostToNetworkInt16(static_cast<int16>(length));
 	}
 
-	if (!this->ensureWrite(bytes, sendLength)) 
-		goto sendFailed;
-	if (!this->ensureWrite(data, length))
-		goto sendFailed;
+	if (!this->ensureWrite(bytes, sendLength) || !this->ensureWrite(data, length)) {
+		TCPConnection::close();
+		return false;
+	}
 
 	return true;
-
-sendFailed:
-	TCPConnection::close();
-	return false;
 }
 
 bool WebSocketConnection::sendParts() {
 	if (!this->connected)
-		return false;
+		throw runtime_error("Not connected.");
 
 	uint8 bytes[4];
-	word sendLength;
+	word sendLength = 2;
 	word totalLength = 0;
 	
 	for (auto& i : this->messageParts)
 		totalLength += i.length;
 
 	bytes[0] = 128 | static_cast<uint8>(OpCodes::Binary);
-	sendLength = 2;
 
 	if (totalLength <= 125) {
 		bytes[1] = static_cast<uint8>(totalLength);
-		reinterpret_cast<uint16*>(bytes + 2)[0] = 0;
 	}
-	else if (totalLength <= 65536) {
+	else {
 		bytes[1] = 126;
 		sendLength += 2;
-		reinterpret_cast<int16*>(bytes + 2)[0] = Net::hostToNetworkInt16(static_cast<int16>(totalLength));
-	}
-	else { // we dont support longer messages
-		this->close(CloseCodes::MessageTooBig);
-		return false;	
+		reinterpret_cast<int16*>(bytes)[1] = Net::hostToNetworkInt16(static_cast<int16>(totalLength));
 	}
 
 	if (!this->ensureWrite(bytes, sendLength)) 
@@ -313,14 +264,15 @@ bool WebSocketConnection::sendParts() {
 
 sendFailed:
 	TCPConnection::close();
+
 	return false;
 }
 
 void WebSocketConnection::close(CloseCodes code) {
 	if (!this->connected)
-		return;
+		throw runtime_error("Not connected.");
 
-	this->send(reinterpret_cast<uint8*>(&code), sizeof(uint16), OpCodes::Close);
+	this->send(reinterpret_cast<uint8*>(&code), sizeof(code), OpCodes::Close);
 	
 	TCPConnection::close();
 }
