@@ -220,17 +220,17 @@ DataStream& DataStream::operator<<(cstr rhs) {
 	return *this;
 }
 
-DataStream& DataStream::operator<<(std::string& rhs) {
+DataStream& DataStream::operator<<(const std::string& rhs) {
 	this->write(rhs);
 	return *this;
 }
 
-DataStream& DataStream::operator<<(DataStream& rhs) {
+DataStream& DataStream::operator<<(const DataStream& rhs) {
 	this->write(rhs);
 	return *this;
 }
 
-DataStream& DataStream::operator<<(datetime rhs) {
+DataStream& DataStream::operator<<(const datetime rhs) {
 	this->write(rhs);
 	return *this;
 }
