@@ -156,6 +156,9 @@ namespace Utilities {
 			DataStream& operator>>(std::string& rhs);
 			DataStream& operator>>(datetime& rhs);
 
+			DataStream& operator<<(bool rhs);
+			DataStream& operator<<(float32 rhs);
+			DataStream& operator<<(float64 rhs);
 			DataStream& operator<<(uint8 rhs);
 			DataStream& operator<<(uint16 rhs);
 			DataStream& operator<<(uint32 rhs);
@@ -165,6 +168,9 @@ namespace Utilities {
 			DataStream& operator<<(int32 rhs);
 			DataStream& operator<<(int64 rhs);
 
+			DataStream& operator>>(bool& rhs);
+			DataStream& operator>>(float32& rhs);
+			DataStream& operator>>(float64& rhs);
 			DataStream& operator>>(uint8& rhs);
 			DataStream& operator>>(uint16& rhs);
 			DataStream& operator>>(uint32& rhs);

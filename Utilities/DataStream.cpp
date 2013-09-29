@@ -245,6 +245,21 @@ DataStream& DataStream::operator>>(datetime& rhs) {
 	return *this;
 }
 
+DataStream& DataStream::operator<<(bool rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(float32 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(float64 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
 DataStream& DataStream::operator<<(uint8 rhs) {
 	this->write(rhs);
 	return *this;
@@ -282,6 +297,21 @@ DataStream& DataStream::operator<<(int32 rhs) {
 
 DataStream& DataStream::operator<<(int64 rhs) {
 	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator>>(bool& rhs) {
+	rhs = this->read<bool>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(float32& rhs) {
+	rhs = this->read<float32>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(float64& rhs) {
+	rhs = this->read<float64>();
 	return *this;
 }
 
