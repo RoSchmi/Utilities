@@ -208,6 +208,9 @@ bool WebSocketConnection::send(const uint8* data, word length, OpCodes opCode) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
+	if (length > 0xFFFF)
+		throw runtime_error("Length of message cannot exceed 0xFFFF.");
+
 	word sendLength = 2;
 	uint8 bytes[4];
 	bytes[0] = 128 | static_cast<uint8>(opCode);
@@ -245,10 +248,13 @@ bool WebSocketConnection::sendParts() {
 	if (totalLength <= 125) {
 		bytes[1] = static_cast<uint8>(totalLength);
 	}
-	else {
+	else if (totalLength <= 0xFFFF) {
 		bytes[1] = 126;
 		sendLength += 2;
 		reinterpret_cast<int16*>(bytes)[1] = Net::hostToNetworkInt16(static_cast<int16>(totalLength));
+	}
+	else {
+		throw runtime_error("Combined length of messages cannot exceed 0xFFFF.");
 	}
 
 	if (!this->ensureWrite(bytes, sendLength)) 

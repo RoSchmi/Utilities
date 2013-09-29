@@ -120,6 +120,9 @@ namespace Utilities {
 				///@return True if all the data was sent, false otherwise.
 				exported virtual bool sendParts();
 
+				///Clears without sending the data in the internal pending queue.
+				exported void clearParts();
+
 				///Closes the underlying connection.
 				exported virtual void close();
 

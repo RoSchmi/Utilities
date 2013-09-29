@@ -123,6 +123,9 @@ bool TCPConnection::send(const uint8* buffer, word length) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
+	if (length > 0xFFFF)
+		throw runtime_error("Length of message cannot exceed 0xFFFF.");
+
 	if (!this->ensureWrite(reinterpret_cast<uint8*>(&length), TCPConnection::MESSAGE_LENGTH_BYTES))
 		return false;
 
@@ -139,14 +142,20 @@ void TCPConnection::addPart(const uint8* buffer, word length) {
 	this->messageParts.emplace_back(buffer, length);
 }
 
+void TCPConnection::clearParts() {
+	this->messageParts.clear();
+}
+
 bool TCPConnection::sendParts() {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
 	word totalLength = 0;
-
 	for (auto& i : this->messageParts)
 		totalLength += i.length;
+
+	if (totalLength > 0xFFFF)
+		throw runtime_error("Combined length of messages cannot exceed 0xFFFF.");
 
 	if (!this->ensureWrite(reinterpret_cast<uint8*>(&totalLength), TCPConnection::MESSAGE_LENGTH_BYTES))
 		goto error;
