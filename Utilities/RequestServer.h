@@ -34,9 +34,15 @@ namespace Utilities {
 					Message& operator=(Message&& other) = delete;
 				};
 
+				enum class RequestResult {
+					SUCCESS,
+					NO_RESPONSE,
+					RETRY_LATER
+				};
+
 				static const word MAX_RETRIES = 5;
 
-				typedef bool(*RequestCallback)(TCPConnection& connection, void* state, word workerNumber, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response);
+				typedef RequestResult(*RequestCallback)(TCPConnection& connection, void* state, word workerNumber, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response);
 				typedef void(*ConnectCallback)(TCPConnection& connection, void* state);
 				typedef void(*DisconnectCallback)(TCPConnection& connection, void* state);
 

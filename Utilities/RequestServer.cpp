@@ -132,17 +132,20 @@ void RequestServer::incomingWorkerRun(word workerNumber) {
 		uint8 requestMethod = request.data.read<uint8>();
 		Message response(request.connection, requestId);
 
-		if (!this->onRequest(request.connection, this->state, workerNumber, requestCategory, requestMethod, request.data, response.data)) {
-			if (request.currentAttempts++ < RequestServer::MAX_RETRIES) {
-				response.data.write(this->retryCode);
-			}
-			else {
-				this->addToIncomingQueue(std::move(request));
-				continue;
-			}
-		}
+		switch (this->onRequest(request.connection, this->state, workerNumber, requestCategory, requestMethod, request.data, response.data)) {
+			case RequestResult::SUCCESS:
+				this->addToOutgoingQueue(std::move(response));
+				break;
+			case RequestResult::RETRY_LATER:
+				if (++request.currentAttempts >= RequestServer::MAX_RETRIES)
+					this->addToIncomingQueue(std::move(request));
+				else
+					response.data.write(this->retryCode);
 
-		this->addToOutgoingQueue(std::move(response));
+				break;
+			case RequestResult::NO_RESPONSE:
+				break;
+		}
 	}
 }
 
