@@ -9,6 +9,7 @@
     <ClInclude Include="RequestServer.h" />
     <ClInclude Include="SQLDatabase.h" />
     <ClInclude Include="Socket.h" />
+    <ClInclude Include="TableBinder.h" />
     <ClInclude Include="TCPConnection.h" />
     <ClInclude Include="TCPServer.h" />
     <ClInclude Include="WebSocketConnection.h" />
