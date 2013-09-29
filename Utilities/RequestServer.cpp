@@ -137,9 +137,10 @@ void RequestServer::incomingWorkerRun(word workerNumber) {
 		if (request.data.getLength() < 4)
 			continue;
 
-		uint16 requestId = request.data.read<uint16>();
-		uint8 requestCategory = request.data.read<uint8>();
-		uint8 requestMethod = request.data.read<uint8>();
+		uint16 requestId;
+		uint8 requestCategory, requestMethod;
+		request.data >> requestId >> requestCategory >> requestMethod;
+
 		Message response(request.connection, requestId);
 
 		switch (this->onRequest(request.connection, this->state, workerNumber, requestCategory, requestMethod, request.data, response.data)) {
@@ -231,7 +232,5 @@ RequestServer::Message::Message(RequestServer::Message&& other) : connection(oth
 }
 
 void RequestServer::Message::writeHeader(DataStream& stream, uint16 id, uint8 category, uint8 method) {
-	stream.write(id);
-	stream.write(category);
-	stream.write(method);
+	stream << id << category << method;
 }

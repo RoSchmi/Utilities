@@ -6,27 +6,27 @@
 
 namespace Utilities {
 	/**
-	 * Seekable stream access to a buffer. Offers more safety than
-	 * Utilities::Array by disallowing reading past the end of what has been
-	 * written.
-	 *
-	 * Additionally, includes length-prefixed string parsing.
-	 */
+	* Seekable stream access to a buffer. Offers more safety than
+	* Utilities::Array by disallowing reading past the end of what has been
+	* written.
+	*
+	* Additionally, includes length-prefixed string parsing.
+	*/
 	class exported DataStream {
 		word allocation;
 		word cursor;
 		word farthestWrite;
 		uint8* buffer;
-		
+
 		static const word MINIMUM_SIZE = 32;
 
 		void resize(word newSize);
 
 		public:
 			/**
-			 * Thrown when operations on uninitialized memory would occur
-			 */
-			class ReadPastEndException { };
+			* Thrown when operations on uninitialized memory would occur
+			*/
+			class ReadPastEndException {};
 
 			DataStream();
 			DataStream(uint8* exisitingBuffer, word length);
@@ -39,8 +39,8 @@ namespace Utilities {
 			DataStream& operator=(const DataStream& other);
 
 			/**
-			 * @returns read-only reference to internal buffer
-			 */
+			* @returns read-only reference to internal buffer
+			*/
 			const uint8* getBuffer() const;
 
 			/**
@@ -49,37 +49,37 @@ namespace Utilities {
 			const uint8* getBufferAtCursor() const;
 
 			/**
-			 * @returns farthest offset considered initialized
-			 */
+			* @returns farthest offset considered initialized
+			*/
 			word getLength() const;
 
 			/**
-			 * @returns true if the cursor is past the end of initialized
-			 * memory
-			 */
+			* @returns true if the cursor is past the end of initialized
+			* memory
+			*/
 			bool isEOF() const;
 
 			/**
-			 * Resets the steam. Sets the cursor to the beginning of the
-			 * buffer and consider the entire buffer uninitialized
-			 */
+			* Resets the steam. Sets the cursor to the beginning of the
+			* buffer and consider the entire buffer uninitialized
+			*/
 			void reset();
 
 			/**
-			 * Seek to @a position bytes from the start of the buffer
-			 */
+			* Seek to @a position bytes from the start of the buffer
+			*/
 			void seek(word position);
 
 			/**
-			 * Reinitialize stream to use @a buffer, considering it
-			 * initialized up to offset @a length
-			 */
+			* Reinitialize stream to use @a buffer, considering it
+			* initialized up to offset @a length
+			*/
 			void adopt(uint8* buffer, word length);
 
 			/**
-			 * Write @a count bytes from @a bytes to the current location in
-			 * the stream, reallocating a larger buffer if need be
-			 */
+			* Write @a count bytes from @a bytes to the current location in
+			* the stream, reallocating a larger buffer if need be
+			*/
 			void write(const uint8* bytes, word count);
 
 			/**
@@ -95,23 +95,23 @@ namespace Utilities {
 			void write(cstr data);
 
 			/**
-			 * Writes the contents of @a toWrite to the buffer
-			 */
+			* Writes the contents of @a toWrite to the buffer
+			*/
 			void write(const std::string& toWrite);
 
 			/**
-			 * Writes the contents of @a toWrite to the buffer
-			 */
+			* Writes the contents of @a toWrite to the buffer
+			*/
 			void write(const DataStream& toWrite);
 
 			/**
-			 * Writes the number of milliseconds since the epoch as a uint64 to the stream.
-			 */
+			* Writes the number of milliseconds since the epoch as a uint64 to the stream.
+			*/
 			void write(const datetime& toWrite);
 
 			/**
-			 * Read @a count bytes, starting at the cursor, into @a buffer.
-			 */
+			* Read @a count bytes, starting at the cursor, into @a buffer.
+			*/
 			void read(uint8* buffer, word count);
 
 			/**
@@ -120,9 +120,9 @@ namespace Utilities {
 			const uint8* read(word count);
 
 			/**
-			 * Read a string from the stream. A string is considered two
-			 * bytes, the length, followed by that many bytes of data.
-			 */
+			* Read a string from the stream. A string is considered two
+			* bytes, the length, followed by that many bytes of data.
+			*/
 			std::string readString();
 
 			/**
@@ -131,22 +131,47 @@ namespace Utilities {
 			datetime readTimePoint();
 
 			/**
-			 * Write a value of arbitrary type to the buffer. This is
-			 * inherrently non-portable past compiler/architecture boundaries,
-			 * as it just copies sizeof(T) bytes from a pointer to the passed
-			 * value.
-			 */
+			* Write a value of arbitrary type to the buffer. This is
+			* inherrently non-portable past compiler/architecture boundaries,
+			* as it just copies sizeof(T) bytes from a pointer to the passed
+			* value.
+			*/
 			template <typename T> void write(T toWrite) {
 				this->write(reinterpret_cast<uint8*>(&toWrite), sizeof(T));
 			}
 
 			/**
-			 * Read an arbitrary value of (hopefully) type T from the buffer.
-			 * This is inherrently non-portable past compiler/architecture
-			 * boundaries, as it just casts sizeof(T) bytes to a T.
-			 */
+			* Read an arbitrary value of (hopefully) type T from the buffer.
+			* This is inherrently non-portable past compiler/architecture
+			* boundaries, as it just casts sizeof(T) bytes to a T.
+			*/
 			template <typename T> T read() {
 				return *reinterpret_cast<const T*>(this->read(sizeof(T)));
 			}
+
+			DataStream& operator<<(cstr rhs);
+			DataStream& operator<<(std::string& rhs);
+			DataStream& operator<<(DataStream& rhs);
+			DataStream& operator<<(datetime rhs);
+			DataStream& operator>>(std::string& rhs);
+			DataStream& operator>>(datetime& rhs);
+
+			DataStream& operator<<(uint8 rhs);
+			DataStream& operator<<(uint16 rhs);
+			DataStream& operator<<(uint32 rhs);
+			DataStream& operator<<(uint64 rhs);
+			DataStream& operator<<(int8 rhs);
+			DataStream& operator<<(int16 rhs);
+			DataStream& operator<<(int32 rhs);
+			DataStream& operator<<(int64 rhs);
+
+			DataStream& operator>>(uint8& rhs);
+			DataStream& operator>>(uint16& rhs);
+			DataStream& operator>>(uint32& rhs);
+			DataStream& operator>>(uint64& rhs);
+			DataStream& operator>>(int8& rhs);
+			DataStream& operator>>(int16& rhs);
+			DataStream& operator>>(int32& rhs);
+			DataStream& operator>>(int64& rhs);
 	};
 }

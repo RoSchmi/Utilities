@@ -41,18 +41,18 @@ DataStream::DataStream(const DataStream& other) {
 DataStream::~DataStream() {
 	this->cursor = 0;
 	this->farthestWrite = 0;
-	delete [] this->buffer;
+	delete[] this->buffer;
 }
 
 DataStream& DataStream::operator=(DataStream&& other) {
 	if (this->buffer)
-		delete [] this->buffer;
+		delete[] this->buffer;
 
 	this->cursor = other.cursor;
 	this->farthestWrite = other.farthestWrite;
 	this->allocation = other.allocation;
 	this->buffer = other.buffer;
-	
+
 	other.cursor = 0;
 	other.farthestWrite = 0;
 	other.allocation = 0;
@@ -63,7 +63,7 @@ DataStream& DataStream::operator=(DataStream&& other) {
 
 DataStream& DataStream::operator=(const DataStream& other) {
 	if (this->buffer)
-		delete [] this->buffer;
+		delete[] this->buffer;
 
 	this->allocation = other.allocation;
 	this->cursor = other.cursor;
@@ -103,11 +103,11 @@ void DataStream::resize(word newSize) {
 		newData = new uint8[actualsize];
 		if (this->buffer) {
 			memcpy(newData, this->buffer, newSize > this->allocation ? this->allocation : newSize);
-			delete [] this->buffer;
+			delete[] this->buffer;
 		}
 		this->buffer = newData;
 	}
-	
+
 	this->allocation = actualsize;
 }
 
@@ -125,7 +125,7 @@ void DataStream::seek(word position) {
 
 void DataStream::adopt(uint8* buffer, word length) {
 	if (this->buffer)
-		delete [] this->buffer;
+		delete[] this->buffer;
 
 	this->cursor = 0;
 	this->farthestWrite = length;
@@ -213,4 +213,114 @@ string DataStream::readString() {
 
 datetime DataStream::readTimePoint() {
 	return epoch + chrono::milliseconds(this->read<uint64>());
+}
+
+DataStream& DataStream::operator<<(cstr rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(std::string& rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(DataStream& rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(datetime rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator>>(std::string& rhs) {
+	rhs = this->readString();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(datetime& rhs) {
+	rhs = this->readTimePoint();
+	return *this;
+}
+
+DataStream& DataStream::operator<<(uint8 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(uint16 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(uint32 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(uint64 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(int8 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(int16 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(int32 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator<<(int64 rhs) {
+	this->write(rhs);
+	return *this;
+}
+
+DataStream& DataStream::operator>>(uint8& rhs) {
+	rhs = this->read<uint8>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(uint16& rhs) {
+	rhs = this->read<uint16>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(uint32& rhs) {
+	rhs = this->read<uint32>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(uint64& rhs) {
+	rhs = this->read<uint64>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(int8& rhs) {
+	rhs = this->read<int8>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(int16& rhs) {
+	rhs = this->read<int16>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(int32& rhs) {
+	rhs = this->read<int32>();
+	return *this;
+}
+
+DataStream& DataStream::operator>>(int64& rhs) {
+	rhs = this->read<int64>();
+	return *this;
 }
