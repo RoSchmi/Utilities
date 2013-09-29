@@ -31,7 +31,6 @@ namespace Utilities {
 
 				word messageLength;
 				bool ready;
-			
 
 				void doHandshake();
 				bool send(const uint8* data, word length, OpCodes opCode);
@@ -40,13 +39,13 @@ namespace Utilities {
 				public:
 					exported WebSocketConnection(Socket&& socket);
 					exported WebSocketConnection(WebSocketConnection&& other);
-					exported virtual ~WebSocketConnection();
+					exported virtual ~WebSocketConnection() override;
 					exported WebSocketConnection& operator=(WebSocketConnection&& other);
 
-					exported virtual std::vector<TCPConnection::Message> read(word messagesToWaitFor = 0);
-					exported virtual bool send(const uint8* data, word length);
-					exported virtual bool sendParts();
-					exported virtual void close();
+					exported virtual std::vector<TCPConnection::Message> read(word messagesToWaitFor = 0) override;
+					exported virtual bool send(const uint8* data, word length) override;
+					exported virtual bool sendParts() override;
+					exported virtual void close() override;
 
 					WebSocketConnection(const WebSocketConnection& other) = delete;
 					WebSocketConnection& operator=(const WebSocketConnection& other) = delete;
