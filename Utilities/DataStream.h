@@ -152,7 +152,7 @@ namespace Utilities {
 			DataStream& operator<<(cstr rhs);
 			DataStream& operator<<(const std::string& rhs);
 			DataStream& operator<<(const DataStream& rhs);
-			DataStream& operator<<(const datetime rhs);
+			DataStream& operator<<(const datetime& rhs);
 
 			DataStream& operator>>(std::string& rhs);
 			DataStream& operator>>(datetime& rhs);

@@ -230,7 +230,7 @@ DataStream& DataStream::operator<<(const DataStream& rhs) {
 	return *this;
 }
 
-DataStream& DataStream::operator<<(const datetime rhs) {
+DataStream& DataStream::operator<<(const datetime& rhs) {
 	this->write(rhs);
 	return *this;
 }

@@ -4,10 +4,24 @@
 
 #include <cstring>
 #include <stdexcept>
+#include <chrono>
 
 using namespace std;
 using namespace Utilities;
 using namespace Utilities::SQLDatabase;
+
+IDBObject::IDBObject() {
+	this->valid = true;
+	this->id = 0;
+}
+
+IDBObject::~IDBObject() {
+
+}
+
+IDBObject::operator bool() {
+	return this->valid;
+}
 
 Exception::Exception(string what) {
 	this->what = what;
@@ -111,7 +125,7 @@ void Query::resetResult() {
 	}
 }
 
-void Query::addParameter(std::string& parameter) {
+void Query::addParameter(const std::string& parameter) {
 	this->parameterLengths[this->currentParameterIndex] = 0; //ignored for text types
 	this->parameterFormats[this->currentParameterIndex] = 0; //text type
 	this->parameterValues[this->currentParameterIndex] = new int8[parameter.size() + 1];
@@ -312,15 +326,132 @@ bool Query::getBool() {
 	return this->getBool(this->currentColumn++);
 }
 
-IDBObject::IDBObject() {
-	this->valid = true;
-	this->id = 0;
+Query& Query::operator<<(const std::string& parameter) {
+	this->addParameter(parameter);
+	return *this;
 }
 
-IDBObject::~IDBObject() {
-
+Query& Query::operator<<(const DataStream& parameter) {
+	this->addParameter(parameter);
+	return *this;
 }
 
-IDBObject::operator bool() {
-	return this->valid;
+Query& Query::operator<<(const datetime& parameter) {
+	this->addParameter(static_cast<uint64>(chrono::duration_cast<chrono::milliseconds>(epoch - parameter).count()));
+	return *this;
+}
+
+Query& Query::operator<<(float64 parameter) {
+	this->addParameter(parameter);
+	return *this;
+}
+
+Query& Query::operator<<(float32 parameter) {
+	this->addParameter(parameter);
+	return *this;
+}
+
+Query& Query::operator<<(uint64 parameter) {
+	this->addParameter(parameter);
+	return *this;
+}
+
+Query& Query::operator<<(uint32 parameter) {
+	this->addParameter(parameter);
+	return *this;
+}
+
+Query& Query::operator<<(uint16 parameter) {
+	this->addParameter(parameter);
+	return *this;
+}
+
+Query& Query::operator<<(uint8 parameter) {
+	this->addParameter(static_cast<uint16>(parameter));
+	return *this;
+}
+
+Query& Query::operator<<(int64 parameter) {
+	this->addParameter(static_cast<uint64>(parameter));
+	return *this;
+}
+
+Query& Query::operator<<(int32 parameter) {
+	this->addParameter(static_cast<uint32>(parameter));
+	return *this;
+}
+
+Query& Query::operator<<(int16 parameter) {
+	this->addParameter(static_cast<uint16>(parameter));
+	return *this;
+}
+
+Query& Query::operator<<(int8 parameter) {
+	this->addParameter(static_cast<uint16>(parameter));
+	return *this;
+}
+
+Query& Query::operator<<(bool parameter) {
+	this->addParameter(parameter);
+	return *this;
+}
+
+Query& Query::operator>>(std::string& parameter) {
+	parameter = this->getString();
+	return *this;
+}
+
+Query& Query::operator>>(DataStream& parameter) {
+	parameter = this->getDataStream();
+	return *this;
+}
+
+Query& Query::operator>>(datetime parameter) {
+	parameter = epoch + chrono::milliseconds(this->getUInt64());
+	return *this;
+}
+
+Query& Query::operator>>(uint64& parameter) {
+	parameter = this->getUInt64();
+	return *this;
+}
+
+Query& Query::operator>>(uint32& parameter) {
+	parameter = this->getUInt32();
+	return *this;
+}
+
+Query& Query::operator>>(uint16& parameter) {
+	parameter = this->getUInt16();
+	return *this;
+}
+
+Query& Query::operator>>(uint8& parameter) {
+	parameter = static_cast<uint8>(this->getUInt16());
+	return *this;
+}
+
+Query& Query::operator>>(int64& parameter) {
+	parameter = static_cast<int64>(this->getUInt64());
+	return *this;
+}
+
+Query& Query::operator>>(int32& parameter) {
+	parameter = static_cast<int32>(this->getUInt32());
+	return *this;
+}
+
+Query& Query::operator>>(int16& parameter) {
+	parameter = static_cast<int16>(this->getUInt16());
+	return *this;
+}
+
+Query& Query::operator>>(int8& parameter) {
+	parameter = static_cast<int8>(this->getUInt16());
+	return *this;
+}
+
+Query& Query::operator>>(bool& parameter) {
+	parameter = static_cast<bool>(this->getBool());
+	return *this;
 }

@@ -67,17 +67,45 @@ namespace Utilities {
 				exported bool advanceToNextRow();
 				exported bool isCurrentColumnNull() const;
 
-				exported void addParameter(std::string& parameter);
+				exported void addParameter(const std::string& parameter);
 				exported void addParameter(const uint8* parameter, int32 length);
-				exported void addParameter(const Utilities::DataStream& parameter);
+				exported void addParameter(const DataStream& parameter);
 				exported void addParameter(float64 parameter);
 				exported void addParameter(uint64 parameter);
 				exported void addParameter(uint32 parameter);
 				exported void addParameter(uint16 parameter);
 				exported void addParameter(bool parameter);
 
+				exported Query& operator<<(const std::string& parameter);
+				exported Query& operator<<(const DataStream& parameter);
+				exported Query& operator<<(const datetime& parameter);
+				exported Query& operator<<(float64 parameter);
+				exported Query& operator<<(float32 parameter);
+				exported Query& operator<<(uint64 parameter);
+				exported Query& operator<<(uint32 parameter);
+				exported Query& operator<<(uint16 parameter);
+				exported Query& operator<<(uint8 parameter);
+				exported Query& operator<<(int64 parameter);
+				exported Query& operator<<(int32 parameter);
+				exported Query& operator<<(int16 parameter);
+				exported Query& operator<<(int8 parameter);
+				exported Query& operator<<(bool parameter);
+
+				exported Query& operator>>(std::string& parameter);
+				exported Query& operator>>(DataStream& parameter);
+				exported Query& operator>>(datetime parameter);
+				exported Query& operator>>(uint64& parameter);
+				exported Query& operator>>(uint32& parameter);
+				exported Query& operator>>(uint16& parameter);
+				exported Query& operator>>(uint8& parameter);
+				exported Query& operator>>(int64& parameter);
+				exported Query& operator>>(int32& parameter);
+				exported Query& operator>>(int16& parameter);
+				exported Query& operator>>(int8& parameter);
+				exported Query& operator>>(bool& parameter);
+
 				exported std::string getString(int32 column);
-				exported Utilities::DataStream getDataStream(int32 column);
+				exported DataStream getDataStream(int32 column);
 				exported uint8* getBytes(int32 column, uint8* buffer, word bufferSize);
 				exported float64 getFloat64(int32 column);
 				exported uint64 getUInt64(int32 column);
@@ -86,7 +114,7 @@ namespace Utilities {
 				exported bool getBool(int32 column);
 
 				exported std::string getString(std::string columnName);
-				exported Utilities::DataStream getDataStream(std::string columnName);
+				exported DataStream getDataStream(std::string columnName);
 				exported uint8* getBytes(std::string columnName, uint8* buffer, word bufferSize);
 				exported float64 getFloat64(std::string columnName);
 				exported uint64 getUInt64(std::string columnName);
@@ -95,7 +123,7 @@ namespace Utilities {
 				exported bool getBool(std::string columnName);
 
 				exported std::string getString();
-				exported Utilities::DataStream getDataStream();
+				exported DataStream getDataStream();
 				exported uint8* getBytes(uint8* buffer, word bufferSize);
 				exported float64 getFloat64();
 				exported uint64 getUInt64();
