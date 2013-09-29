@@ -93,8 +93,18 @@ void RequestServer::stop() {
 	this->outgoingWorker.join();
 }
 
-void RequestServer::adoptConnection(TCPConnection&& connection) {
-	RequestServer::onClientConnect(std::move(connection), this);
+TCPConnection& RequestServer::adoptConnection(TCPConnection&& connection, bool callOnClientConnect) {
+	this->clientListLock.lock();
+
+	this->clients.push_back(std::move(connection));
+	auto& newReference = this->clients.back();
+
+	if (callOnClientConnect && this->onConnect)
+		this->onConnect(newReference, this->state);
+
+	this->clientListLock.unlock();
+
+	return newReference;
 }
 
 void RequestServer::onClientConnect(TCPConnection&& connection, void* serverState) {

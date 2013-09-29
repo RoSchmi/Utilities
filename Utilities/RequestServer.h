@@ -58,7 +58,7 @@ namespace Utilities {
 
 				exported void start();
 				exported void stop();
-				exported void adoptConnection(TCPConnection&& connection);
+				exported TCPConnection& adoptConnection(TCPConnection&& connection, bool callOnClientConnect = false);
 
 				RequestServer(const RequestServer& other) = delete;
 				RequestServer& operator=(const RequestServer& other) = delete;
