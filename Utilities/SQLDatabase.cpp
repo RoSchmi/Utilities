@@ -61,6 +61,10 @@ query connection::newQuery(string queryString) const {
 	return query(queryString, this);
 }
 
+query connection::operator<<(const string& queryString) {
+	return this->newQuery(queryString);
+}
+
 
 
 query::query(string query, const connection* connection) : parentConnection(connection) {
@@ -70,6 +74,7 @@ query::query(string query, const connection* connection) : parentConnection(conn
 	this->rowCount = 0;
 	this->currentRow = -1;
 	this->currentColumn = 0;
+	this->executed = false;
 }
 
 query::query(query&& other) {
@@ -80,6 +85,7 @@ query::query(query&& other) {
 	this->rowCount = other.rowCount;
 	this->currentRow = other.currentRow;
 	this->currentColumn = other.currentColumn;
+	this->executed = other.executed;
 
 	for (int32 i = 0; i < other.currentParameterIndex; i++) {
 		this->parameterValues[i] = other.parameterValues[i];
@@ -182,6 +188,7 @@ word query::execute(const connection* connection) {
 		this->rowCount = PQntuples(this->baseResult);
 		this->currentRow = -1;
 		this->currentColumn = 0;
+		this->executed = true;
 	}
 	else if (resultType == PGRES_COMMAND_OK) {
 		this->rowCount = atoi(PQcmdTuples(this->baseResult));
@@ -209,6 +216,7 @@ bool query::isCurrentColumnNull() const {
 }
 
 string query::getString(int32 column) {
+	if (!this->executed) { this->execute(); this->advanceToNextRow(); }
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return "";
 
@@ -216,10 +224,12 @@ string query::getString(int32 column) {
 }
 
 util::data_stream query::getDataStream(int32 column) {
+	if (!this->executed) { this->execute(); this->advanceToNextRow(); }
 	return data_stream(reinterpret_cast<uint8*>(PQgetvalue(this->baseResult, this->currentRow, column)), PQgetlength(this->baseResult, this->currentRow, column));
 }
 
 uint8* query::getBytes(int32 column, uint8* buffer, word bufferSize) {
+	if (!this->executed) { this->execute(); this->advanceToNextRow(); }
 	int32 length = PQgetlength(this->baseResult, this->currentRow, column);
 	int8* temporary = PQgetvalue(this->baseResult, this->currentRow, column);
 	memcpy(buffer, temporary, static_cast<int32>(bufferSize) > length ? length : bufferSize);
@@ -227,6 +237,7 @@ uint8* query::getBytes(int32 column, uint8* buffer, word bufferSize) {
 }
 
 float64 query::getFloat64(int32 column) {
+	if (!this->executed) { this->execute(); this->advanceToNextRow(); }
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
@@ -235,6 +246,7 @@ float64 query::getFloat64(int32 column) {
 }
 
 uint64 query::getUInt64(int32 column) {
+	if (!this->executed) { this->execute(); this->advanceToNextRow(); }
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
@@ -242,6 +254,7 @@ uint64 query::getUInt64(int32 column) {
 }
 
 uint32 query::getUInt32(int32 column) {
+	if (!this->executed) { this->execute(); this->advanceToNextRow(); }
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
@@ -249,6 +262,7 @@ uint32 query::getUInt32(int32 column) {
 }
 
 uint16 query::getUInt16(int32 column) {
+	if (!this->executed) { this->execute(); this->advanceToNextRow(); }
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
@@ -256,6 +270,7 @@ uint16 query::getUInt16(int32 column) {
 }
 
 bool query::getBool(int32 column) {
+	if (!this->executed) { this->execute(); this->advanceToNextRow(); }
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return false;
 

@@ -49,6 +49,7 @@ namespace util {
 			int32 rowCount;
 			int32 currentRow;
 			int32 currentColumn;
+			bool executed;
 
 			public:
 				query(const query& other) = delete;
@@ -158,6 +159,8 @@ namespace util {
 
 				exported bool getIsConnected() const;
 				exported query newQuery(std::string queryString = "") const;
+
+				exported query operator<<(const std::string& parameter);
 		};
 	}
 }
