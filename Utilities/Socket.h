@@ -5,43 +5,43 @@
 #include <string>
 #include <array>
 
-namespace Utilities {
-	namespace Net {
+namespace util {
+	namespace net {
 		/**
-		 * Socket, a bidirectional stream endpoint
+		 * socket, a bidirectional stream endpoint
 		 *
 		 * General usage:
 		 *
-		 * Socket foo(Socket::Families::FooFamily, Socket::Types::FooProto);
+		 * socket foo(socket::families::FooFamily, socket::types::FooProto);
 		 * foo.connect("example.com", "80");
 		 * // read/write here
 		 *
 		 * Or:
 		 *
-		 * Socket foo(Socket::Families::FooFamily, Socket::Types::FooProto);
+		 * socket foo(socket::families::FooFamily, socket::types::FooProto);
 		 * foo.listen("8080");
 		 * foo.accept();
 		 */
-		class exported Socket {
+		class exported socket {
 			public:	
 				static const uint16 ADDRESS_LENGTH = 16;
 
-				enum class Types {
+				enum class types {
 					TCP
 				};
 
-				enum class Families {
+				enum class families {
 					IPV4,
 					IPV6,
 					IPAny
 				};
 
-				Socket(Families family, Types type, std::string address, std::string port);
-				Socket(Families family, Types type, std::string port);
-				Socket(Socket&& other);
-				Socket();
-				Socket& operator=(Socket&& other);
-				~Socket();
+				socket(families family, types type, std::string address, std::string port);
+				socket(families family, types type, std::string port);
+				socket(socket&& other);
+				socket();
+				socket& operator=(socket&& other);
+				~socket();
 
 				/**
 				 * Disconnect and close the connection
@@ -55,7 +55,7 @@ namespace Utilities {
 				 *
 				 * @warning Must have already called listen()
 				 */
-				Socket accept();
+				socket accept();
 
 				/**
 				 * Read up to @a bufferSize from the stream into @a buffer
@@ -76,7 +76,7 @@ namespace Utilities {
 				 * returned from @a accept(). Is always an IPv6 address (for now),
 				 * but will sometimes be an IPv4 mapped address
 				 */
-				std::array<uint8, Socket::ADDRESS_LENGTH> getRemoteAddress() const;
+				std::array<uint8, socket::ADDRESS_LENGTH> getRemoteAddress() const;
 
 				/**
 				 * @returns true if socket is connected, false otherwise
@@ -88,14 +88,14 @@ namespace Utilities {
 				 */
 				bool isDataAvailable() const;
 
-				Socket(const Socket& other) = delete;
-				Socket& operator=(const Socket& other) = delete;
+				socket(const socket& other) = delete;
+				socket& operator=(const socket& other) = delete;
 
 			private:
-				Types type;
-				Families family;
+				types type;
+				families family;
 				bool connected;
-				std::array<uint8, Socket::ADDRESS_LENGTH> remoteEndpointAddress;
+				std::array<uint8, socket::ADDRESS_LENGTH> remoteEndpointAddress;
 			
 				#ifdef WINDOWS
 					uintptr rawSocket;
@@ -103,7 +103,7 @@ namespace Utilities {
 					int rawSocket;
 				#endif
 
-				Socket(Families family, Types type);
+				socket(families family, types type);
 		};
 
 		int16 hostToNetworkInt16(int16 value);

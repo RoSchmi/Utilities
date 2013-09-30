@@ -12,29 +12,29 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace Utilities {
-	namespace Net {
-		class RequestServer {
+namespace util {
+	namespace net {
+		class request_server {
 			public:
-				struct exported Message {
-					TCPConnection& connection;
+				struct exported message {
+					tcp_connection& connection;
 					word currentAttempts;
-					DataStream data;
+					data_stream data;
 
-					Message(TCPConnection& connection, TCPConnection::Message&& message);
-					Message(TCPConnection& connection, DataStream&& data);
-					Message(TCPConnection& connection, const uint8* data, word length);
-					Message(TCPConnection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
-					Message(Message&& other);
+					message(tcp_connection& connection, tcp_connection::message&& message);
+					message(tcp_connection& connection, data_stream&& data);
+					message(tcp_connection& connection, const uint8* data, word length);
+					message(tcp_connection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
+					message(message&& other);
 
-					static void writeHeader(DataStream& stream, uint16 id, uint8 category, uint8 method);
+					static void writeHeader(data_stream& stream, uint16 id, uint8 category, uint8 method);
 
-					Message(const Message& other) = delete;
-					Message& operator=(const Message& other) = delete;
-					Message& operator=(Message&& other) = delete;
+					message(const message& other) = delete;
+					message& operator=(const message& other) = delete;
+					message& operator=(message&& other) = delete;
 				};
 
-				enum class RequestResult {
+				enum class request_result {
 					SUCCESS,
 					NO_RESPONSE,
 					RETRY_LATER
@@ -42,38 +42,38 @@ namespace Utilities {
 
 				static const word MAX_RETRIES = 5;
 
-				typedef RequestResult(*RequestCallback)(TCPConnection& connection, void* state, word workerNumber, uint8 requestCategory, uint8 requestMethod, DataStream& parameters, DataStream& response);
-				typedef void(*ConnectCallback)(TCPConnection& connection, void* state);
-				typedef void(*DisconnectCallback)(TCPConnection& connection, void* state);
+				typedef request_result(*on_request_callback)(tcp_connection& connection, void* state, word workerNumber, uint8 requestCategory, uint8 requestMethod, data_stream& parameters, data_stream& response);
+				typedef void(*on_connect_callback)(tcp_connection& connection, void* state);
+				typedef void(*on_disconnect_callback)(tcp_connection& connection, void* state);
 
-				exported RequestServer();
-				exported RequestServer(std::string port, bool usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
-				exported RequestServer(std::vector<std::string> ports, std::vector<bool> usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state = nullptr);
-				exported RequestServer(RequestServer&& other);
-				exported ~RequestServer();
-				exported RequestServer& operator=(RequestServer&& other); 
+				exported request_server();
+				exported request_server(std::string port, bool usesWebSockets, word workers, uint16 retryCode, on_request_callback onRequest, on_connect_callback onConnect, on_disconnect_callback onDisconnect, void* state = nullptr);
+				exported request_server(std::vector<std::string> ports, std::vector<bool> usesWebSockets, word workers, uint16 retryCode, on_request_callback onRequest, on_connect_callback onConnect, on_disconnect_callback onDisconnect, void* state = nullptr);
+				exported request_server(request_server&& other);
+				exported ~request_server();
+				exported request_server& operator=(request_server&& other); 
 
-				exported void addToIncomingQueue(Message&& message);
-				exported void addToOutgoingQueue(Message&& message);
+				exported void addToIncomingQueue(message&& message);
+				exported void addToOutgoingQueue(message&& message);
 
 				exported void start();
 				exported void stop();
-				exported TCPConnection& adoptConnection(TCPConnection&& connection, bool callOnClientConnect = false);
+				exported tcp_connection& adoptConnection(tcp_connection&& connection, bool callOnClientConnect = false);
 
-				RequestServer(const RequestServer& other) = delete;
-				RequestServer& operator=(const RequestServer& other) = delete;
+				request_server(const request_server& other) = delete;
+				request_server& operator=(const request_server& other) = delete;
 
 			private:
-				std::list<TCPServer> servers;
-				std::vector<TCPConnection> clients;
+				std::list<tcp_server> servers;
+				std::vector<tcp_connection> clients;
 				std::mutex clientListLock;
 
-				RequestCallback onRequest;
-				ConnectCallback onConnect;
-				DisconnectCallback onDisconnect;
+				on_request_callback onRequest;
+				on_connect_callback onConnect;
+				on_disconnect_callback onDisconnect;
 
-				std::queue<Message> incomingQueue;
-				std::queue<Message> outgoingQueue;
+				std::queue<message> incomingQueue;
+				std::queue<message> outgoingQueue;
 				std::mutex incomingLock;
 				std::mutex outgoingLock;
 				std::condition_variable incomingCV;
@@ -93,7 +93,7 @@ namespace Utilities {
 				void outgoingWorkerRun();
 				void ioWorkerRun();
 
-				static void onClientConnect(TCPConnection&& connection, void* serverState);
+				static void onClientConnect(tcp_connection&& connection, void* serverState);
 		};
 	}
 }

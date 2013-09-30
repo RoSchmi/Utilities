@@ -8,33 +8,33 @@
 #include <atomic>
 #include <string>
 
-namespace Utilities {
-	namespace Net {
-		class TCPServer {
+namespace util {
+	namespace net {
+		class tcp_server {
 			public:
-				typedef void (*OnConnectCallback)(TCPConnection&& client, void* state);
+				typedef void (*on_connect_callback)(tcp_connection&& client, void* state);
 			
-				exported TCPServer();
-				exported TCPServer(std::string port, OnConnectCallback connectCallback, void* onConnectState = nullptr, bool isWebSocket = false);
-				exported TCPServer(TCPServer&& other);
-				exported TCPServer& operator=(TCPServer&& other);
-				exported ~TCPServer();
+				exported tcp_server();
+				exported tcp_server(std::string port, on_connect_callback connectCallback, void* onConnectState = nullptr, bool isWebSocket = false);
+				exported tcp_server(tcp_server&& other);
+				exported tcp_server& operator=(tcp_server&& other);
+				exported ~tcp_server();
 
 				exported void start();
 				exported void stop();
 
-				TCPServer(const TCPServer& other) = delete;
-				TCPServer& operator=(const TCPServer& other) = delete;
+				tcp_server(const tcp_server& other) = delete;
+				tcp_server& operator=(const tcp_server& other) = delete;
 
 			private:
-				Socket listener;
+				socket listener;
 				std::string port;
 				std::thread acceptWorker;
 				std::atomic<bool> active;
 				std::atomic<bool> valid;
 				bool isWebSocket;
 				void* state;
-				OnConnectCallback connectCallback;
+				on_connect_callback connectCallback;
 
 				void acceptWorkerRun();
 		};

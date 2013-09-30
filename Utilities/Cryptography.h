@@ -2,11 +2,11 @@
 
 #include "Common.h"
 
-namespace Utilities {
+namespace util {
 	/**
 	 * Cryptographic utilities
 	 */
-	namespace Cryptography {
+	namespace crypto {
 		static const word SHA512_LENGTH = 64;
 		static const word SHA1_LENGTH = 20;
 		

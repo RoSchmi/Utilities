@@ -24,10 +24,10 @@ typedef unsigned short uint16;
 typedef unsigned char uint8;
 typedef double float64;
 typedef float float32;
-typedef std::chrono::system_clock::time_point datetime;
+typedef std::chrono::system_clock::time_point date_time;
 
-namespace Utilities {
-	static datetime epoch;
+namespace util {
+	static date_time epoch;
 }
 
 #ifdef WINDOWS

@@ -5,31 +5,31 @@
 #include <thread>
 
 using namespace std;
-using namespace Utilities;
-using namespace Utilities::Net;
+using namespace util;
+using namespace util::net;
 
-TCPConnection::TCPConnection() {
+tcp_connection::tcp_connection() {
 	this->bytesReceived = 0;
 	this->state = nullptr;
 	this->connected = false;
 	this->buffer = nullptr;
 }
 
-TCPConnection::TCPConnection(std::string address, std::string port, void* state) : connection(Socket::Families::IPAny, Socket::Types::TCP, address, port) {
+tcp_connection::tcp_connection(std::string address, std::string port, void* state) : connection(socket::families::IPAny, socket::types::TCP, address, port) {
 	this->bytesReceived = 0;
 	this->state = nullptr;
 	this->connected = true;
-	this->buffer = new uint8[TCPConnection::MESSAGE_MAX_SIZE];
+	this->buffer = new uint8[tcp_connection::MESSAGE_MAX_SIZE];
 }
 
-TCPConnection::TCPConnection(Socket&& socket) : connection(std::move(socket)) {
+tcp_connection::tcp_connection(socket&& socket) : connection(std::move(socket)) {
 	this->bytesReceived = 0;
 	this->state = nullptr;
 	this->connected = true;
-	this->buffer = new uint8[TCPConnection::MESSAGE_MAX_SIZE];
+	this->buffer = new uint8[tcp_connection::MESSAGE_MAX_SIZE];
 }
 
-TCPConnection::TCPConnection(TCPConnection&& other) : connection(std::move(other.connection)) {
+tcp_connection::tcp_connection(tcp_connection&& other) : connection(std::move(other.connection)) {
 	this->state = other.state;
 	this->connected = other.connected;
 	this->messageParts = std::move(other.messageParts);
@@ -39,7 +39,7 @@ TCPConnection::TCPConnection(TCPConnection&& other) : connection(std::move(other
 	other.connected = false;
 }
 
-TCPConnection& TCPConnection::operator = (TCPConnection&& other) {
+tcp_connection& tcp_connection::operator = (tcp_connection&& other) {
 	this->close();
 
 	this->connection = std::move(other.connection);
@@ -54,45 +54,45 @@ TCPConnection& TCPConnection::operator = (TCPConnection&& other) {
 	return *this;
 }
 
-TCPConnection::~TCPConnection() {
+tcp_connection::~tcp_connection() {
 	this->close();
 
 	if (this->buffer)
 		delete[] this->buffer;
 }
 
-array<uint8, Socket::ADDRESS_LENGTH> TCPConnection::getAddress() const {
+array<uint8, socket::ADDRESS_LENGTH> tcp_connection::getAddress() const {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
 	return this->connection.getRemoteAddress();
 }
 
-const Socket& TCPConnection::getBaseSocket() const {
+const socket& tcp_connection::getBaseSocket() const {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
 	return this->connection;
 }
 
-bool TCPConnection::isDataAvailable() const {
+bool tcp_connection::isDataAvailable() const {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
 	return this->connection.isDataAvailable();
 }
 
-vector<TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
+vector<tcp_connection::message> tcp_connection::read(word messagesToWaitFor) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
-	vector<TCPConnection::Message> messages;
+	vector<tcp_connection::message> messages;
 
 	if (!this->connected)
 		return messages;
 
 	do {
-		word received = this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived);
+		word received = this->connection.read(this->buffer + this->bytesReceived, tcp_connection::MESSAGE_MAX_SIZE - this->bytesReceived);
 		this->bytesReceived += received;
 
 		if (received == 0) {
@@ -101,12 +101,12 @@ vector<TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
 			return messages;
 		}
 	
-		while (this->bytesReceived >= TCPConnection::MESSAGE_LENGTH_BYTES) {
+		while (this->bytesReceived >= tcp_connection::MESSAGE_LENGTH_BYTES) {
 			sword length = reinterpret_cast<uint16*>(this->buffer)[0];
-			sword remaining = this->bytesReceived - TCPConnection::MESSAGE_LENGTH_BYTES - length;
+			sword remaining = this->bytesReceived - tcp_connection::MESSAGE_LENGTH_BYTES - length;
 
 			if (remaining >= 0) {
-				messages.emplace_back(this->buffer + TCPConnection::MESSAGE_LENGTH_BYTES, length);
+				messages.emplace_back(this->buffer + tcp_connection::MESSAGE_LENGTH_BYTES, length);
 				memcpy(this->buffer, this->buffer + this->bytesReceived - remaining, remaining);
 				this->bytesReceived = remaining;
 			}
@@ -119,14 +119,14 @@ vector<TCPConnection::Message> TCPConnection::read(word messagesToWaitFor) {
 	return messages;
 }
 
-bool TCPConnection::send(const uint8* buffer, word length) {
+bool tcp_connection::send(const uint8* buffer, word length) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
 	if (length > 0xFFFF)
 		throw runtime_error("Length of message cannot exceed 0xFFFF.");
 
-	if (!this->ensureWrite(reinterpret_cast<uint8*>(&length), TCPConnection::MESSAGE_LENGTH_BYTES))
+	if (!this->ensureWrite(reinterpret_cast<uint8*>(&length), tcp_connection::MESSAGE_LENGTH_BYTES))
 		return false;
 
 	if (!this->ensureWrite(buffer, length))
@@ -135,18 +135,18 @@ bool TCPConnection::send(const uint8* buffer, word length) {
 	return true;
 }
 
-void TCPConnection::addPart(const uint8* buffer, word length) {
+void tcp_connection::addPart(const uint8* buffer, word length) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
 	this->messageParts.emplace_back(buffer, length);
 }
 
-void TCPConnection::clearParts() {
+void tcp_connection::clearParts() {
 	this->messageParts.clear();
 }
 
-bool TCPConnection::sendParts() {
+bool tcp_connection::sendParts() {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
@@ -157,7 +157,7 @@ bool TCPConnection::sendParts() {
 	if (totalLength > 0xFFFF)
 		throw runtime_error("Combined length of messages cannot exceed 0xFFFF.");
 
-	if (!this->ensureWrite(reinterpret_cast<uint8*>(&totalLength), TCPConnection::MESSAGE_LENGTH_BYTES))
+	if (!this->ensureWrite(reinterpret_cast<uint8*>(&totalLength), tcp_connection::MESSAGE_LENGTH_BYTES))
 		goto error;
 			
 	for (auto& i : this->messageParts)
@@ -174,7 +174,7 @@ error:
 	return false;
 }
 
-void TCPConnection::close() {
+void tcp_connection::close() {
 	if (!this->connected)
 		return;
 
@@ -182,7 +182,7 @@ void TCPConnection::close() {
 	this->connected = false;
 }
 
-bool TCPConnection::ensureWrite(const uint8* toWrite, word writeAmount) {
+bool tcp_connection::ensureWrite(const uint8* toWrite, word writeAmount) {
 	if (writeAmount == 0)
 		return true;
 
@@ -196,35 +196,35 @@ bool TCPConnection::ensureWrite(const uint8* toWrite, word writeAmount) {
 	return sentSoFar == writeAmount;
 }
 
-TCPConnection::Message::Message(bool closed) {
+tcp_connection::message::message(bool closed) {
 	this->wasClosed = closed;
 	this->length = 0;
 	this->data = nullptr;
 }
 
-TCPConnection::Message::Message(const uint8* buffer, word length) {
+tcp_connection::message::message(const uint8* buffer, word length) {
 	this->wasClosed = false;
 	this->length = length;
 	this->data = new uint8[length];
 	memcpy(this->data, buffer, length);
 }
 
-TCPConnection::Message::~Message() {
+tcp_connection::message::~message() {
 	if (this->data)
 		delete[] this->data;
 }
 
-TCPConnection::Message::Message(const TCPConnection::Message& other) {
+tcp_connection::message::message(const tcp_connection::message& other) {
 	this->data = nullptr;
 	*this = other;
 }
 
-TCPConnection::Message::Message(TCPConnection::Message&& other) {
+tcp_connection::message::message(tcp_connection::message&& other) {
 	this->data = nullptr;
 	*this = std::move(other);
 }
 
-TCPConnection::Message& TCPConnection::Message::operator=(const TCPConnection::Message& other) {
+tcp_connection::message& tcp_connection::message::operator=(const tcp_connection::message& other) {
 	if (this->data)
 		delete[] this->data;
 
@@ -238,7 +238,7 @@ TCPConnection::Message& TCPConnection::Message::operator=(const TCPConnection::M
 }
 
 
-TCPConnection::Message& TCPConnection::Message::operator=(TCPConnection::Message&& other) {
+tcp_connection::message& tcp_connection::message::operator=(tcp_connection::message&& other) {
 	if (this->data)
 		delete [] this->data;
 

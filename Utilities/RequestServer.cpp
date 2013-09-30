@@ -4,19 +4,19 @@
 #include <stdexcept>
 
 using namespace std;
-using namespace Utilities;
-using namespace Utilities::Net;
+using namespace util;
+using namespace util::net;
 
-RequestServer::RequestServer() {
+request_server::request_server() {
 	this->running = false;
 	this->valid = false;
 }
 
-RequestServer::RequestServer(string port, bool usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) : RequestServer(vector<string>{ port }, vector<bool>{ usesWebSockets }, workers, retryCode, onRequest, onConnect, onDisconnect, state) {
+request_server::request_server(string port, bool usesWebSockets, word workers, uint16 retryCode, on_request_callback onRequest, on_connect_callback onConnect, on_disconnect_callback onDisconnect, void* state) : request_server(vector<string>{ port }, vector<bool>{ usesWebSockets }, workers, retryCode, onRequest, onConnect, onDisconnect, state) {
 	
 }
 
-RequestServer::RequestServer(vector<string> ports, vector<bool> usesWebSockets, word workers, uint16 retryCode, RequestCallback onRequest, ConnectCallback onConnect, DisconnectCallback onDisconnect, void* state) {
+request_server::request_server(vector<string> ports, vector<bool> usesWebSockets, word workers, uint16 retryCode, on_request_callback onRequest, on_connect_callback onConnect, on_disconnect_callback onDisconnect, void* state) {
 	this->running = false;
 	this->valid = true;
 	this->onConnect = onConnect;
@@ -27,20 +27,20 @@ RequestServer::RequestServer(vector<string> ports, vector<bool> usesWebSockets, 
 	this->workers = workers;
 
 	for (word i = 0; i < ports.size(); i++)
-		this->servers.emplace_back(ports[i], RequestServer::onClientConnect, this, usesWebSockets[i]);
+		this->servers.emplace_back(ports[i], request_server::onClientConnect, this, usesWebSockets[i]);
 }
 
-RequestServer::RequestServer(RequestServer&& other) {
+request_server::request_server(request_server&& other) {
 	if (other.running)
-		throw runtime_error("Cannot move a running RequestServer.");
+		throw runtime_error("Cannot move a running request_server.");
 
 	this->running = false;
 	*this = std::move(other);
 }
 
-RequestServer& RequestServer::operator = (RequestServer&& other) {
+request_server& request_server::operator = (request_server&& other) {
 	if (other.running || this->running)
-		throw runtime_error("Cannot move to or from a running RequestServer.");
+		throw runtime_error("Cannot move to or from a running request_server.");
 
 	this->valid = other.valid.load();
 	this->onConnect = other.onConnect;
@@ -55,11 +55,11 @@ RequestServer& RequestServer::operator = (RequestServer&& other) {
 	return *this;
 }
 
-RequestServer::~RequestServer() {
+request_server::~request_server() {
 	this->stop();
 }
 
-void RequestServer::start() {
+void request_server::start() {
 	if (!this->valid)
 		throw runtime_error("Default-Constructed RequestServers cannot be started.");
 
@@ -67,16 +67,16 @@ void RequestServer::start() {
 		return;
 
 	for (word i = 0; i < this->workers; i++)
-		this->incomingWorkers.push_back(thread(&RequestServer::incomingWorkerRun, this, i));
+		this->incomingWorkers.push_back(thread(&request_server::incomingWorkerRun, this, i));
 
-	this->outgoingWorker = thread(&RequestServer::outgoingWorkerRun, this);
-	this->ioWorker = thread(&RequestServer::ioWorkerRun, this);
+	this->outgoingWorker = thread(&request_server::outgoingWorkerRun, this);
+	this->ioWorker = thread(&request_server::ioWorkerRun, this);
 
 	for (auto& i : this->servers)
 		i.start();
 }
 
-void RequestServer::stop() {
+void request_server::stop() {
 	if (!this->running)
 		return;
 
@@ -93,7 +93,7 @@ void RequestServer::stop() {
 	this->outgoingWorker.join();
 }
 
-TCPConnection& RequestServer::adoptConnection(TCPConnection&& connection, bool callOnClientConnect) {
+tcp_connection& request_server::adoptConnection(tcp_connection&& connection, bool callOnClientConnect) {
 	this->clientListLock.lock();
 
 	this->clients.push_back(std::move(connection));
@@ -107,8 +107,8 @@ TCPConnection& RequestServer::adoptConnection(TCPConnection&& connection, bool c
 	return newReference;
 }
 
-void RequestServer::onClientConnect(TCPConnection&& connection, void* serverState) {
-	auto& self = *reinterpret_cast<RequestServer*>(serverState);
+void request_server::onClientConnect(tcp_connection&& connection, void* serverState) {
+	auto& self = *reinterpret_cast<request_server*>(serverState);
 
 	self.clientListLock.lock();
 
@@ -119,7 +119,7 @@ void RequestServer::onClientConnect(TCPConnection&& connection, void* serverStat
 	self.clientListLock.unlock();
 }
 
-void RequestServer::incomingWorkerRun(word workerNumber) {
+void request_server::incomingWorkerRun(word workerNumber) {
 	while (this->running) {
 		this_thread::sleep_for(chrono::microseconds(500));
 
@@ -129,7 +129,7 @@ void RequestServer::incomingWorkerRun(word workerNumber) {
 			if (this->incomingCV.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
 				continue;
 		
-		Message request(std::move(this->incomingQueue.front()));
+		message request(std::move(this->incomingQueue.front()));
 		this->incomingQueue.pop();
 
 		lock.unlock();
@@ -141,27 +141,27 @@ void RequestServer::incomingWorkerRun(word workerNumber) {
 		uint8 requestCategory, requestMethod;
 		request.data >> requestId >> requestCategory >> requestMethod;
 
-		Message response(request.connection, requestId);
+		message response(request.connection, requestId);
 
 		switch (this->onRequest(request.connection, this->state, workerNumber, requestCategory, requestMethod, request.data, response.data)) {
-			case RequestResult::SUCCESS:
+			case request_result::SUCCESS:
 				this->addToOutgoingQueue(std::move(response));
 
 				break;
-			case RequestResult::RETRY_LATER:
-				if (++request.currentAttempts >= RequestServer::MAX_RETRIES)
+			case request_result::RETRY_LATER:
+				if (++request.currentAttempts >= request_server::MAX_RETRIES)
 					this->addToIncomingQueue(std::move(request));
 				else
 					response.data.write(this->retryCode);
 
 				break;
-			case RequestResult::NO_RESPONSE:
+			case request_result::NO_RESPONSE:
 				break;
 		}
 	}
 }
 
-void RequestServer::outgoingWorkerRun() {
+void request_server::outgoingWorkerRun() {
 	while (this->running) {
 		this_thread::sleep_for(chrono::microseconds(500));
 
@@ -177,14 +177,14 @@ void RequestServer::outgoingWorkerRun() {
 	}
 }
 
-void RequestServer::ioWorkerRun() {
+void request_server::ioWorkerRun() {
 	while (this->running) {
 		this->clientListLock.lock();
 
 		for (auto& i : this->clients)
 			if (i.isDataAvailable()) 
 				for (auto& k : i.read())
-					this->addToIncomingQueue(Message(i, std::move(k)));
+					this->addToIncomingQueue(message(i, std::move(k)));
 
 		this->clientListLock.unlock();
 
@@ -192,7 +192,7 @@ void RequestServer::ioWorkerRun() {
 	}
 }
 
-void RequestServer::addToIncomingQueue(Message&& message) {
+void request_server::addToIncomingQueue(message&& message) {
 	if (!this->running)
 		return;
 
@@ -201,7 +201,7 @@ void RequestServer::addToIncomingQueue(Message&& message) {
 	this->incomingCV.notify_one();
 }
 
-void RequestServer::addToOutgoingQueue(Message&& message) {
+void request_server::addToOutgoingQueue(message&& message) {
 	if (!this->running)
 		return;
 
@@ -210,27 +210,27 @@ void RequestServer::addToOutgoingQueue(Message&& message) {
 	this->outgoingCV.notify_one();
 }
 
-RequestServer::Message::Message(TCPConnection& connection, TCPConnection::Message&& message) : connection(connection), data(message.data, message.length) {
+request_server::message::message(tcp_connection& connection, tcp_connection::message&& message) : connection(connection), data(message.data, message.length) {
 	this->currentAttempts = 0;
 }
 
-RequestServer::Message::Message(TCPConnection& connection, DataStream&& data) : connection(connection), data(std::move(data)) {
+request_server::message::message(tcp_connection& connection, data_stream&& data) : connection(connection), data(std::move(data)) {
 	this->currentAttempts = 0;
 }
 
-RequestServer::Message::Message(TCPConnection& connection, const uint8* data, word length) : connection(connection), data(data, length) {
+request_server::message::message(tcp_connection& connection, const uint8* data, word length) : connection(connection), data(data, length) {
 	this->currentAttempts = 0;
 }
 
-RequestServer::Message::Message(TCPConnection& connection, uint16 id, uint8 category, uint8 method) : connection(connection) {
-	RequestServer::Message::writeHeader(this->data, id, category, method);
+request_server::message::message(tcp_connection& connection, uint16 id, uint8 category, uint8 method) : connection(connection) {
+	request_server::message::writeHeader(this->data, id, category, method);
 	this->currentAttempts = 0;
 }
 
-RequestServer::Message::Message(RequestServer::Message&& other) : connection(other.connection), data(std::move(other.data)) {
+request_server::message::message(request_server::message&& other) : connection(other.connection), data(std::move(other.data)) {
 	this->currentAttempts = other.currentAttempts;
 }
 
-void RequestServer::Message::writeHeader(DataStream& stream, uint16 id, uint8 category, uint8 method) {
+void request_server::message::writeHeader(data_stream& stream, uint16 id, uint8 category, uint8 method) {
 	stream << id << category << method;
 }

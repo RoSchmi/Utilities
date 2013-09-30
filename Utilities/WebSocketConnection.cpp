@@ -8,32 +8,32 @@
 #include <stdexcept>
 
 using namespace std;
-using namespace Utilities;
-using namespace Utilities::Net;
+using namespace util;
+using namespace util::net;
 
-WebSocketConnection::WebSocketConnection(Socket&& socket) : TCPConnection(std::move(socket)) {
+websocket_connection::websocket_connection(socket&& socket) : tcp_connection(std::move(socket)) {
 	this->ready = false;
 	this->currentBufferStart = this->buffer;
 }
 
-WebSocketConnection::WebSocketConnection(WebSocketConnection&& other) : TCPConnection(std::move(other)) {
+websocket_connection::websocket_connection(websocket_connection&& other) : tcp_connection(std::move(other)) {
 	this->ready = other.ready;
 	this->currentBufferStart = other.currentBufferStart;
 }
 
-WebSocketConnection& WebSocketConnection::operator = (WebSocketConnection&& other) {
-	dynamic_cast<TCPConnection&>(*this) = std::move(dynamic_cast<TCPConnection&>(other));
+websocket_connection& websocket_connection::operator = (websocket_connection&& other) {
+	dynamic_cast<tcp_connection&>(*this) = std::move(dynamic_cast<tcp_connection&>(other));
 	this->ready = other.ready;
 	this->currentBufferStart = other.currentBufferStart;
 	return *this;
 }
 
-WebSocketConnection::~WebSocketConnection() {
+websocket_connection::~websocket_connection() {
 
 }
 
-bool WebSocketConnection::doHandshake() {
-	word received = this->connection.read(this->buffer + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived);
+bool websocket_connection::doHandshake() {
+	word received = this->connection.read(this->buffer + this->bytesReceived, tcp_connection::MESSAGE_MAX_SIZE - this->bytesReceived);
 	this->bytesReceived += received;
 
 	if (received == 0)
@@ -59,15 +59,15 @@ complete:
 	while (this->buffer[keyEnd] == ' ')
 		keyEnd--;
 
-	DataStream keyAndMagic;
-	DataStream response;
-	uint8 hash[Cryptography::SHA1_LENGTH];
+	data_stream keyAndMagic;
+	data_stream response;
+	uint8 hash[crypto::SHA1_LENGTH];
 	string base64;
 
 	keyAndMagic.write(this->buffer + keyPos, keyEnd - keyPos);
 	keyAndMagic.write("258EAFA5-E914-47DA-95CA-C5AB0DC85B11", 36);
-	Cryptography::SHA1(keyAndMagic.getBuffer(), keyAndMagic.getLength(), hash);
-	base64 = Misc::base64Encode(hash, Cryptography::SHA1_LENGTH);
+	crypto::SHA1(keyAndMagic.getBuffer(), keyAndMagic.getLength(), hash);
+	base64 = misc::base64Encode(hash, crypto::SHA1_LENGTH);
 
 	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 57);
 	response.write(base64.c_str(), base64.size());
@@ -82,15 +82,15 @@ complete:
 	return false;
 }
 
-vector<TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor) {
+vector<tcp_connection::message> websocket_connection::read(word messagesToWaitFor) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
-	vector<TCPConnection::Message> messages;
+	vector<tcp_connection::message> messages;
 
 	if (this->ready == false) {
 		if (this->doHandshake()) {
-			TCPConnection::close();
+			tcp_connection::close();
 			goto close;
 		}
 
@@ -99,11 +99,11 @@ vector<TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor)
 
 	do {
 		while (this->bytesReceived > 0) {
-			word received = this->connection.read(this->currentBufferStart + this->bytesReceived, TCPConnection::MESSAGE_MAX_SIZE - this->bytesReceived);
+			word received = this->connection.read(this->currentBufferStart + this->bytesReceived, tcp_connection::MESSAGE_MAX_SIZE - this->bytesReceived);
 			this->bytesReceived += received;
 
 			if (received == 0) {
-				TCPConnection::close();
+				tcp_connection::close();
 				goto close;
 			}
 
@@ -123,7 +123,7 @@ vector<TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor)
 				}
 
 				if (length == 126) {
-					length = Net::networkToHostInt16(reinterpret_cast<uint16*>(this->currentBufferStart)[1]);
+					length = net::networkToHostInt16(reinterpret_cast<uint16*>(this->currentBufferStart)[1]);
 					headerEnd += 2;
 				}
 				else if (length == 127) {
@@ -159,7 +159,7 @@ vector<TCPConnection::Message> WebSocketConnection::read(word messagesToWaitFor)
 						this->buffer[0] = 128 | static_cast<uint8>(OpCodes::Pong);
 
 						if (!this->ensureWrite(this->currentBufferStart, headerEnd + length)) {
-							TCPConnection::close();
+							tcp_connection::close();
 							goto close;
 						} 
 
@@ -197,14 +197,14 @@ close:
 	return messages;
 }
 
-bool WebSocketConnection::send(const uint8* data, word length) {
+bool websocket_connection::send(const uint8* data, word length) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
 	return this->send(data, length, OpCodes::Binary);
 }
 
-bool WebSocketConnection::send(const uint8* data, word length, OpCodes opCode) {
+bool websocket_connection::send(const uint8* data, word length, OpCodes opCode) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
@@ -221,18 +221,18 @@ bool WebSocketConnection::send(const uint8* data, word length, OpCodes opCode) {
 	else {
 		bytes[1] = 126;
 		sendLength += 2;
-		reinterpret_cast<int16*>(bytes)[1] = Net::hostToNetworkInt16(static_cast<int16>(length));
+		reinterpret_cast<int16*>(bytes)[1] = net::hostToNetworkInt16(static_cast<int16>(length));
 	}
 
 	if (!this->ensureWrite(bytes, sendLength) || !this->ensureWrite(data, length)) {
-		TCPConnection::close();
+		tcp_connection::close();
 		return false;
 	}
 
 	return true;
 }
 
-bool WebSocketConnection::sendParts() {
+bool websocket_connection::sendParts() {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
@@ -251,7 +251,7 @@ bool WebSocketConnection::sendParts() {
 	else if (totalLength <= 0xFFFF) {
 		bytes[1] = 126;
 		sendLength += 2;
-		reinterpret_cast<int16*>(bytes)[1] = Net::hostToNetworkInt16(static_cast<int16>(totalLength));
+		reinterpret_cast<int16*>(bytes)[1] = net::hostToNetworkInt16(static_cast<int16>(totalLength));
 	}
 	else {
 		throw runtime_error("Combined length of messages cannot exceed 0xFFFF.");
@@ -269,20 +269,20 @@ bool WebSocketConnection::sendParts() {
 	return true;
 
 sendFailed:
-	TCPConnection::close();
+	tcp_connection::close();
 
 	return false;
 }
 
-void WebSocketConnection::close(CloseCodes code) {
+void websocket_connection::close(CloseCodes code) {
 	if (!this->connected)
 		throw runtime_error("Not connected.");
 
 	this->send(reinterpret_cast<uint8*>(&code), sizeof(code), OpCodes::Close);
 	
-	TCPConnection::close();
+	tcp_connection::close();
 }
 
-void WebSocketConnection::close() {
+void websocket_connection::close() {
 	this->close(CloseCodes::ServerShutdown);
 }

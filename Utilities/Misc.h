@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Common.h"
 #include <string>
 
-namespace Utilities {
-	namespace Misc {
+#include "Common.h"
+
+namespace util {
+	namespace misc {
 		/**
 		 * Encode @a dataLength bytes from @a data as a base64 ASCII string
 		 */

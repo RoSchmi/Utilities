@@ -6,15 +6,15 @@
 #include "WebSocketConnection.h"
 
 using namespace std;
-using namespace Utilities;
-using namespace Utilities::Net;
+using namespace util;
+using namespace util::net;
 
-TCPServer::TCPServer() {
+tcp_server::tcp_server() {
 	this->active = false;
 	this->valid = false;
 }
 
-TCPServer::TCPServer(string port, OnConnectCallback connectCallback, void* onConnectState, bool isWebSocket) {
+tcp_server::tcp_server(string port, on_connect_callback connectCallback, void* onConnectState, bool isWebSocket) {
 	this->isWebSocket = isWebSocket;
 	this->active = false;
 	this->connectCallback = connectCallback;
@@ -23,17 +23,17 @@ TCPServer::TCPServer(string port, OnConnectCallback connectCallback, void* onCon
 	this->valid = true;
 }
 
-TCPServer::TCPServer(TCPServer&& other) {
+tcp_server::tcp_server(tcp_server&& other) {
 	if (other.active)
-		throw runtime_error("Cannot move a running TCPServer.");
+		throw runtime_error("Cannot move a running tcp_server.");
 
 	this->active = false;
 	*this = std::move(other);
 }
 
-TCPServer& TCPServer::operator = (TCPServer&& other) {
+tcp_server& tcp_server::operator = (tcp_server&& other) {
 	if (other.active || this->active)
-		throw runtime_error("Cannot move to or from a running TCPServer.");
+		throw runtime_error("Cannot move to or from a running tcp_server.");
 
 	this->isWebSocket = other.isWebSocket;
 	this->valid = other.valid.load();
@@ -45,23 +45,23 @@ TCPServer& TCPServer::operator = (TCPServer&& other) {
 	return *this;
 }
 
-TCPServer::~TCPServer() {
+tcp_server::~tcp_server() {
 	this->stop();
 }
 
-void TCPServer::start() {
+void tcp_server::start() {
 	if (!this->valid)
-		throw runtime_error("Default-Constructed TCPServer cannot be started.");
+		throw runtime_error("Default-Constructed tcp_server cannot be started.");
 
 	if (this->active)
 		return;
 
 	this->active = true;
-	this->listener = Socket(Socket::Families::IPAny, Socket::Types::TCP, this->port);
-	this->acceptWorker = thread(&TCPServer::acceptWorkerRun, this);
+	this->listener = socket(socket::families::IPAny, socket::types::TCP, this->port);
+	this->acceptWorker = thread(&tcp_server::acceptWorkerRun, this);
 }
 
-void TCPServer::stop() {
+void tcp_server::stop() {
 	if (!this->active)
 		return;
 
@@ -70,10 +70,10 @@ void TCPServer::stop() {
 	this->acceptWorker.join();
 }
 
-void TCPServer::acceptWorkerRun() {
+void tcp_server::acceptWorkerRun() {
 	while (this->active) {
-		Socket acceptedSocket = this->listener.accept();
+		socket acceptedSocket = this->listener.accept();
 		if (acceptedSocket.isConnected())
-			this->connectCallback(!this->isWebSocket ? TCPConnection(std::move(acceptedSocket)) : WebSocketConnection(std::move(acceptedSocket)), this->state);
+			this->connectCallback(!this->isWebSocket ? tcp_connection(std::move(acceptedSocket)) : websocket_connection(std::move(acceptedSocket)), this->state);
 	}
 }

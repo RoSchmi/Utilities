@@ -6,9 +6,9 @@
 
 #include <vector>
 
-namespace Utilities {
-	namespace Net {
-		class WebSocketConnection : public TCPConnection {
+namespace util {
+	namespace net {
+		class websocket_connection : public tcp_connection {
 				enum class OpCodes {
 					Continuation = 0x0,
 					Text = 0x1,
@@ -34,18 +34,18 @@ namespace Utilities {
 				void close(CloseCodes code);
 
 				public:
-					exported WebSocketConnection(Socket&& socket);
-					exported WebSocketConnection(WebSocketConnection&& other);
-					exported virtual ~WebSocketConnection() override;
-					exported WebSocketConnection& operator=(WebSocketConnection&& other);
+					exported websocket_connection(socket&& socket);
+					exported websocket_connection(websocket_connection&& other);
+					exported virtual ~websocket_connection() override;
+					exported websocket_connection& operator=(websocket_connection&& other);
 
-					exported virtual std::vector<TCPConnection::Message> read(word messagesToWaitFor = 0) override;
+					exported virtual std::vector<tcp_connection::message> read(word messagesToWaitFor = 0) override;
 					exported virtual bool send(const uint8* data, word length) override;
 					exported virtual bool sendParts() override;
 					exported virtual void close() override;
 
-					WebSocketConnection(const WebSocketConnection& other) = delete;
-					WebSocketConnection& operator=(const WebSocketConnection& other) = delete;
+					websocket_connection(const websocket_connection& other) = delete;
+					websocket_connection& operator=(const websocket_connection& other) = delete;
 		};
 	}
 }

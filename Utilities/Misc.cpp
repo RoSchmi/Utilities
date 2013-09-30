@@ -1,8 +1,8 @@
-#include "Misc.h"
+#include "misc.h"
 
 using namespace std;
 
-string Utilities::Misc::base64Encode(const uint8* data, word dataLength) {
+string util::misc::base64Encode(const uint8* data, word dataLength) {
 	static cstr characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; 
 	static uint8 endTable[] = { 0, 2, 1 };
 
@@ -27,7 +27,7 @@ string Utilities::Misc::base64Encode(const uint8* data, word dataLength) {
 	return result;
 }
 
-bool Utilities::Misc::isStringUTF8(string str) {
+bool util::misc::isStringUTF8(string str) {
 	cstr bytes = str.data();
 
 	for (uint8 i = 0, toFind = 0, byte = bytes[0]; i < static_cast<uint8>(str.size()); byte = bytes[++i]) {

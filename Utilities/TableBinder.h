@@ -9,52 +9,52 @@
 #include <sstream>
 #include <chrono>
 
-namespace Utilities {
-	namespace SQLDatabase {
-		template<typename T> class TableBinder {
+namespace util {
+	namespace sql {
+		template<typename T> class table_binder {
 			public:
-				class ColumnDefinition {
+				class column_definition {
 					public:
-						enum class DataType {
-							UInt64,
-								UInt32,
-								UInt16,
-								Float64,
-								Boolean,
-								String,
-								DateTime,
-								DataStream
+						enum class data_type {
+							uint64,
+							uint32,
+							uint16,
+							float64,
+							bool,
+							string,
+							date_time,
+							data_stream
 						};
 
-						exported ColumnDefinition(std::string name, bool updatable, uint64 T::*uint64Type) : name(name), updatable(updatable), type(DataType::UInt64) { this->value.uint64Type = uint64Type; };
-						exported ColumnDefinition(std::string name, bool updatable, uint32 T::*uint32Type) : name(name), updatable(updatable), type(DataType::UInt32) { this->value.uint32Type = uint32Type; };
-						exported ColumnDefinition(std::string name, bool updatable, uint16 T::*uint16Type) : name(name), updatable(updatable), type(DataType::UInt16) { this->value.uint16Type = uint16Type; };
-						exported ColumnDefinition(std::string name, bool updatable, float64 T::*float64Type) : name(name), updatable(updatable), type(DataType::Float64) { this->value.float64Type = float64Type; };
-						exported ColumnDefinition(std::string name, bool updatable, bool T::*booleanType) : name(name), updatable(updatable), type(DataType::Boolean) { this->value.booleanType = booleanType; };
-						exported ColumnDefinition(std::string name, bool updatable, std::string T::*stringType) : name(name), updatable(updatable), type(DataType::String) { this->value.stringType = stringType; };
-						exported ColumnDefinition(std::string name, bool updatable, datetime T::*dateTimeType) : name(name), updatable(updatable), type(DataType::DateTime) { this->value.dateTimeType = dateTimeType; };
-						exported ColumnDefinition(std::string name, bool updatable, Utilities::DataStream T::*binaryType) : name(name), updatable(updatable), type(DataType::DataStream) { this->value.binaryType = binaryType; };
+						exported column_definition(std::string name, bool updatable, uint64 T::*uint64Type) : name(name), updatable(updatable), type(data_type::uint64) { this->value.uint64Type = uint64Type; };
+						exported column_definition(std::string name, bool updatable, uint32 T::*uint32Type) : name(name), updatable(updatable), type(data_type::uint32) { this->value.uint32Type = uint32Type; };
+						exported column_definition(std::string name, bool updatable, uint16 T::*uint16Type) : name(name), updatable(updatable), type(data_type::uint16) { this->value.uint16Type = uint16Type; };
+						exported column_definition(std::string name, bool updatable, float64 T::*float64Type) : name(name), updatable(updatable), type(data_type::float64) { this->value.float64Type = float64Type; };
+						exported column_definition(std::string name, bool updatable, bool T::*booleanType) : name(name), updatable(updatable), type(data_type::bool) { this->value.booleanType = booleanType; };
+						exported column_definition(std::string name, bool updatable, std::string T::*stringType) : name(name), updatable(updatable), type(data_type::string) { this->value.stringType = stringType; };
+						exported column_definition(std::string name, bool updatable, date_time T::*dateTimeType) : name(name), updatable(updatable), type(data_type::date_time) { this->value.dateTimeType = dateTimeType; };
+						exported column_definition(std::string name, bool updatable, util::data_stream T::*binaryType) : name(name), updatable(updatable), type(data_type::data_stream) { this->value.binaryType = binaryType; };
 
 					private:
 						std::string name;
 						bool updatable;
-						DataType type;
+						data_type type;
 
-						union ValueTypes {
+						union value_types {
 							uint64 T::*uint64Type;
 							uint32 T::*uint32Type;
 							uint16 T::*uint16Type;
 							float64 T::*float64Type;
 							bool T::*booleanType;
 							std::string T::*stringType;
-							datetime T::*dateTimeType;
-							Utilities::DataStream T::*binaryType;
+							date_time T::*dateTimeType;
+							util::data_stream T::*binaryType;
 						} value;
 
-						friend class TableBinder<T>;
+						friend class table_binder<T>;
 				};
 
-				exported TableBinder(std::string name, bool lockSelectedRow) {
+				exported table_binder(std::string name, bool lockSelectedRow) {
 					this->name = name;
 					this->lockStatement = lockSelectedRow ? " FOR UPDATE;" : "";
 				}
@@ -66,8 +66,8 @@ namespace Utilities {
 					this->generateDelete();
 				}
 
-				exported void addColumnDefinition(ColumnDefinition ColumnDefinition) {
-					this->columnDefinitions.push_back(ColumnDefinition);
+				exported void addColumnDefinition(column_definition column_definition) {
+					this->columnDefinitions.push_back(column_definition);
 				}
 
 				template<typename U> exported T executeSelectSingleByField(const Connection& db, std::string field, U value) const {
@@ -147,7 +147,7 @@ namespace Utilities {
 				}
 
 			private:
-				std::vector<ColumnDefinition> columnDefinitions;
+				std::vector<column_definition> columnDefinitions;
 				std::string name;
 				std::string lockStatement;
 
@@ -156,29 +156,29 @@ namespace Utilities {
 				std::string insertQueryString;
 				std::string updateQueryString;
 
-				void addQueryParameter(ColumnDefinition& column, Query& query, T& object) const {
+				void addQueryParameter(column_definition& column, Query& query, T& object) const {
 					switch (column.type) {
-						case ColumnDefinition::DataType::UInt64: query.addParameter(object.*(column.value.uint64Type)); break;
-						case ColumnDefinition::DataType::UInt32: query.addParameter(object.*(column.value.uint32Type)); break;
-						case ColumnDefinition::DataType::UInt16: query.addParameter(object.*(column.value.uint16Type)); break;
-						case ColumnDefinition::DataType::Float64: query.addParameter(object.*(column.value.float64Type)); break;
-						case ColumnDefinition::DataType::Boolean: query.addParameter(object.*(column.value.booleanType)); break;
-						case ColumnDefinition::DataType::String: query.addParameter(object.*(column.value.stringType)); break;
-						case ColumnDefinition::DataType::DateTime: query.addParameter(static_cast<uint64>(std::chrono::duration_cast<std::chrono::milliseconds>(epoch - (object.*(column.value.dateTimeType))).count())); break;
-						case ColumnDefinition::DataType::DataStream: query.addParameter(object.*(column.value.binaryType)); break;
+						case column_definition::data_type::uint64: query.addParameter(object.*(column.value.uint64Type)); break;
+						case column_definition::data_type::uint32: query.addParameter(object.*(column.value.uint32Type)); break;
+						case column_definition::data_type::uint16: query.addParameter(object.*(column.value.uint16Type)); break;
+						case column_definition::data_type::float64: query.addParameter(object.*(column.value.float64Type)); break;
+						case column_definition::data_type::bool: query.addParameter(object.*(column.value.booleanType)); break;
+						case column_definition::data_type::string: query.addParameter(object.*(column.value.stringType)); break;
+						case column_definition::data_type::date_time: query.addParameter(static_cast<uint64>(std::chrono::duration_cast<std::chrono::milliseconds>(epoch - (object.*(column.value.dateTimeType))).count())); break;
+						case column_definition::data_type::data_stream: query.addParameter(object.*(column.value.binaryType)); break;
 					}
 				}
 
-				void setObjectField(ColumnDefinition& column, Query& query, T& object) const {
+				void setObjectField(column_definition& column, Query& query, T& object) const {
 					switch (column.type) {
-						case ColumnDefinition::DataType::UInt64: object.*(column.value.uint64Type) = query.getUInt64(column.name); break;
-						case ColumnDefinition::DataType::UInt32: object.*(column.value.uint32Type) = query.getUInt32(column.name); break;
-						case ColumnDefinition::DataType::UInt16: object.*(column.value.uint16Type) = query.getUInt16(column.name); break;
-						case ColumnDefinition::DataType::Float64: object.*(column.value.float64Type) = query.getFloat64(column.name); break;
-						case ColumnDefinition::DataType::Boolean: object.*(column.value.booleanType) = query.getBool(column.name); break;
-						case ColumnDefinition::DataType::String: object.*(column.value.stringType) = query.getString(column.name); break;
-						case ColumnDefinition::DataType::DateTime: object.*(column.value.dateTimeType) = epoch + std::chrono::milliseconds(query.getUInt64(column.name)); break;
-						case ColumnDefinition::DataType::DataStream: object.*(column.value.binaryType) = query.getDataStream(column.name); break;
+						case column_definition::data_type::uint64: object.*(column.value.uint64Type) = query.getUInt64(column.name); break;
+						case column_definition::data_type::uint32: object.*(column.value.uint32Type) = query.getUInt32(column.name); break;
+						case column_definition::data_type::uint16: object.*(column.value.uint16Type) = query.getUInt16(column.name); break;
+						case column_definition::data_type::float64: object.*(column.value.float64Type) = query.getFloat64(column.name); break;
+						case column_definition::data_type::bool: object.*(column.value.booleanType) = query.getBool(column.name); break;
+						case column_definition::data_type::string: object.*(column.value.stringType) = query.getString(column.name); break;
+						case column_definition::data_type::date_time: object.*(column.value.dateTimeType) = epoch + std::chrono::milliseconds(query.getUInt64(column.name)); break;
+						case column_definition::data_type::data_stream: object.*(column.value.binaryType) = query.getDataStream(column.name); break;
 					}
 				}
 

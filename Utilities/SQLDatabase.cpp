@@ -7,63 +7,63 @@
 #include <chrono>
 
 using namespace std;
-using namespace Utilities;
-using namespace Utilities::SQLDatabase;
+using namespace util;
+using namespace util::sql;
 
-IDBObject::IDBObject() {
+db_object::db_object() {
 	this->valid = true;
 	this->id = 0;
 }
 
-IDBObject::~IDBObject() {
+db_object::~db_object() {
 
 }
 
-IDBObject::operator bool() {
+db_object::operator bool() {
 	return this->valid;
 }
 
-Exception::Exception(string what) {
+db_exception::db_exception(string what) {
 	this->what = what;
 }
 
-Connection::Connection(string host, string port, string database, string username, string password) {
+connection::connection(string host, string port, string database, string username, string password) {
 	cstr keywords[] = { "host", "port", "dbname", "user", "password", nullptr };
 	cstr values[] = { host.c_str(), port.c_str(), database.c_str(), username.c_str(), password.c_str(), nullptr };
 	
 	this->baseConnection = PQconnectdbParams(keywords, values, false);
 
 	if (PQstatus(this->baseConnection) != CONNECTION_OK) {
-		std::string error = PQerrorMessage(this->baseConnection);
+		string error = PQerrorMessage(this->baseConnection);
 		PQfinish(this->baseConnection);
-		throw runtime_error(error);
+		throw db_exception(error);
 	}
 	else {
 		this->isConnected = true;
 	}
 }
 
-Connection::Connection(const Parameters& parameters) : Connection(parameters.host, parameters.port, parameters.database, parameters.username, parameters.password) {
+connection::connection(const parameters& parameters) : connection(parameters.host, parameters.port, parameters.database, parameters.username, parameters.password) {
 
 }
 
-Connection::~Connection() {
+connection::~connection() {
 	if (this->isConnected)
 		PQfinish(this->baseConnection);
 }
 
-bool Connection::getIsConnected() const {
+bool connection::getIsConnected() const {
 	return this->isConnected;
 }
 
 
-Query Connection::newQuery(std::string queryString) const {
-	return Query(queryString, this);
+query connection::newQuery(string queryString) const {
+	return query(queryString, this);
 }
 
 
 
-Query::Query(std::string query, const Connection* connection) : parentConnection(connection) {
+query::query(string query, const connection* connection) : parentConnection(connection) {
 	this->queryString = query;
 	this->currentParameterIndex = 0;
 	this->baseResult = nullptr;
@@ -72,7 +72,7 @@ Query::Query(std::string query, const Connection* connection) : parentConnection
 	this->currentColumn = 0;
 }
 
-Query::Query(Query&& other) {
+query::query(query&& other) {
 	this->parentConnection = other.parentConnection;
 	this->queryString = other.queryString;
 	this->currentParameterIndex = other.currentParameterIndex;
@@ -98,23 +98,23 @@ Query::Query(Query&& other) {
 	other.resetResult();
 }
 
-Query::~Query() {
+query::~query() {
 	this->resetParameters();
 	this->resetResult();
 }
 
-void Query::setQueryString(std::string query) {
+void query::setQueryString(string query) {
 	this->queryString = query;
 }
 
-void Query::resetParameters() {
+void query::resetParameters() {
 	for (uint8 i = 0; i < this->currentParameterIndex; i++)
 		delete[] this->parameterValues[i];
 
 	this->currentParameterIndex = 0;
 }
 
-void Query::resetResult() {
+void query::resetResult() {
 	this->rowCount = 0;
 	this->currentColumn = 0;
 	this->currentRow = -1;
@@ -125,7 +125,7 @@ void Query::resetResult() {
 	}
 }
 
-void Query::addParameter(const std::string& parameter) {
+void query::addParameter(const string& parameter) {
 	this->parameterLengths[this->currentParameterIndex] = 0; //ignored for text types
 	this->parameterFormats[this->currentParameterIndex] = 0; //text type
 	this->parameterValues[this->currentParameterIndex] = new int8[parameter.size() + 1];
@@ -134,7 +134,7 @@ void Query::addParameter(const std::string& parameter) {
 	this->currentParameterIndex++;
 }
 
-void Query::addParameter(const uint8* parameter, int32 length) {
+void query::addParameter(const uint8* parameter, int32 length) {
 	this->parameterLengths[this->currentParameterIndex] = length; 
 	this->parameterFormats[this->currentParameterIndex] = 1; //binary type
 	this->parameterValues[this->currentParameterIndex] = new int8[length];
@@ -143,35 +143,35 @@ void Query::addParameter(const uint8* parameter, int32 length) {
 	this->currentParameterIndex++;
 }
 
-void Query::addParameter(const Utilities::DataStream& parameter) {
+void query::addParameter(const util::data_stream& parameter) {
 	this->addParameter(parameter.getBuffer(), static_cast<uint32>(parameter.getLength()));
 }
 
-void Query::addParameter(float64 parameter) {
-	uint64 networkInt = Utilities::Net::hostToNetworkInt64(*(uint64*)&parameter);
+void query::addParameter(float64 parameter) {
+	uint64 networkInt = util::net::hostToNetworkInt64(*(uint64*)&parameter);
 	this->addParameter((uint8*)&networkInt, sizeof(parameter));
 }
 
-void Query::addParameter(uint64 parameter) {
-	int64 networkparameter = Utilities::Net::hostToNetworkInt64(parameter);
+void query::addParameter(uint64 parameter) {
+	int64 networkparameter = util::net::hostToNetworkInt64(parameter);
 	this->addParameter((uint8*)&networkparameter, sizeof(parameter));
 }
 
-void Query::addParameter(uint32 parameter) {
-	int32 networkparameter = Utilities::Net::hostToNetworkInt32(parameter);
+void query::addParameter(uint32 parameter) {
+	int32 networkparameter = util::net::hostToNetworkInt32(parameter);
 	this->addParameter((uint8*)&networkparameter, sizeof(parameter));
 }
 
-void Query::addParameter(uint16 parameter) {
-	int16 networkparameter = Utilities::Net::hostToNetworkInt16(parameter);
+void query::addParameter(uint16 parameter) {
+	int16 networkparameter = util::net::hostToNetworkInt16(parameter);
 	this->addParameter((uint8*)&networkparameter, sizeof(parameter));
 }
 
-void Query::addParameter(bool parameter) {
+void query::addParameter(bool parameter) {
 	this->addParameter((uint8*)&parameter, sizeof(parameter));
 }
 
-word Query::execute(const Connection* connection) {
+word query::execute(const connection* connection) {
 	PGconn* toUse = connection ? connection->baseConnection : this->parentConnection->baseConnection;
 
 	this->resetResult();
@@ -193,265 +193,265 @@ word Query::execute(const Connection* connection) {
 	return static_cast<word>(this->rowCount);
 }
 
-word Query::getRowCount() const {
+word query::getRowCount() const {
 	return static_cast<word>(this->rowCount);
 }
 
-bool Query::advanceToNextRow() {
+bool query::advanceToNextRow() {
 	this->currentRow++;
 	this->currentColumn = 0;
 
 	return this->currentRow < this->rowCount;
 }
 
-bool Query::isCurrentColumnNull() const {
+bool query::isCurrentColumnNull() const {
 	return PQgetisnull(this->baseResult, this->currentRow, this->currentColumn) == 1;
 }
 
-std::string Query::getString(int32 column) {
+string query::getString(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return "";
 
 	return location;
 }
 
-Utilities::DataStream Query::getDataStream(int32 column) {
-	return DataStream(reinterpret_cast<uint8*>(PQgetvalue(this->baseResult, this->currentRow, column)), PQgetlength(this->baseResult, this->currentRow, column));
+util::data_stream query::getDataStream(int32 column) {
+	return data_stream(reinterpret_cast<uint8*>(PQgetvalue(this->baseResult, this->currentRow, column)), PQgetlength(this->baseResult, this->currentRow, column));
 }
 
-uint8* Query::getBytes(int32 column, uint8* buffer, word bufferSize) {
+uint8* query::getBytes(int32 column, uint8* buffer, word bufferSize) {
 	int32 length = PQgetlength(this->baseResult, this->currentRow, column);
 	int8* temporary = PQgetvalue(this->baseResult, this->currentRow, column);
 	memcpy(buffer, temporary, static_cast<int32>(bufferSize) > length ? length : bufferSize);
 	return buffer;
 }
 
-float64 Query::getFloat64(int32 column) {
+float64 query::getFloat64(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
-	uint64 hostInt = Utilities::Net::networkToHostInt64( *reinterpret_cast<uint64*>(location));
+	uint64 hostInt = util::net::networkToHostInt64( *reinterpret_cast<uint64*>(location));
 	return *(float64*)&hostInt;
 }
 
-uint64 Query::getUInt64(int32 column) {
+uint64 query::getUInt64(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
-	return Utilities::Net::networkToHostInt64(*reinterpret_cast<uint64*>(location));
+	return util::net::networkToHostInt64(*reinterpret_cast<uint64*>(location));
 }
 
-uint32 Query::getUInt32(int32 column) {
+uint32 query::getUInt32(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
-	return Utilities::Net::networkToHostInt32(*reinterpret_cast<uint32*>(location));
+	return util::net::networkToHostInt32(*reinterpret_cast<uint32*>(location));
 }
 
-uint16 Query::getUInt16(int32 column) {
+uint16 query::getUInt16(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return 0;
 
-	return Utilities::Net::networkToHostInt16(*reinterpret_cast<uint16*>(location));
+	return util::net::networkToHostInt16(*reinterpret_cast<uint16*>(location));
 }
 
-bool Query::getBool(int32 column) {
+bool query::getBool(int32 column) {
 	int8* location = PQgetvalue(this->baseResult, this->currentRow, column);
 	if (!location) return false;
 
 	return (*location) != 0;
 }
 
-std::string Query::getString(std::string columnName) {
+string query::getString(string columnName) {
 	return this->getString(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-Utilities::DataStream Query::getDataStream(std::string columnName) {
+util::data_stream query::getDataStream(string columnName) {
 	return this->getDataStream(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-uint8* Query::getBytes(std::string columnName, uint8* buffer, word bufferSize) {
+uint8* query::getBytes(string columnName, uint8* buffer, word bufferSize) {
 	return this->getBytes(PQfnumber(this->baseResult, columnName.c_str()), buffer, bufferSize);
 }
 
-float64 Query::getFloat64(std::string columnName) {
+float64 query::getFloat64(string columnName) {
 	return this->getFloat64(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-uint64 Query::getUInt64(std::string columnName) {
+uint64 query::getUInt64(string columnName) {
 	return this->getUInt64(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-uint32 Query::getUInt32(std::string columnName) {
+uint32 query::getUInt32(string columnName) {
 	return this->getUInt32(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-uint16 Query::getUInt16(std::string columnName) {
+uint16 query::getUInt16(string columnName) {
 	return this->getUInt16(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-bool Query::getBool(std::string columnName) {
+bool query::getBool(string columnName) {
 	return this->getBool(PQfnumber(this->baseResult, columnName.c_str()));
 }
 
-std::string Query::getString() {
+string query::getString() {
 	return this->getString(this->currentColumn++);
 }
 
-Utilities::DataStream Query::getDataStream() {
+util::data_stream query::getDataStream() {
 	return this->getDataStream(this->currentColumn++);
 }
 
-uint8* Query::getBytes(uint8* buffer, word bufferSize) {
+uint8* query::getBytes(uint8* buffer, word bufferSize) {
 	return this->getBytes(this->currentColumn++, buffer, bufferSize);
 }
 
-float64 Query::getFloat64() {
+float64 query::getFloat64() {
 	return this->getFloat64(this->currentColumn++);
 }
 
-uint64 Query::getUInt64() {
+uint64 query::getUInt64() {
 	return this->getUInt64(this->currentColumn++);
 }
 
-uint32 Query::getUInt32() {
+uint32 query::getUInt32() {
 	return this->getUInt32(this->currentColumn++);
 }
 
-uint16 Query::getUInt16() {
+uint16 query::getUInt16() {
 	return this->getUInt16(this->currentColumn++);
 }
 
-bool Query::getBool() {
+bool query::getBool() {
 	return this->getBool(this->currentColumn++);
 }
 
-Query& Query::operator<<(const std::string& parameter) {
+query& query::operator<<(const string& parameter) {
 	this->addParameter(parameter);
 	return *this;
 }
 
-Query& Query::operator<<(const DataStream& parameter) {
+query& query::operator<<(const data_stream& parameter) {
 	this->addParameter(parameter);
 	return *this;
 }
 
-Query& Query::operator<<(const datetime& parameter) {
+query& query::operator<<(const date_time& parameter) {
 	this->addParameter(static_cast<uint64>(chrono::duration_cast<chrono::milliseconds>(epoch - parameter).count()));
 	return *this;
 }
 
-Query& Query::operator<<(float64 parameter) {
+query& query::operator<<(float64 parameter) {
 	this->addParameter(parameter);
 	return *this;
 }
 
-Query& Query::operator<<(float32 parameter) {
+query& query::operator<<(float32 parameter) {
 	this->addParameter(parameter);
 	return *this;
 }
 
-Query& Query::operator<<(uint64 parameter) {
+query& query::operator<<(uint64 parameter) {
 	this->addParameter(parameter);
 	return *this;
 }
 
-Query& Query::operator<<(uint32 parameter) {
+query& query::operator<<(uint32 parameter) {
 	this->addParameter(parameter);
 	return *this;
 }
 
-Query& Query::operator<<(uint16 parameter) {
+query& query::operator<<(uint16 parameter) {
 	this->addParameter(parameter);
 	return *this;
 }
 
-Query& Query::operator<<(uint8 parameter) {
+query& query::operator<<(uint8 parameter) {
 	this->addParameter(static_cast<uint16>(parameter));
 	return *this;
 }
 
-Query& Query::operator<<(int64 parameter) {
+query& query::operator<<(int64 parameter) {
 	this->addParameter(static_cast<uint64>(parameter));
 	return *this;
 }
 
-Query& Query::operator<<(int32 parameter) {
+query& query::operator<<(int32 parameter) {
 	this->addParameter(static_cast<uint32>(parameter));
 	return *this;
 }
 
-Query& Query::operator<<(int16 parameter) {
+query& query::operator<<(int16 parameter) {
 	this->addParameter(static_cast<uint16>(parameter));
 	return *this;
 }
 
-Query& Query::operator<<(int8 parameter) {
+query& query::operator<<(int8 parameter) {
 	this->addParameter(static_cast<uint16>(parameter));
 	return *this;
 }
 
-Query& Query::operator<<(bool parameter) {
+query& query::operator<<(bool parameter) {
 	this->addParameter(parameter);
 	return *this;
 }
 
-Query& Query::operator>>(std::string& parameter) {
+query& query::operator>>(string& parameter) {
 	parameter = this->getString();
 	return *this;
 }
 
-Query& Query::operator>>(DataStream& parameter) {
+query& query::operator>>(data_stream& parameter) {
 	parameter = this->getDataStream();
 	return *this;
 }
 
-Query& Query::operator>>(datetime parameter) {
+query& query::operator>>(date_time parameter) {
 	parameter = epoch + chrono::milliseconds(this->getUInt64());
 	return *this;
 }
 
-Query& Query::operator>>(uint64& parameter) {
+query& query::operator>>(uint64& parameter) {
 	parameter = this->getUInt64();
 	return *this;
 }
 
-Query& Query::operator>>(uint32& parameter) {
+query& query::operator>>(uint32& parameter) {
 	parameter = this->getUInt32();
 	return *this;
 }
 
-Query& Query::operator>>(uint16& parameter) {
+query& query::operator>>(uint16& parameter) {
 	parameter = this->getUInt16();
 	return *this;
 }
 
-Query& Query::operator>>(uint8& parameter) {
+query& query::operator>>(uint8& parameter) {
 	parameter = static_cast<uint8>(this->getUInt16());
 	return *this;
 }
 
-Query& Query::operator>>(int64& parameter) {
+query& query::operator>>(int64& parameter) {
 	parameter = static_cast<int64>(this->getUInt64());
 	return *this;
 }
 
-Query& Query::operator>>(int32& parameter) {
+query& query::operator>>(int32& parameter) {
 	parameter = static_cast<int32>(this->getUInt32());
 	return *this;
 }
 
-Query& Query::operator>>(int16& parameter) {
+query& query::operator>>(int16& parameter) {
 	parameter = static_cast<int16>(this->getUInt16());
 	return *this;
 }
 
-Query& Query::operator>>(int8& parameter) {
+query& query::operator>>(int8& parameter) {
 	parameter = static_cast<int8>(this->getUInt16());
 	return *this;
 }
 
-Query& Query::operator>>(bool& parameter) {
+query& query::operator>>(bool& parameter) {
 	parameter = static_cast<bool>(this->getBool());
 	return *this;
 }

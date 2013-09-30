@@ -16,7 +16,7 @@
 	static bool winsockInitialized = false;
 #elif defined POSIX
 	#include <sys/select.h>
-	#include <sys/socket.h>
+	#include <sys/Socket.h>
 	#include <sys/types.h>
 	#include <netinet/in.h>
 	#include <unistd.h>
@@ -28,13 +28,13 @@
 #endif
 
 using namespace std;
-using namespace Utilities;
-using namespace Utilities::Net;
+using namespace util;
+using namespace util::net;
 
 #ifdef WINDOWS
-uintptr prepareRawSocket(Socket::Families family, Socket::Types type, string address, string port, bool isListener, addrinfo** addressInfo) {
+uintptr prepareRawSocket(socket::families family, socket::types type, string address, string port, bool isListener, addrinfo** addressInfo) {
 #elif defined POSIX
-int prepareRawSocket(Socket::Families family, Socket::Types type, string address, string port, bool isListener, addrinfo** addressInfo) {
+int prepareRawSocket(socket::families family, socket::types type, string address, string port, bool isListener, addrinfo** addressInfo) {
 #endif
 	addrinfo serverHints;
 	addrinfo* serverAddrInfo;
@@ -54,19 +54,19 @@ int prepareRawSocket(Socket::Families family, Socket::Types type, string address
 	memset(&serverHints, 0, sizeof(addrinfo));
 
 	switch (family) {
-		case Socket::Families::IPV4: serverHints.ai_family = AF_INET; break;
-		case Socket::Families::IPV6: serverHints.ai_family = AF_INET6; break;
+		case socket::families::IPV4: serverHints.ai_family = AF_INET; break;
+		case socket::families::IPV6: serverHints.ai_family = AF_INET6; break;
 		#ifdef WINDOWS
-		case Socket::Families::IPAny: serverHints.ai_family = AF_INET6; break;
+		case socket::families::IPAny: serverHints.ai_family = AF_INET6; break;
 		#elif defined POSIX
-		case Socket::Families::IPAny: serverHints.ai_family = AF_UNSPEC; break;
+		case socket::families::IPAny: serverHints.ai_family = AF_UNSPEC; break;
 		#endif
-		default: throw runtime_error("Invalid Socket Family.");
+		default: throw runtime_error("Invalid socket Family.");
 	}
 
 	switch (type) {
-		case Socket::Types::TCP: serverHints.ai_socktype = SOCK_STREAM; break;
-		default: throw runtime_error("Invalid Socket Type.");
+		case socket::types::TCP: serverHints.ai_socktype = SOCK_STREAM; break;
+		default: throw runtime_error("Invalid socket Type.");
 	}
 
 	if (isListener)
@@ -99,7 +99,7 @@ int prepareRawSocket(Socket::Families family, Socket::Types type, string address
 	return rawSocket;
 }
 
-Socket::Socket(Families family, Types type) {
+socket::socket(families family, types type) {
 	this->type = type;
 	this->family = family;
 	this->connected = false;
@@ -112,11 +112,11 @@ Socket::Socket(Families family, Types type) {
 	#endif
 }
 
-Socket::Socket() {
+socket::socket() {
 	this->connected = false;
 }
 
-Socket::Socket(Families family, Types type, string address, string port) : Socket(family, type) {
+socket::socket(families family, types type, string address, string port) : socket(family, type) {
 	addrinfo* serverAddrInfo;
 	
 	this->rawSocket = prepareRawSocket(family, type, address, port, false, &serverAddrInfo);
@@ -138,7 +138,7 @@ Socket::Socket(Families family, Types type, string address, string port) : Socke
 	::freeaddrinfo(serverAddrInfo);
 }
 
-Socket::Socket(Families family, Types type, string port) : Socket(family, type) {
+socket::socket(families family, types type, string port) : socket(family, type) {
 	addrinfo* serverAddrInfo;
 
 	this->rawSocket = prepareRawSocket(family, type, "", port, true, &serverAddrInfo);
@@ -165,16 +165,16 @@ error:
 	throw runtime_error("Couldn't listen on port.");
 }
 
-Socket::Socket(Socket&& other) {
+socket::socket(socket&& other) {
 	this->connected = false;
 	*this = std::move(other);
 }
 
-Socket::~Socket() {
+socket::~socket() {
 	this->close();
 }
 
-Socket& Socket::operator=(Socket&& other) {
+net::socket& socket::operator=(socket&& other) {
 	if (this->connected)
 		this->close();
 		
@@ -196,7 +196,7 @@ Socket& Socket::operator=(Socket&& other) {
 	return *this;
 }
 
-void Socket::close() {
+void socket::close() {
 	if (!this->connected)
 		return;
 
@@ -213,51 +213,51 @@ void Socket::close() {
 #endif
 }
 
-Socket Socket::accept() {
+net::socket socket::accept() {
 	if (!this->connected)
-		throw runtime_error("Socket is not open.");
+		throw runtime_error("socket is not open.");
 
-	Socket socket(this->family, this->type);
+	socket newSocket(this->family, this->type);
 	sockaddr_storage remoteAddress;
 	size_t addressLength = sizeof(remoteAddress);
 
 #ifdef WINDOWS
-	socket.rawSocket = ::accept(this->rawSocket, reinterpret_cast<sockaddr*>(&remoteAddress), reinterpret_cast<int*>(&addressLength));
-	if (socket.rawSocket == INVALID_SOCKET)
-		return socket;
+	newSocket.rawSocket = ::accept(this->rawSocket, reinterpret_cast<sockaddr*>(&remoteAddress), reinterpret_cast<int*>(&addressLength));
+	if (newSocket.rawSocket == INVALID_SOCKET)
+		return newSocket;
 #elif defined POSIX
-	socket.rawSocket = ::accept(this->rawSocket, reinterpret_cast<sockaddr* > (&remoteAddress), reinterpret_cast<socklen_t*>(&addressLength));
-	if (socket.rawSocket == -1)
-		return socket;
+	newSocket.rawSocket = ::accept(this->rawSocket, reinterpret_cast<sockaddr* > (&remoteAddress), reinterpret_cast<socklen_t*>(&addressLength));
+	if (newSocket.rawSocket == -1)
+		return newSocket;
 #endif
 	
-	socket.connected = true;
+	newSocket.connected = true;
 
 	if (remoteAddress.ss_family == AF_INET) {
 		sockaddr_in* ipv4Address = reinterpret_cast<sockaddr_in*>(&remoteAddress);
-		memset(socket.remoteEndpointAddress.data(), 0, 10); //to copy the ipv4 address in ipv6 mapped format
-		memset(socket.remoteEndpointAddress.data() + 10, 1, 2);
+		memset(newSocket.remoteEndpointAddress.data(), 0, 10); //to copy the ipv4 address in ipv6 mapped format
+		memset(newSocket.remoteEndpointAddress.data() + 10, 1, 2);
 		#ifdef WINDOWS
-		memcpy(socket.remoteEndpointAddress.data() + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.S_un.S_addr), 4);
+		memcpy(newSocket.remoteEndpointAddress.data() + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.S_un.S_addr), 4);
 		#elif defined POSIX
-		memcpy(socket.remoteEndpointAddress.data() + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.s_addr), 4);
+		memcpy(newSocket.remoteEndpointAddress.data() + 12, reinterpret_cast<uint8*>(&ipv4Address->sin_addr.s_addr), 4);
 		#endif
 	}
 	else if (remoteAddress.ss_family == AF_INET6) {
 		sockaddr_in6* ipv6Address = reinterpret_cast<sockaddr_in6*>(&remoteAddress);
 		#ifdef WINDOWS
-		memcpy(socket.remoteEndpointAddress.data(), ipv6Address->sin6_addr.u.Byte, sizeof(ipv6Address->sin6_addr.u.Byte));
+		memcpy(newSocket.remoteEndpointAddress.data(), ipv6Address->sin6_addr.u.Byte, sizeof(ipv6Address->sin6_addr.u.Byte));
 		#elif defined POSIX
-		memcpy(socket.remoteEndpointAddress.data(), ipv6Address->sin6_addr.s6_addr, sizeof(ipv6Address->sin6_addr.s6_addr));
+		memcpy(newSocket.remoteEndpointAddress.data(), ipv6Address->sin6_addr.s6_addr, sizeof(ipv6Address->sin6_addr.s6_addr));
 		#endif
 	}
 
-	return socket;
+	return newSocket;
 }
 
-word Socket::read(uint8* buffer, word bufferSize) {
+word socket::read(uint8* buffer, word bufferSize) {
 	if (!this->connected)
-		throw runtime_error("Socket is not open.");
+		throw runtime_error("socket is not open.");
 
 	int received = ::recv(this->rawSocket, reinterpret_cast<char*>(buffer), static_cast<int>(bufferSize), 0);
 	if (received <= 0)
@@ -266,9 +266,9 @@ word Socket::read(uint8* buffer, word bufferSize) {
 	return static_cast<word>(received);
 }
 
-word Socket::write(const uint8* toWrite, word writeAmount) {
+word socket::write(const uint8* toWrite, word writeAmount) {
 	if (!this->connected)
-		throw runtime_error("Socket is not open.");
+		throw runtime_error("socket is not open.");
 
 	if (writeAmount == 0)
 		return 0;
@@ -276,23 +276,23 @@ word Socket::write(const uint8* toWrite, word writeAmount) {
 	return static_cast<word>(::send(this->rawSocket, reinterpret_cast<const char*>(toWrite), static_cast<int>(writeAmount), 0));
 }
 
-array<uint8, Socket::ADDRESS_LENGTH> Socket::getRemoteAddress() const {
+array<uint8, socket::ADDRESS_LENGTH> socket::getRemoteAddress() const {
 	if (!this->connected)
-		throw runtime_error("Socket is not open.");
+		throw runtime_error("socket is not open.");
 
 	return this->remoteEndpointAddress;
 }
 
-bool Socket::isConnected() const {
+bool socket::isConnected() const {
 	if (!this->connected)
-		throw runtime_error("Socket is not open.");
+		throw runtime_error("socket is not open.");
 
 	return this->connected;
 }
 
-bool Socket::isDataAvailable() const {
+bool socket::isDataAvailable() const {
 	if (!this->connected)
-		throw runtime_error("Socket is not open.");
+		throw runtime_error("socket is not open.");
 
 	static fd_set readSet;
 	FD_ZERO(&readSet);
@@ -311,15 +311,15 @@ bool Socket::isDataAvailable() const {
 }
 
 
-int16 Utilities::Net::hostToNetworkInt16(int16 value) {
+int16 util::net::hostToNetworkInt16(int16 value) {
 	return htons(value);
 }
 
-int32 Utilities::Net::hostToNetworkInt32(int32 value) {
+int32 util::net::hostToNetworkInt32(int32 value) {
 	return htonl(value);
 }
 
-int64 Utilities::Net::hostToNetworkInt64(int64 value) {
+int64 util::net::hostToNetworkInt64(int64 value) {
 #ifdef WINDOWS
 	return htonll(value);
 #elif defined POSIX
@@ -327,15 +327,15 @@ int64 Utilities::Net::hostToNetworkInt64(int64 value) {
 #endif
 }
 
-int16 Utilities::Net::networkToHostInt16(int16 value) {
+int16 util::net::networkToHostInt16(int16 value) {
 	return ntohs(value);
 }
 
-int32 Utilities::Net::networkToHostInt32(int32 value) {
+int32 util::net::networkToHostInt32(int32 value) {
 	return ntohl(value);
 }
 
-int64 Utilities::Net::networkToHostInt64(int64 value) {
+int64 util::net::networkToHostInt64(int64 value) {
 #ifdef WINDOWS
 	return ntohll(value);
 #elif defined POSIX

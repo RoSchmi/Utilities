@@ -11,13 +11,13 @@
 #endif
 
 using namespace std;
-using namespace Utilities;
-using namespace Utilities::Cryptography;
+using namespace util;
+using namespace util::crypto;
 
 static random_device device;
 static mt19937_64 generator(device());
 
-void Utilities::Cryptography::SHA512(const uint8* source, word length, uint8 hashOutput[SHA512_LENGTH]) {
+void util::crypto::SHA512(const uint8* source, word length, uint8 hashOutput[SHA512_LENGTH]) {
 #ifdef WINDOWS
 	HCRYPTPROV provider = 0;
 	HCRYPTHASH hasher = 0;
@@ -42,7 +42,7 @@ void Utilities::Cryptography::SHA512(const uint8* source, word length, uint8 has
 #endif
 }
 
-void Utilities::Cryptography::SHA1(const uint8* source, word length, uint8 hashOutput[SHA1_LENGTH]) {
+void util::crypto::SHA1(const uint8* source, word length, uint8 hashOutput[SHA1_LENGTH]) {
 #ifdef WINDOWS
 	HCRYPTPROV provider = 0;
 	HCRYPTHASH hasher = 0;
@@ -65,7 +65,7 @@ void Utilities::Cryptography::SHA1(const uint8* source, word length, uint8 hashO
 #endif
 }
 
-void Utilities::Cryptography::randomBytes(uint8* buffer, word count) {
+void util::crypto::randomBytes(uint8* buffer, word count) {
 	uniform_int_distribution<uint64> distribution(0, 0xFFFFFFFFFFFFFFFF);
 
 	if (count > 0) {
@@ -77,15 +77,15 @@ void Utilities::Cryptography::randomBytes(uint8* buffer, word count) {
 	}
 }
 
-int64 Utilities::Cryptography::randomInt64(int64 floor, int64 ceiling) {
+int64 util::crypto::randomInt64(int64 floor, int64 ceiling) {
 	return uniform_int_distribution<int64>(floor, ceiling)(generator);
 }
 
-uint64 Utilities::Cryptography::randomUInt64(uint64 floor, uint64 ceiling) {
+uint64 util::crypto::randomUInt64(uint64 floor, uint64 ceiling) {
 	return uniform_int_distribution<uint64>(floor, ceiling)(generator);
 }
 
 
-float64 Utilities::Cryptography::randomFloat64(float64 floor, float64 ceiling) {
+float64 util::crypto::randomFloat64(float64 floor, float64 ceiling) {
 	return uniform_real_distribution<float64>(floor, ceiling)(generator);
 }

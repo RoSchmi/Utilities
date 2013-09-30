@@ -4,15 +4,15 @@
 #include <string>
 #include <chrono>
 
-namespace Utilities {
+namespace util {
 	/**
 	* Seekable stream access to a buffer. Offers more safety than
-	* Utilities::Array by disallowing reading past the end of what has been
+	* util::Array by disallowing reading past the end of what has been
 	* written.
 	*
 	* Additionally, includes length-prefixed string parsing.
 	*/
-	class exported DataStream {
+	class exported data_stream {
 		word allocation;
 		word cursor;
 		word farthestWrite;
@@ -26,17 +26,17 @@ namespace Utilities {
 			/**
 			* Thrown when operations on uninitialized memory would occur
 			*/
-			class ReadPastEndException {};
+			class read_past_end_exception { };
 
-			DataStream();
-			DataStream(uint8* exisitingBuffer, word length);
-			DataStream(const uint8* exisitingBuffer, word length);
-			DataStream(DataStream&& other);
-			DataStream(const DataStream& other);
-			~DataStream();
+			data_stream();
+			data_stream(uint8* exisitingBuffer, word length);
+			data_stream(const uint8* exisitingBuffer, word length);
+			data_stream(data_stream&& other);
+			data_stream(const data_stream& other);
+			~data_stream();
 
-			DataStream& operator=(DataStream&& other);
-			DataStream& operator=(const DataStream& other);
+			data_stream& operator=(data_stream&& other);
+			data_stream& operator=(const data_stream& other);
 
 			/**
 			* @returns read-only reference to internal buffer
@@ -102,12 +102,12 @@ namespace Utilities {
 			/**
 			* Writes the contents of @a toWrite to the buffer
 			*/
-			void write(const DataStream& toWrite);
+			void write(const data_stream& toWrite);
 
 			/**
 			* Writes the number of milliseconds since the epoch as a uint64 to the stream.
 			*/
-			void write(const datetime& toWrite);
+			void write(const date_time& toWrite);
 
 			/**
 			* Read @a count bytes, starting at the cursor, into @a buffer.
@@ -128,7 +128,7 @@ namespace Utilities {
 			/**
 			* Read a DateTime from the stream. Considered a uint64 of milliseconds.
 			*/
-			datetime readTimePoint();
+			date_time readTimePoint();
 
 			/**
 			* Write a value of arbitrary type to the buffer. This is
@@ -149,36 +149,36 @@ namespace Utilities {
 				return *reinterpret_cast<const T*>(this->read(sizeof(T)));
 			}
 
-			DataStream& operator<<(cstr rhs);
-			DataStream& operator<<(const std::string& rhs);
-			DataStream& operator<<(const DataStream& rhs);
-			DataStream& operator<<(const datetime& rhs);
+			data_stream& operator<<(cstr rhs);
+			data_stream& operator<<(const std::string& rhs);
+			data_stream& operator<<(const data_stream& rhs);
+			data_stream& operator<<(const date_time& rhs);
 
-			DataStream& operator>>(std::string& rhs);
-			DataStream& operator>>(datetime& rhs);
+			data_stream& operator>>(std::string& rhs);
+			data_stream& operator>>(date_time& rhs);
 
-			DataStream& operator<<(bool rhs);
-			DataStream& operator<<(float32 rhs);
-			DataStream& operator<<(float64 rhs);
-			DataStream& operator<<(uint8 rhs);
-			DataStream& operator<<(uint16 rhs);
-			DataStream& operator<<(uint32 rhs);
-			DataStream& operator<<(uint64 rhs);
-			DataStream& operator<<(int8 rhs);
-			DataStream& operator<<(int16 rhs);
-			DataStream& operator<<(int32 rhs);
-			DataStream& operator<<(int64 rhs);
+			data_stream& operator<<(bool rhs);
+			data_stream& operator<<(float32 rhs);
+			data_stream& operator<<(float64 rhs);
+			data_stream& operator<<(uint8 rhs);
+			data_stream& operator<<(uint16 rhs);
+			data_stream& operator<<(uint32 rhs);
+			data_stream& operator<<(uint64 rhs);
+			data_stream& operator<<(int8 rhs);
+			data_stream& operator<<(int16 rhs);
+			data_stream& operator<<(int32 rhs);
+			data_stream& operator<<(int64 rhs);
 
-			DataStream& operator>>(bool& rhs);
-			DataStream& operator>>(float32& rhs);
-			DataStream& operator>>(float64& rhs);
-			DataStream& operator>>(uint8& rhs);
-			DataStream& operator>>(uint16& rhs);
-			DataStream& operator>>(uint32& rhs);
-			DataStream& operator>>(uint64& rhs);
-			DataStream& operator>>(int8& rhs);
-			DataStream& operator>>(int16& rhs);
-			DataStream& operator>>(int32& rhs);
-			DataStream& operator>>(int64& rhs);
+			data_stream& operator>>(bool& rhs);
+			data_stream& operator>>(float32& rhs);
+			data_stream& operator>>(float64& rhs);
+			data_stream& operator>>(uint8& rhs);
+			data_stream& operator>>(uint16& rhs);
+			data_stream& operator>>(uint32& rhs);
+			data_stream& operator>>(uint64& rhs);
+			data_stream& operator>>(int8& rhs);
+			data_stream& operator>>(int16& rhs);
+			data_stream& operator>>(int32& rhs);
+			data_stream& operator>>(int64& rhs);
 	};
 }
