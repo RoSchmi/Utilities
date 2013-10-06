@@ -1,9 +1,9 @@
 #include "PostgreSQL.h"
 
-#include "../Net/Socket.h"
-
 #include <cstring>
 #include <utility>
+
+#include "../Net/Socket.h"
 
 using namespace std;
 using namespace util;

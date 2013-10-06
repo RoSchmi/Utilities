@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../Common.h"
-
 #include <string>
 #include <array>
+
+#include "../Common.h"
 
 namespace util {
 	namespace net {

@@ -1,16 +1,12 @@
 #pragma once
 
-#include "../Common.h"
-#include "../DataStream.h"
-#include "Database.h"
-#include "TableBinder.h"
-#include "PostgreSQL.h"
-
 #include <string>
 #include <vector>
 #include <sstream>
-#include <chrono>
-#include <type_traits>
+
+#include "../Common.h"
+#include "TableBinder.h"
+#include "PostgreSQL.h"
 
 namespace util {
 	namespace sql {

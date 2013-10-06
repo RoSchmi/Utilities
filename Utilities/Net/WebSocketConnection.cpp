@@ -1,11 +1,10 @@
 #include "WebSocketConnection.h"
 
+#include <cstring>
+
 #include "../Misc.h"
 #include "../Cryptography.h"
 #include "../DataStream.h"
-
-#include <cstring>
-#include <stdexcept>
 
 using namespace std;
 using namespace util;

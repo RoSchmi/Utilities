@@ -1,9 +1,5 @@
 #pragma once
 
-#include "../Common.h"
-#include "TCPServer.h"
-#include "../DataStream.h"
-
 #include <atomic>
 #include <vector>
 #include <list>
@@ -12,6 +8,10 @@
 #include <mutex>
 #include <condition_variable>
 #include <functional>
+
+#include "../Common.h"
+#include "../DataStream.h"
+#include "TCPServer.h"
 
 namespace util {
 	namespace net {

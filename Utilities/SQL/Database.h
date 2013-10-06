@@ -1,10 +1,9 @@
 #pragma once
 
+#include <string>
+
 #include "../Common.h"
 #include "../DataStream.h"
-
-#include <string>
-#include <chrono>
 
 namespace util {
 	namespace sql {

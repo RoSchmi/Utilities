@@ -1,14 +1,12 @@
 #pragma once
 
+#include <string>
+#include <vector>
+#include <type_traits>
+
 #include "../Common.h"
 #include "../DataStream.h"
 #include "Database.h"
-
-#include <string>
-#include <vector>
-#include <sstream>
-#include <chrono>
-#include <type_traits>
 
 namespace util {
 	namespace sql {

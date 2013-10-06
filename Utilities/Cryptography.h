@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Common.h"
-
 #include <random>
 #include <array>
+
+#include "Common.h"
 
 namespace util {
 	/**

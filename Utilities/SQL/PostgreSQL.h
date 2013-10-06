@@ -1,16 +1,11 @@
 #pragma once
 
+#include <string>
+
+#include <libpq-fe.h>
+
 #include "../Common.h"
 #include "Database.h"
-
-#include <string>
-#include <chrono>
-
-#ifdef WINDOWS
-#include <libpq/libpq-fe.h>
-#elif defined POSIX
-#include <libpq-fe.h>
-#endif
 
 namespace util {
 	namespace sql {

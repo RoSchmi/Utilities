@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../Common.h"
-#include "Socket.h"
-#include "TCPConnection.h"
-
 #include <thread>
 #include <atomic>
 #include <string>
 #include <functional>
+
+#include "../Common.h"
+#include "Socket.h"
+#include "TCPConnection.h"
 
 namespace util {
 	namespace net {

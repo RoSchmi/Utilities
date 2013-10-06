@@ -1,10 +1,10 @@
 #pragma once
 
+#include <vector>
+
 #include "../Common.h"
 #include "Socket.h"
 #include "TCPConnection.h"
-
-#include <vector>
 
 namespace util {
 	namespace net {

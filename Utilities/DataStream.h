@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Common.h"
-
 #include <string>
-#include <chrono>
 #include <type_traits>
+
+#include "Common.h"
 
 namespace util {
 	/**
