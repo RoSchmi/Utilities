@@ -3,7 +3,6 @@
 #include "../Common.h"
 #include "../DataStream.h"
 #include "Database.h"
-#include "PostgreSQL.h"
 
 #include <string>
 #include <vector>
@@ -77,9 +76,8 @@ namespace util {
 						friend class table_binder<T, C, Q>;
 				};
 
-				exported table_binder(C& conn, std::string name, bool lock_row = true) : db(conn), select_by_id_query("", &conn), update_query("", &conn), insert_query("", &conn), delete_query("", &conn) {
+				exported table_binder(C& conn, std::string name) : db(conn), select_by_id_query("", &conn), update_query("", &conn), insert_query("", &conn), delete_query("", &conn) {
 					this->name = name;
-					this->lock_stmt = lock_row ? " FOR UPDATE;" : "";
 				}
 
 				exported void prepare_stmts() {
@@ -91,18 +89,6 @@ namespace util {
 
 				exported void add_def(column_definition def) {
 					this->defs.push_back(def);
-				}
-
-				template<typename U> exported T select_one_by_field(std::string field, U value) {
-					auto query = Q("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lock_stmt, &this->db);
-					query.add_para(value);
-					return this->fill_one(query);
-				}
-
-				template<typename U> exported std::vector<T> select_by_field(std::string field, U value) {
-					auto query = Q("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lock_stmt, &this->db);
-					query.add_para(value);
-					return this->fill(query);
 				}
 
 				exported T select_by_id(connection& db, PType id) {
@@ -179,7 +165,6 @@ namespace util {
 
 				std::vector<column_definition> defs;
 				std::string name;
-				std::string lock_stmt;
 
 				void add_para(column_definition& column, Q& query, T& object) {
 					switch (column.type) {
@@ -219,65 +204,10 @@ namespace util {
 					}
 				}
 
-				void generate_select_by_id() {
-					this->select_by_id_query.query_str = "SELECT * FROM " + this->name + " WHERE " + PName + " = $1" + this->lock_stmt;
-				}
-
-				void generate_delete() {
-					this->delete_query.query_str = "DELETE FROM " + this->name + " WHERE Id = $1;";
-				}
-
-				void generate_insert() {
-					std::stringstream query;
-					query << "INSERT INTO " << this->name << " (";
-
-					bool isFirst = true;
-					for (auto i : this->defs) {
-						if (!isFirst)
-							query << ", ";
-						else
-							isFirst = false;
-						query << i.name;
-					}
-
-					query << ") VALUES (";
-					isFirst = true;
-
-					word column_index = 0;
-					for (auto i : this->defs) {
-						if (!isFirst)
-							query << ", ";
-						else
-							isFirst = false;
-						query << "$" << ++column_index;
-					}
-
-					query << ");";
-
-					this->insert_query.query_str = query.str();
-				}
-
-				void generate_update() {
-					std::stringstream query;
-					query << "UPDATE " << this->name << " SET ";
-
-					word column_index = 0;
-					bool isFirst = true;
-					for (auto i : this->defs) {
-						if (i.updatable) {
-							if (!isFirst)
-								query << ", ";
-							else
-								isFirst = false;
-
-							query << i.name << " = $" << ++column_index;
-						}
-					}
-
-					query << " WHERE Id = $" << column_index + 1;
-
-					this->update_query.query_str = query.str();
-				}
+				virtual void generate_select_by_id() = 0;
+				virtual void generate_delete() = 0;
+				virtual void generate_insert() = 0;
+				virtual void generate_update() = 0;
 		};
 	}
 }

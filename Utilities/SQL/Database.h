@@ -102,6 +102,38 @@ namespace util {
 				exported virtual int8 get_int8() = 0;
 				exported virtual bool get_bool() = 0;
 
+				exported virtual uint8* get_bytes(std::string column, uint8* buffer, word count) = 0;
+				exported virtual std::string get_string(std::string column) = 0;
+				exported virtual date_time get_date_time(std::string column) = 0;
+				exported virtual data_stream get_data_stream(std::string column) = 0;
+				exported virtual float64 get_float64(std::string column) = 0;
+				exported virtual float32 get_float32(std::string column) = 0;
+				exported virtual uint64 get_uint64(std::string column) = 0;
+				exported virtual uint32 get_uint32(std::string column) = 0;
+				exported virtual uint16 get_uint16(std::string column) = 0;
+				exported virtual uint8 get_uint8(std::string column) = 0;
+				exported virtual int64 get_int64(std::string column) = 0;
+				exported virtual int32 get_int32(std::string column) = 0;
+				exported virtual int16 get_int16(std::string column) = 0;
+				exported virtual int8 get_int8(std::string column) = 0;
+				exported virtual bool get_bool(std::string column) = 0;
+
+				exported virtual uint8* get_bytes(word column, uint8* buffer, word count) = 0;
+				exported virtual std::string get_string(word column) = 0;
+				exported virtual date_time get_date_time(word column) = 0;
+				exported virtual data_stream get_data_stream(word column) = 0;
+				exported virtual float64 get_float64(word column) = 0;
+				exported virtual float32 get_float32(word column) = 0;
+				exported virtual uint64 get_uint64(word column) = 0;
+				exported virtual uint32 get_uint32(word column) = 0;
+				exported virtual uint16 get_uint16(word column) = 0;
+				exported virtual uint8 get_uint8(word column) = 0;
+				exported virtual int64 get_int64(word column) = 0;
+				exported virtual int32 get_int32(word column) = 0;
+				exported virtual int16 get_int16(word column) = 0;
+				exported virtual int8 get_int8(word column) = 0;
+				exported virtual bool get_bool(word column) = 0;
+
 				exported query& operator<<(const std::string& para);
 				exported query& operator<<(const date_time& para);
 				exported query& operator<<(const data_stream& para);
