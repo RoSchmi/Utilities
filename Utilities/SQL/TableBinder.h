@@ -155,7 +155,7 @@ namespace util {
 					return result;
 				}
 
-			private:
+			protected:
 				C& db;
 
 				Q select_by_id_query;
