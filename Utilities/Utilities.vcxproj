@@ -5,6 +5,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="Cryptography.h" />
     <ClInclude Include="DataStream.h" />
+    <ClInclude Include="Event.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="Net\RequestServer.h" />
     <ClInclude Include="Net\Socket.h" />
