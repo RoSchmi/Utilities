@@ -10,7 +10,7 @@
     <ClInclude Include="Socket.h" />
     <ClInclude Include="SQL\Database.h" />
     <ClInclude Include="SQL\PostgreSQL.h" />
-    <ClInclude Include="TableBinder.h" />
+    <ClInclude Include="SQL\TableBinder.h" />
     <ClInclude Include="TCPConnection.h" />
     <ClInclude Include="TCPServer.h" />
     <ClInclude Include="WebSocketConnection.h" />
