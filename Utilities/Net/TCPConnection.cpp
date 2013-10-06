@@ -22,7 +22,7 @@ tcp_connection::tcp_connection(std::string address, std::string port, void* stat
 	this->buffer = new uint8[tcp_connection::MESSAGE_MAX_SIZE];
 }
 
-tcp_connection::tcp_connection(socket&& socket) : connection(move(socket)) {
+tcp_connection::tcp_connection(socket&& sock) : connection(move(sock)) {
 	this->received = 0;
 	this->state = nullptr;
 	this->connected = true;

@@ -73,7 +73,7 @@ namespace util {
 				
 				///Constructs a new tcp_connection by using an existing socket.
 				///Takes ownership of the socket.
-				exported tcp_connection(socket&& socket);
+				exported tcp_connection(socket&& sock);
 
 				///Constructs a new tcp_connection by establishing a new connection to the specified address and port.
 				///@param address The address to connect to. 
