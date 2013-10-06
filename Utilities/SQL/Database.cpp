@@ -16,9 +16,17 @@ db_exception::db_exception(string message) {
 	this->message = message;
 }
 
+connection::connection() {
+	this->is_connected = false;
+	this->is_committed = false;
+}
 
 bool connection::connected() const {
 	return this->is_connected;
+}
+
+bool connection::committed() const {
+	return this->is_committed;
 }
 
 query::query(string query_str, connection* conn) {

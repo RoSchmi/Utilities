@@ -49,11 +49,11 @@ namespace util {
 						exported column_definition(std::string name, bool updatable, date_time T::*dateTime_type) : name(name), updatable(updatable), type(data_type::date_time) { this->value.dateTime_type = dateTime_type; };
 						exported column_definition(std::string name, bool updatable, util::data_stream T::*binary_type) : name(name), updatable(updatable), type(data_type::data_stream) { this->value.binary_type = binary_type; };
 
+						const std::string name;
+						const bool updatable;
+						const data_type type;
+						 
 					private:
-						std::string name;
-						bool updatable;
-						data_type type;
-
 						union value_types {
 							uint64 T::*uint64_type;
 							uint32 T::*uint32_type;
@@ -71,7 +71,7 @@ namespace util {
 							util::data_stream T::*binary_type;
 						} value;
 
-						friend class table_binder<T, C, Q>;
+						friend class table_binder<T, C, Q, PType, PName>;
 				};
 
 				exported table_binder(C& conn, std::string name) : db(conn), select_by_id_query("", &conn), update_query("", &conn), insert_query("", &conn), delete_query("", &conn) {
@@ -89,19 +89,19 @@ namespace util {
 					this->defs.push_back(def);
 				}
 
-				exported T select_by_id(connection& db, PType id) {
+				exported T select_by_id(PType id) {
 					this->select_by_id_query.reset();
 					this->select_by_id_query.add_para(id);
 					return this->fill_one(this->select_by_id_query);
 				}
 
-				exported void remove(connection& db, T& object) {
+				exported void remove(T& object) {
 					this->delete_query.reset();
 					this->delete_query.add_para(id);
 					this->delete_query.execute();
 				}
 
-				exported void insert(connection& db, T& object) {
+				exported void insert(T& object) {
 					this->insert_query.reset();
 
 					for (auto i : this->defs)
@@ -110,7 +110,7 @@ namespace util {
 					this->insert_query.execute();
 				}
 
-				exported void update(connection& db, T& object) {
+				exported void update(T& object) {
 					this->update_query.reset();
 
 					for (auto i : this->defs)

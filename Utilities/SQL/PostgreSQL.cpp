@@ -30,6 +30,30 @@ connection::~connection() {
 		PQfinish(this->base_connection);
 }
 
+void connection::begin_transaction() {
+	if (!this->is_committed)
+		throw db_exception("Transaction already begun.");
+
+	query("START TRANSACTION ISOLATION LEVEL REPEATABLE READ;", this).execute();
+	this->is_committed = false;
+}
+
+void connection::commit_transaction() {
+	if (this->is_committed)
+		throw db_exception("Transaction not yet begun.");
+
+	query("COMMIT TRANSACTION;", this).execute();
+	this->is_committed = true;
+}
+
+void connection::rollback_transaction() {
+	if (this->is_committed)
+		throw db_exception("Transaction not yet begun.");
+
+	query("ROLLBACK TRANSACTION;", this).execute();
+	this->is_committed = true;
+}
+
 query connection::new_query(string query_str) {
 	return query(query_str, this);
 }

@@ -24,23 +24,7 @@ namespace util {
 				std::string message;
 		};
 
-		class connection {
-			protected:
-				bool is_connected;
-
-			public:
-				struct parameters {
-					std::string host;
-					std::string port;
-					std::string database;
-					std::string username;
-					std::string password;
-				};
-
-				exported virtual ~connection() = 0;
-
-				exported bool connected() const;
-		};
+		class connection;
 
 		class query {
 			protected:
@@ -163,6 +147,31 @@ namespace util {
 				exported query& operator>>(int16& para);
 				exported query& operator>>(int8& para);
 				exported query& operator>>(bool& para);
+		};
+
+		class connection {
+			protected:
+				bool is_connected;
+				bool is_committed;
+
+			public:
+				struct parameters {
+					std::string host;
+					std::string port;
+					std::string database;
+					std::string username;
+					std::string password;
+				};
+
+				exported connection();
+
+				exported virtual ~connection() = 0;
+
+				exported bool connected() const;
+				exported bool committed() const;
+				exported virtual void begin_transaction() = 0;
+				exported virtual void rollback_transaction() = 0;
+				exported virtual void commit_transaction() = 0;
 		};
 	}
 }

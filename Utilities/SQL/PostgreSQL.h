@@ -120,6 +120,9 @@ namespace util {
 
 					exported query new_query(std::string query_str = "");
 					exported query operator<<(std::string query_str);
+					exported virtual void begin_transaction() override;
+					exported virtual void rollback_transaction() override;
+					exported virtual void commit_transaction() override;
 			};
 		}
 	}
