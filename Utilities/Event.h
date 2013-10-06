@@ -61,6 +61,8 @@ namespace util {
 		unique_lock<mutex> lck2(other.lock);
 
 		this->registered = move(other.registered);
+
+		return *this;
 	}
 
 	template<typename T, typename... args> vector<T> event<T, args...>::operator()(args&&... paras) {
@@ -97,6 +99,8 @@ namespace util {
 		unique_lock<mutex> lck2(other.lock);
 
 		this->registered = move(other.registered);
+
+		return *this;
 	}
 
 	template<typename... args> void event<void, args...>::operator()(args&&... paras) {
