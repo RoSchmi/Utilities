@@ -13,8 +13,8 @@
 namespace util {
 	namespace sql {
 		template<typename T, typename C, typename Q, typename PType, typename PName> class table_binder {
-			static_assert(std::is_base_of<sql::connection, C>::value, "typename C must inherit from sql::connection.");
-			static_assert(std::is_base_of<sql::query, Q>::value, "typename Q must inherit from sql::query.");
+			static_assert(std::is_base_of<sql::connection, C>::value && !std::is_same<sql::connection, C>::value, "typename C must derive from sql::connection.");
+			static_assert(std::is_base_of<sql::query, Q>::value && !std::is_same<sql::query, Q>::value, "typename Q must derive from sql::query.");
 
 			public:
 				class column_definition {
