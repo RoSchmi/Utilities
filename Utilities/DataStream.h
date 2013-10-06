@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Common.h"
+
 #include <string>
 #include <chrono>
+#include <type_traits>
 
 namespace util {
 	/**
@@ -150,6 +152,7 @@ namespace util {
 			* value.
 			*/
 			template <typename T> void write(T data) {
+				static_assert(std::is_arithmetic<T>::value, "data_stream::write<T> must be an arithmetic type.");
 				this->write(reinterpret_cast<const uint8*>(&data), sizeof(T));
 			}
 
@@ -159,15 +162,18 @@ namespace util {
 			* boundaries, as it just casts sizeof(T) bytes to a T.
 			*/
 			template <typename T> T read() {
+				static_assert(std::is_arithmetic<T>::value, "data_stream::read<T> must be an arithmetic type.");
 				return *reinterpret_cast<const T*>(this->read(sizeof(T)));
 			}
 
 			template<typename T> data_stream& operator<<(T rhs) {
+				static_assert(std::is_arithmetic<T>::value, "data_stream::operator<< of T must be an arithmetic type.");
 				this->write<T>(rhs);
 				return *this;
 			}
 
 			template<typename T> data_stream& operator>>(T& rhs) {
+				static_assert(std::is_arithmetic<T>::value, "data_stream::operator>> of T must be an arithmetic type.");
 				rhs = this->read<T>();
 				return *this;
 			}

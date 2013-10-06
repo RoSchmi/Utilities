@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Common.h"
-#include "DataStream.h"
-#include "SQL/Database.h"
-#include "SQL/PostgreSQL.h"
+#include "../Common.h"
+#include "../DataStream.h"
+#include "Database.h"
+#include "PostgreSQL.h"
 
 #include <string>
 #include <vector>
