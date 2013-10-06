@@ -239,13 +239,13 @@ namespace util {
 					query << ") VALUES (";
 					isFirst = true;
 
-					word columnIndex = 0;
+					word column_index = 0;
 					for (auto i : this->defs) {
 						if (!isFirst)
 							query << ", ";
 						else
 							isFirst = false;
-						query << "$" << ++columnIndex;
+						query << "$" << ++column_index;
 					}
 
 					query << ");";
@@ -257,7 +257,7 @@ namespace util {
 					std::stringstream query;
 					query << "UPDATE " << this->name << " SET ";
 
-					word columnIndex = 0;
+					word column_index = 0;
 					bool isFirst = true;
 					for (auto i : this->defs) {
 						if (i.updatable) {
@@ -266,11 +266,11 @@ namespace util {
 							else
 								isFirst = false;
 
-							query << i.name << " = $" << ++columnIndex;
+							query << i.name << " = $" << ++column_index;
 						}
 					}
 
-					query << " WHERE Id = $" << columnIndex + 1;
+					query << " WHERE Id = $" << column_index + 1;
 
 					this->update_query.query_str = query.str();
 				}
