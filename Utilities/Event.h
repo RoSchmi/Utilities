@@ -10,11 +10,18 @@ namespace util {
 		public:
 			typedef T(*handler)(args...);
 
+			event() = default;
+			event(const event& other) = delete;
+			event& operator=(const event& other) = delete;
+
 		private:
 			std::vector<handler> registered;
 			std::mutex lock;
 
 		public:
+			event(event&& other);
+			event& operator=(event&& other);
+
 			std::vector<T> operator()(args&&... paras);
 			void operator+=(handler hndlr);
 			void operator-=(handler hndlr);
@@ -24,11 +31,18 @@ namespace util {
 		public:
 			typedef void(*handler)(args...);
 
+			event() = default;
+			event(const event& other) = delete;
+			event& operator=(const event& other) = delete;
+
 		private:
 			std::vector<handler> registered;
 			std::mutex lock;
 
 		public:
+			event(event&& other);
+			event& operator=(event&& other);
+
 			void operator()(args&&... paras);
 			void operator+=(handler hndlr);
 			void operator-=(handler hndlr);
@@ -37,6 +51,17 @@ namespace util {
 
 namespace util {
 	using namespace std;
+
+	template<typename T, typename... args> event<T, args...>::event(event&& other) {
+		*this = move(other);
+	}
+
+	template<typename T, typename... args> event<T, args...>& event<T, args...>::operator=(event&& other) {
+		unique_lock<mutex> lck1(this->lock);
+		unique_lock<mutex> lck2(other.lock);
+
+		this->registered = move(other.registered);
+	}
 
 	template<typename T, typename... args> vector<T> event<T, args...>::operator()(args&&... paras) {
 		vector<T> results;
@@ -60,6 +85,18 @@ namespace util {
 		auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
 		if (pos != this->registered.end())
 			this->registered.erase(pos);
+	}
+
+
+	template<typename... args> event<void, args...>::event(event&& other) {
+		*this = move(other);
+	}
+
+	template<typename... args> event<void, args...>& event<void, args...>::operator=(event&& other) {
+		unique_lock<mutex> lck1(this->lock);
+		unique_lock<mutex> lck2(other.lock);
+
+		this->registered = move(other.registered);
 	}
 
 	template<typename... args> void event<void, args...>::operator()(args&&... paras) {
