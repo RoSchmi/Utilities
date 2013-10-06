@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Common.h"
+#include "../Common.h"
 #include "TCPServer.h"
-#include "DataStream.h"
+#include "../DataStream.h"
 
 #include <atomic>
 #include <vector>

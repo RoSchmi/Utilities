@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common.h"
+#include "../Common.h"
 #include "Socket.h"
 #include "TCPConnection.h"
 

@@ -1,8 +1,8 @@
 #include "WebSocketConnection.h"
 
-#include "Misc.h"
-#include "Cryptography.h"
-#include "DataStream.h"
+#include "../Misc.h"
+#include "../Cryptography.h"
+#include "../DataStream.h"
 
 #include <cstring>
 #include <stdexcept>

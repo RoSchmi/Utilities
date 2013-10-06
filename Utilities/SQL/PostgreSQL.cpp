@@ -1,6 +1,6 @@
 #include "PostgreSQL.h"
 
-#include "../Socket.h"
+#include "../Net/Socket.h"
 
 #include <cstring>
 #include <utility>
@@ -47,7 +47,7 @@ query::query(query&& other) : sql::query(move(other)) {
 	this->para_index = other.para_index;
 	this->result = other.result;
 
-	for (word i = 0; i < other.para_index; i++) {
+	for (word i = 0; i < static_cast<word>(other.para_index); i++) {
 		this->para_values[i] = other.para_values[i];
 		this->para_lengths[i] = other.para_lengths[i];
 		this->para_formats[i] = other.para_formats[i];
@@ -189,7 +189,7 @@ uint8* query::get_bytes(word column, uint8* buffer, word count) {
 	if (!this->executed) { this->execute(); this->advance_row(); }
 	int length = PQgetlength(this->result, static_cast<int>(this->row), static_cast<int>(column));
 	char* temporary = PQgetvalue(this->result, static_cast<int>(this->row), static_cast<int>(column));
-	memcpy(buffer, temporary, count > length ? length : count);
+	memcpy(buffer, temporary, count > static_cast<word>(length) ? static_cast<word>(length) : count);
 	return buffer;
 }
 
