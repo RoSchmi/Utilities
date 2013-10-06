@@ -11,6 +11,7 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 
 namespace util {
 	namespace net {
@@ -18,7 +19,7 @@ namespace util {
 			public:
 				struct exported message {
 					tcp_connection& connection;
-					word currentAttempts;
+					word attempts;
 					data_stream data;
 
 					message(tcp_connection& connection, tcp_connection::message&& message);
@@ -27,7 +28,7 @@ namespace util {
 					message(tcp_connection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
 					message(message&& other);
 
-					static void writeHeader(data_stream& stream, uint16 id, uint8 category, uint8 method);
+					static void write_header(data_stream& stream, uint16 id, uint8 category, uint8 method);
 
 					message(const message& other) = delete;
 					message& operator=(const message& other) = delete;
@@ -40,25 +41,29 @@ namespace util {
 					RETRY_LATER
 				};
 
+				class cant_move_running_server_exception {};
+				class cant_start_default_constructed_exception {};
+
 				static const word MAX_RETRIES = 5;
 
-				typedef request_result(*on_request_callback)(tcp_connection& connection, void* state, word workerNumber, uint8 requestCategory, uint8 requestMethod, data_stream& parameters, data_stream& response);
-				typedef void(*on_connect_callback)(tcp_connection& connection, void* state);
-				typedef void(*on_disconnect_callback)(tcp_connection& connection, void* state);
+				typedef std::function<request_result(tcp_connection& connection, void* state, word worker_number, uint8 category, uint8 method, data_stream& parameters, data_stream& response)> on_request_callback;
+				typedef std::function<void(tcp_connection& connection, void* state)> on_connect_callback;
+				typedef std::function<void(tcp_connection& connection, void* state)> on_disconnect_callback;
 
 				exported request_server();
-				exported request_server(std::string port, bool usesWebSockets, word workers, uint16 retryCode, on_request_callback onRequest, on_connect_callback onConnect, on_disconnect_callback onDisconnect, void* state = nullptr);
-				exported request_server(std::vector<std::string> ports, std::vector<bool> usesWebSockets, word workers, uint16 retryCode, on_request_callback onRequest, on_connect_callback onConnect, on_disconnect_callback onDisconnect, void* state = nullptr);
+				exported request_server(std::string port, bool uses_websockets, word workers, uint16 retry_code, on_request_callback on_request, on_connect_callback on_connect, on_disconnect_callback on_disconnect, void* state = nullptr);
+				exported request_server(std::vector<std::string> ports, std::vector<bool> uses_websockets, word workers, uint16 retry_code, on_request_callback on_request, on_connect_callback on_connect, on_disconnect_callback on_disconnect, void* state = nullptr);
 				exported request_server(request_server&& other);
 				exported ~request_server();
+
 				exported request_server& operator=(request_server&& other); 
 
-				exported void addToIncomingQueue(message&& message);
-				exported void addToOutgoingQueue(message&& message);
+				exported void enqueue_incoming(message&& message);
+				exported void enqueue_outgoing(message&& message);
 
 				exported void start();
 				exported void stop();
-				exported tcp_connection& adoptConnection(tcp_connection&& connection, bool callOnClientConnect = false);
+				exported tcp_connection& adopt(tcp_connection&& connection, bool call_on_connect = false);
 
 				request_server(const request_server& other) = delete;
 				request_server& operator=(const request_server& other) = delete;
@@ -66,34 +71,34 @@ namespace util {
 			private:
 				std::list<tcp_server> servers;
 				std::vector<tcp_connection> clients;
-				std::mutex clientListLock;
+				std::mutex client_lock;
 
-				on_request_callback onRequest;
-				on_connect_callback onConnect;
-				on_disconnect_callback onDisconnect;
+				on_request_callback on_request;
+				on_connect_callback on_connect;
+				on_disconnect_callback on_disconnect;
 
-				std::queue<message> incomingQueue;
-				std::queue<message> outgoingQueue;
-				std::mutex incomingLock;
-				std::mutex outgoingLock;
-				std::condition_variable incomingCV;
-				std::condition_variable outgoingCV;
+				std::queue<message> incoming;
+				std::queue<message> outgoing;
+				std::mutex incoming_lock;
+				std::mutex outgoing_lock;
+				std::condition_variable incoming_cv;
+				std::condition_variable outgoing_cv;
 
-				uint16 retryCode;
+				uint16 retry_code;
 				void* state;
 				word workers;
 
-				std::thread ioWorker;
-				std::thread outgoingWorker;
-				std::vector<std::thread> incomingWorkers;
+				std::thread io_worker;
+				std::thread outgoing_worker;
+				std::vector<std::thread> incoming_workers;
 				std::atomic<bool> running;
 				std::atomic<bool> valid;
 
-				void incomingWorkerRun(word workerNumber);
-				void outgoingWorkerRun();
-				void ioWorkerRun();
+				void incoming_run(word worker_number);
+				void outgoing_run();
+				void io_run();
 
-				static void onClientConnect(tcp_connection&& connection, void* serverState);
+				static void on_client_connect(tcp_connection&& connection, void* serverState);
 		};
 	}
 }

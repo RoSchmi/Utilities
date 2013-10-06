@@ -7,20 +7,23 @@
     <ClInclude Include="DataStream.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="RequestServer.h" />
-    <ClInclude Include="SQLDatabase.h" />
     <ClInclude Include="Socket.h" />
+    <ClInclude Include="SQL\Database.h" />
+    <ClInclude Include="SQL\PostgreSQL.h" />
     <ClInclude Include="TableBinder.h" />
     <ClInclude Include="TCPConnection.h" />
     <ClInclude Include="TCPServer.h" />
     <ClInclude Include="WebSocketConnection.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="Cryptography.cpp" />
     <ClCompile Include="DataStream.cpp" />
     <ClCompile Include="Misc.cpp" />
     <ClCompile Include="RequestServer.cpp" />
-    <ClCompile Include="SQLDatabase.cpp" />
     <ClCompile Include="Socket.cpp" />
+    <ClCompile Include="SQL\Database.cpp" />
+    <ClCompile Include="SQL\PostgreSQL.cpp" />
     <ClCompile Include="TCPConnection.cpp" />
     <ClCompile Include="TCPServer.cpp" />
     <ClCompile Include="WebSocketConnection.cpp" />

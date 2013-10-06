@@ -1,7 +1,6 @@
 #include "RequestServer.h"
 
 #include <utility>
-#include <stdexcept>
 
 using namespace std;
 using namespace util;
@@ -12,45 +11,45 @@ request_server::request_server() {
 	this->valid = false;
 }
 
-request_server::request_server(string port, bool usesWebSockets, word workers, uint16 retryCode, on_request_callback onRequest, on_connect_callback onConnect, on_disconnect_callback onDisconnect, void* state) : request_server(vector<string>{ port }, vector<bool>{ usesWebSockets }, workers, retryCode, onRequest, onConnect, onDisconnect, state) {
+request_server::request_server(string port, bool uses_websockets, word workers, uint16 retry_code, on_request_callback on_request, on_connect_callback on_connect, on_disconnect_callback on_disconnect, void* state) : request_server(vector<string>{ port }, vector<bool>{ uses_websockets }, workers, retry_code, on_request, on_connect, on_disconnect, state) {
 	
 }
 
-request_server::request_server(vector<string> ports, vector<bool> usesWebSockets, word workers, uint16 retryCode, on_request_callback onRequest, on_connect_callback onConnect, on_disconnect_callback onDisconnect, void* state) {
+request_server::request_server(vector<string> ports, vector<bool> uses_websockets, word workers, uint16 retry_code, on_request_callback on_request, on_connect_callback on_connect, on_disconnect_callback on_disconnect, void* state) {
 	this->running = false;
 	this->valid = true;
-	this->onConnect = onConnect;
-	this->onDisconnect = onDisconnect;
-	this->onRequest = onRequest;
-	this->retryCode = retryCode;
+	this->on_connect = on_connect;
+	this->on_disconnect = on_disconnect;
+	this->on_request = on_request;
+	this->retry_code = retry_code;
 	this->state = state;
 	this->workers = workers;
 
 	for (word i = 0; i < ports.size(); i++)
-		this->servers.emplace_back(ports[i], request_server::onClientConnect, this, usesWebSockets[i]);
+		this->servers.emplace_back(ports[i], request_server::on_client_connect, this, uses_websockets[i]);
 }
 
 request_server::request_server(request_server&& other) {
 	if (other.running)
-		throw runtime_error("Cannot move a running request_server.");
+		throw cant_move_running_server_exception();
 
 	this->running = false;
-	*this = std::move(other);
+	*this = move(other);
 }
 
 request_server& request_server::operator = (request_server&& other) {
 	if (other.running || this->running)
-		throw runtime_error("Cannot move to or from a running request_server.");
+		throw cant_move_running_server_exception();
 
 	this->valid = other.valid.load();
-	this->onConnect = other.onConnect;
-	this->onDisconnect = other.onDisconnect;
-	this->onRequest = other.onRequest;
-	this->retryCode = other.retryCode;
+	this->on_connect = other.on_connect;
+	this->on_disconnect = other.on_disconnect;
+	this->on_request = other.on_request;
+	this->retry_code = other.retry_code;
 	this->state = other.state;
 	this->workers = other.workers;
 	this->running = false;
-	this->servers = std::move(other.servers);
+	this->servers = move(other.servers);
 
 	return *this;
 }
@@ -61,16 +60,16 @@ request_server::~request_server() {
 
 void request_server::start() {
 	if (!this->valid)
-		throw runtime_error("Default-Constructed RequestServers cannot be started.");
+		throw cant_start_default_constructed_exception();
 
 	if (this->running)
 		return;
 
 	for (word i = 0; i < this->workers; i++)
-		this->incomingWorkers.push_back(thread(&request_server::incomingWorkerRun, this, i));
+		this->incoming_workers.push_back(thread(&request_server::incoming_run, this, i));
 
-	this->outgoingWorker = thread(&request_server::outgoingWorkerRun, this);
-	this->ioWorker = thread(&request_server::ioWorkerRun, this);
+	this->outgoing_worker = thread(&request_server::outgoing_run, this);
+	this->io_worker = thread(&request_server::io_run, this);
 
 	for (auto& i : this->servers)
 		i.start();
@@ -85,74 +84,74 @@ void request_server::stop() {
 
 	this->running = false;
 
-	this->ioWorker.join();
+	this->io_worker.join();
 
-	for (auto& i : this->incomingWorkers)
+	for (auto& i : this->incoming_workers)
 		i.join();
 
-	this->outgoingWorker.join();
+	this->outgoing_worker.join();
 }
 
-tcp_connection& request_server::adoptConnection(tcp_connection&& connection, bool callOnClientConnect) {
-	this->clientListLock.lock();
+tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_connect) {
+	this->client_lock.lock();
 
-	this->clients.push_back(std::move(connection));
+	this->clients.push_back(move(connection));
 	auto& newReference = this->clients.back();
 
-	if (callOnClientConnect && this->onConnect)
-		this->onConnect(newReference, this->state);
+	if (call_on_connect && this->on_connect)
+		this->on_connect(newReference, this->state);
 
-	this->clientListLock.unlock();
+	this->client_lock.unlock();
 
 	return newReference;
 }
 
-void request_server::onClientConnect(tcp_connection&& connection, void* serverState) {
+void request_server::on_client_connect(tcp_connection&& connection, void* serverState) {
 	auto& self = *reinterpret_cast<request_server*>(serverState);
 
-	self.clientListLock.lock();
+	self.client_lock.lock();
 
-	self.clients.push_back(std::move(connection));
-	if (self.onConnect)
-		self.onConnect(self.clients.back(), self.state);
+	self.clients.push_back(move(connection));
+	if (self.on_connect)
+		self.on_connect(self.clients.back(), self.state);
 
-	self.clientListLock.unlock();
+	self.client_lock.unlock();
 }
 
-void request_server::incomingWorkerRun(word workerNumber) {
+void request_server::incoming_run(word worker_number) {
 	while (this->running) {
 		this_thread::sleep_for(chrono::microseconds(500));
 
-		unique_lock<mutex> lock(this->incomingLock);
+		unique_lock<mutex> lock(this->incoming_lock);
 
-		while (this->incomingQueue.empty())
-			if (this->incomingCV.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
+		while (this->incoming.empty())
+			if (this->incoming_cv.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
 				continue;
 		
-		message request(std::move(this->incomingQueue.front()));
-		this->incomingQueue.pop();
+		message request(move(this->incoming.front()));
+		this->incoming.pop();
 
 		lock.unlock();
 
-		if (request.data.getLength() < 4)
+		if (request.data.size() < 4)
 			continue;
 
-		uint16 requestId;
-		uint8 requestCategory, requestMethod;
-		request.data >> requestId >> requestCategory >> requestMethod;
+		uint16 id;
+		uint8 category, method;
+		request.data >> id >> category >> method;
 
-		message response(request.connection, requestId);
+		message response(request.connection, id);
 
-		switch (this->onRequest(request.connection, this->state, workerNumber, requestCategory, requestMethod, request.data, response.data)) {
+		switch (this->on_request(request.connection, this->state, worker_number, category, method, request.data, response.data)) {
 			case request_result::SUCCESS:
-				this->addToOutgoingQueue(std::move(response));
+				this->enqueue_outgoing(move(response));
 
 				break;
 			case request_result::RETRY_LATER:
-				if (++request.currentAttempts >= request_server::MAX_RETRIES)
-					this->addToIncomingQueue(std::move(request));
+				if (++request.attempts >= request_server::MAX_RETRIES)
+					this->enqueue_incoming(move(request));
 				else
-					response.data.write(this->retryCode);
+					response.data.write(this->retry_code);
 
 				break;
 			case request_result::NO_RESPONSE:
@@ -161,76 +160,76 @@ void request_server::incomingWorkerRun(word workerNumber) {
 	}
 }
 
-void request_server::outgoingWorkerRun() {
+void request_server::outgoing_run() {
 	while (this->running) {
 		this_thread::sleep_for(chrono::microseconds(500));
 
-		unique_lock<mutex> lock(this->outgoingLock);
+		unique_lock<mutex> lock(this->outgoing_lock);
 
-		while (this->outgoingQueue.empty())
-			if (this->outgoingCV.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
+		while (this->outgoing.empty())
+			if (this->outgoing_cv.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
 				continue;
 
-		auto& message = this->outgoingQueue.front();
-		message.connection.send(message.data.getBuffer(), static_cast<uint16>(message.data.getLength()));
-		this->outgoingQueue.pop();
+		auto& message = this->outgoing.front();
+		message.connection.send(message.data.data(), static_cast<uint16>(message.data.size()));
+		this->outgoing.pop();
 	}
 }
 
-void request_server::ioWorkerRun() {
+void request_server::io_run() {
 	while (this->running) {
-		this->clientListLock.lock();
+		this->client_lock.lock();
 
 		for (auto& i : this->clients)
-			if (i.isDataAvailable()) 
+			if (i.data_available()) 
 				for (auto& k : i.read())
-					this->addToIncomingQueue(message(i, std::move(k)));
+					this->enqueue_incoming(message(i, move(k)));
 
-		this->clientListLock.unlock();
+		this->client_lock.unlock();
 
 		this_thread::sleep_for(chrono::microseconds(500));
 	}
 }
 
-void request_server::addToIncomingQueue(message&& message) {
+void request_server::enqueue_incoming(message&& message) {
 	if (!this->running)
 		return;
 
-	unique_lock<mutex> lock(this->incomingLock);
-	this->incomingQueue.push(std::move(message));
-	this->incomingCV.notify_one();
+	unique_lock<mutex> lock(this->incoming_lock);
+	this->incoming.push(move(message));
+	this->incoming_cv.notify_one();
 }
 
-void request_server::addToOutgoingQueue(message&& message) {
+void request_server::enqueue_outgoing(message&& message) {
 	if (!this->running)
 		return;
 
-	unique_lock<mutex> lock(this->outgoingLock);
-	this->outgoingQueue.push(std::move(message));
-	this->outgoingCV.notify_one();
+	unique_lock<mutex> lock(this->outgoing_lock);
+	this->outgoing.push(move(message));
+	this->outgoing_cv.notify_one();
 }
 
 request_server::message::message(tcp_connection& connection, tcp_connection::message&& message) : connection(connection), data(message.data, message.length) {
-	this->currentAttempts = 0;
+	this->attempts = 0;
 }
 
-request_server::message::message(tcp_connection& connection, data_stream&& data) : connection(connection), data(std::move(data)) {
-	this->currentAttempts = 0;
+request_server::message::message(tcp_connection& connection, data_stream&& data) : connection(connection), data(move(data)) {
+	this->attempts = 0;
 }
 
 request_server::message::message(tcp_connection& connection, const uint8* data, word length) : connection(connection), data(data, length) {
-	this->currentAttempts = 0;
+	this->attempts = 0;
 }
 
 request_server::message::message(tcp_connection& connection, uint16 id, uint8 category, uint8 method) : connection(connection) {
-	request_server::message::writeHeader(this->data, id, category, method);
-	this->currentAttempts = 0;
+	request_server::message::write_header(this->data, id, category, method);
+	this->attempts = 0;
 }
 
-request_server::message::message(request_server::message&& other) : connection(other.connection), data(std::move(other.data)) {
-	this->currentAttempts = other.currentAttempts;
+request_server::message::message(request_server::message&& other) : connection(other.connection), data(move(other.data)) {
+	this->attempts = other.attempts;
 }
 
-void request_server::message::writeHeader(data_stream& stream, uint16 id, uint8 category, uint8 method) {
+void request_server::message::write_header(data_stream& stream, uint16 id, uint8 category, uint8 method) {
 	stream << id << category << method;
 }

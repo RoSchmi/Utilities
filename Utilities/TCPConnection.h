@@ -26,7 +26,7 @@ namespace util {
 					uint8* data;
 
 					///A flag signaling that the connection was closed.
-					bool wasClosed;
+					bool closed;
 
 					///Copies an existing message into this message.
 					///@param other The message copied from. 
@@ -60,6 +60,9 @@ namespace util {
 					~message();
 				};
 
+				class not_connected_exception {};
+				class message_too_long_exception {};
+
 				///State to be stored with this connection.
 				///Not used in any way by this class
 				void* state;
@@ -89,20 +92,20 @@ namespace util {
 
 				///Gets the IP address of the underlying socket.
 				///@return The IP address.
-				exported std::array<uint8, socket::ADDRESS_LENGTH> getAddress() const;
+				exported std::array<uint8, socket::ADDRESS_LENGTH> address() const;
 
 				///Gets the underlying socket.
 				///@return The socket.
-				exported const socket& getBaseSocket() const;
+				exported const socket& base_socket() const;
 
 				///Gets whether or not data is available to be read.
 				///@return True if data is available, false otherwise.
-				exported bool isDataAvailable() const;
+				exported bool data_available() const;
 
 				///Gets a list of messages that are available and complete.
-				///@param messagesToWaitFor The number of messages to wait for. Defaults to zero. 
+				///@param wait_for The number of messages to wait for. Defaults to zero. 
 				///@return A vector of possible zero messages that were read.
-				exported virtual std::vector<message> read(word messagesToWaitFor = 0);
+				exported virtual std::vector<message> read(word wait_for = 0);
 
 				///Sends the given data over the connection.
 				///@param buffer The data to send. 
@@ -111,17 +114,17 @@ namespace util {
 				exported virtual bool send(const uint8* buffer, word length);
 
 				///Adds the data to the internal pending queue.
-				///Call sendParts to send all the data queued with this message as one contiguous message
+				///Call send_queued to send all the data queued with this message as one contiguous message
 				///@param buffer The data to send. 
 				///@param length The number of bytes to be sent. 
-				exported void addPart(const uint8* buffer, word length);
+				exported void enqueue(const uint8* buffer, word length);
 
-				///Sends all the data queued with addPart as one contiguous message.
+				///Sends all the data queued with enqueue as one contiguous message.
 				///@return True if all the data was sent, false otherwise.
-				exported virtual bool sendParts();
+				exported virtual bool send_queued();
 
 				///Clears without sending the data in the internal pending queue.
-				exported void clearParts();
+				exported void clear_queued();
 
 				///Closes the underlying connection.
 				exported virtual void close();
@@ -135,11 +138,11 @@ namespace util {
 			protected:
 				socket connection;
 				uint8* buffer;
-				word bytesReceived;
+				word received;
 				bool connected;
-				std::vector<message> messageParts;
+				std::vector<message> queued;
 
-				bool ensureWrite(const uint8* toWrite, word writeAmount);
+				bool ensure_write(const uint8* toWrite, word writeAmount);
 		};
 	}
 }

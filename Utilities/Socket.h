@@ -40,8 +40,15 @@ namespace util {
 				socket(families family, types type, std::string port);
 				socket(socket&& other);
 				socket();
-				socket& operator=(socket&& other);
 				~socket();
+
+				socket& operator=(socket&& other);
+
+				class not_connected_exception {};
+				class could_not_listen_exception {};
+				class could_not_connect_exception {};
+				class could_not_create_exception {};
+				class invalid_address_exception {};
 
 				/**
 				 * Disconnect and close the connection
@@ -62,31 +69,31 @@ namespace util {
 				 *
 				 * @returns Number of bytes read
 				 */
-				word read(uint8* buffer, word bufferSize);
+				word read(uint8* buffer, word count);
 
 				/**
 				 * Write @a writeAmount bytes from @a toWrite to the stream
 				 *
 				 * @returns Number of bytes written
 				 */
-				word write(const uint8* toWrite, word writeAmount);
+				word write(const uint8* buffer, word count);
 
 				/**
 				 * @returns Address of the host on the other end of a socket
 				 * returned from @a accept(). Is always an IPv6 address (for now),
 				 * but will sometimes be an IPv4 mapped address
 				 */
-				std::array<uint8, socket::ADDRESS_LENGTH> getRemoteAddress() const;
+				std::array<uint8, socket::ADDRESS_LENGTH> remote_address() const;
 
 				/**
 				 * @returns true if socket is connected, false otherwise
 				 */
-				bool isConnected() const;
+				bool is_connected() const;
 
 				/**
 				 * @returns true if there is data available to be read on the socket, false otherwise.
 				 */
-				bool isDataAvailable() const;
+				bool data_available() const;
 
 				socket(const socket& other) = delete;
 				socket& operator=(const socket& other) = delete;
@@ -95,22 +102,22 @@ namespace util {
 				types type;
 				families family;
 				bool connected;
-				std::array<uint8, socket::ADDRESS_LENGTH> remoteEndpointAddress;
+				std::array<uint8, socket::ADDRESS_LENGTH> endpoint_address;
 			
 				#ifdef WINDOWS
-					uintptr rawSocket;
+				uintptr raw_socket;
 				#elif defined POSIX
-					int rawSocket;
+				int raw_socket;
 				#endif
 
 				socket(families family, types type);
 		};
 
-		int16 hostToNetworkInt16(int16 value);
-		int32 hostToNetworkInt32(int32 value);
-		int64 hostToNetworkInt64(int64 value);
-		int16 networkToHostInt16(int16 value);
-		int32 networkToHostInt32(int32 value);
-		int64 networkToHostInt64(int64 value);
+		int16 host_to_net_int16(int16 value);
+		int32 host_to_net_int32(int32 value);
+		int64 host_to_net_int64(int64 value);
+		int16 net_to_host_int16(int16 value);
+		int32 net_to_host_int32(int32 value);
+		int64 net_to_host_int64(int64 value);
 	}
 }

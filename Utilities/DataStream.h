@@ -15,22 +15,27 @@ namespace util {
 	class exported data_stream {
 		word allocation;
 		word cursor;
-		word farthestWrite;
+		word written;
 		uint8* buffer;
 
 		static const word MINIMUM_SIZE = 32;
-
-		void resize(word newSize);
+		static const word GROWTH = 2;
+		static const word STRING_LENGTH = 2;
 
 		public:
 			/**
 			* Thrown when operations on uninitialized memory would occur
 			*/
-			class read_past_end_exception { };
+			class read_past_end_exception {};
 
+			/**
+			* Thrown when a string read by read_utf8 is not valid utf8.
+			*/
+			class string_not_utf8 {};
+			
 			data_stream();
-			data_stream(uint8* exisitingBuffer, word length);
-			data_stream(const uint8* exisitingBuffer, word length);
+			data_stream(uint8* data, word length);
+			data_stream(const uint8* data, word length);
 			data_stream(data_stream&& other);
 			data_stream(const data_stream& other);
 			~data_stream();
@@ -38,26 +43,27 @@ namespace util {
 			data_stream& operator=(data_stream&& other);
 			data_stream& operator=(const data_stream& other);
 
+			void resize(word size);
+
 			/**
 			* @returns read-only reference to internal buffer
 			*/
-			const uint8* getBuffer() const;
+			const uint8* data() const;
 
 			/**
 			* @returns read-only reference to internal buffer offset by the cursor
 			*/
-			const uint8* getBufferAtCursor() const;
+			const uint8* data_at_cursor() const;
 
 			/**
-			* @returns farthest offset considered initialized
+			* @returns farthest offset that has been written to
 			*/
-			word getLength() const;
+			word size() const;
 
 			/**
-			* @returns true if the cursor is past the end of initialized
-			* memory
+			* @returns the position of the cursor
 			*/
-			bool isEOF() const;
+			word position() const;
 
 			/**
 			* Resets the steam. Sets the cursor to the beginning of the
@@ -97,22 +103,22 @@ namespace util {
 			/**
 			* Writes the contents of @a toWrite to the buffer
 			*/
-			void write(const std::string& toWrite);
+			void write(const std::string& data);
 
 			/**
 			* Writes the contents of @a toWrite to the buffer
 			*/
-			void write(const data_stream& toWrite);
+			void write(const data_stream& data);
 
 			/**
 			* Writes the number of milliseconds since the epoch as a uint64 to the stream.
 			*/
-			void write(const date_time& toWrite);
+			void write(const date_time& data);
 
 			/**
 			* Read @a count bytes, starting at the cursor, into @a buffer.
 			*/
-			void read(uint8* buffer, word count);
+			void read(uint8* data, word count);
 
 			/**
 			* Returns @a count bytes, starting at the cursor.
@@ -123,12 +129,19 @@ namespace util {
 			* Read a string from the stream. A string is considered two
 			* bytes, the length, followed by that many bytes of data.
 			*/
-			std::string readString();
+			std::string read_string();
+
+			/**
+			* Read a string from the stream. A string is considered two
+			* bytes, the length, followed by that many bytes of data.
+			* Makes sure that the read data is avlid utf-8.
+			*/
+			std::string read_utf8();
 
 			/**
 			* Read a DateTime from the stream. Considered a uint64 of milliseconds.
 			*/
-			date_time readTimePoint();
+			date_time read_date_time();
 
 			/**
 			* Write a value of arbitrary type to the buffer. This is
@@ -136,8 +149,8 @@ namespace util {
 			* as it just copies sizeof(T) bytes from a pointer to the passed
 			* value.
 			*/
-			template <typename T> void write(T toWrite) {
-				this->write(reinterpret_cast<uint8*>(&toWrite), sizeof(T));
+			template <typename T> void write(T data) {
+				this->write(reinterpret_cast<const uint8*>(&data), sizeof(T));
 			}
 
 			/**
@@ -149,6 +162,16 @@ namespace util {
 				return *reinterpret_cast<const T*>(this->read(sizeof(T)));
 			}
 
+			template<typename T> data_stream& operator<<(T rhs) {
+				this->write<T>(rhs);
+				return *this;
+			}
+
+			template<typename T> data_stream& operator>>(T& rhs) {
+				rhs = this->read<T>();
+				return *this;
+			}
+
 			data_stream& operator<<(cstr rhs);
 			data_stream& operator<<(const std::string& rhs);
 			data_stream& operator<<(const data_stream& rhs);
@@ -156,29 +179,5 @@ namespace util {
 
 			data_stream& operator>>(std::string& rhs);
 			data_stream& operator>>(date_time& rhs);
-
-			data_stream& operator<<(bool rhs);
-			data_stream& operator<<(float32 rhs);
-			data_stream& operator<<(float64 rhs);
-			data_stream& operator<<(uint8 rhs);
-			data_stream& operator<<(uint16 rhs);
-			data_stream& operator<<(uint32 rhs);
-			data_stream& operator<<(uint64 rhs);
-			data_stream& operator<<(int8 rhs);
-			data_stream& operator<<(int16 rhs);
-			data_stream& operator<<(int32 rhs);
-			data_stream& operator<<(int64 rhs);
-
-			data_stream& operator>>(bool& rhs);
-			data_stream& operator>>(float32& rhs);
-			data_stream& operator>>(float64& rhs);
-			data_stream& operator>>(uint8& rhs);
-			data_stream& operator>>(uint16& rhs);
-			data_stream& operator>>(uint32& rhs);
-			data_stream& operator>>(uint64& rhs);
-			data_stream& operator>>(int8& rhs);
-			data_stream& operator>>(int16& rhs);
-			data_stream& operator>>(int32& rhs);
-			data_stream& operator>>(int64& rhs);
 	};
 }

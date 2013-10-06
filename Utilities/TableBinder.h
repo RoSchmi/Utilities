@@ -2,7 +2,8 @@
 
 #include "Common.h"
 #include "DataStream.h"
-#include "SQLDatabase.h"
+#include "SQL/Database.h"
+#include "SQL/PostgreSQL.h"
 
 #include <string>
 #include <vector>
@@ -11,7 +12,7 @@
 
 namespace util {
 	namespace sql {
-		template<typename T> class table_binder {
+		template<typename T, typename C = postgres::connection, typename Q = postgres::query, typename PType = uint64, typename PName = "id"> class table_binder {
 			public:
 				class column_definition {
 					public:
@@ -19,21 +20,33 @@ namespace util {
 							uint64,
 							uint32,
 							uint16,
+							uint8,
+							int64,
+							int32,
+							int16,
+							int8,
 							float64,
+							float32,
 							bool,
 							string,
 							date_time,
 							data_stream
 						};
 
-						exported column_definition(std::string name, bool updatable, uint64 T::*uint64Type) : name(name), updatable(updatable), type(data_type::uint64) { this->value.uint64Type = uint64Type; };
-						exported column_definition(std::string name, bool updatable, uint32 T::*uint32Type) : name(name), updatable(updatable), type(data_type::uint32) { this->value.uint32Type = uint32Type; };
-						exported column_definition(std::string name, bool updatable, uint16 T::*uint16Type) : name(name), updatable(updatable), type(data_type::uint16) { this->value.uint16Type = uint16Type; };
-						exported column_definition(std::string name, bool updatable, float64 T::*float64Type) : name(name), updatable(updatable), type(data_type::float64) { this->value.float64Type = float64Type; };
-						exported column_definition(std::string name, bool updatable, bool T::*booleanType) : name(name), updatable(updatable), type(data_type::bool) { this->value.booleanType = booleanType; };
-						exported column_definition(std::string name, bool updatable, std::string T::*stringType) : name(name), updatable(updatable), type(data_type::string) { this->value.stringType = stringType; };
-						exported column_definition(std::string name, bool updatable, date_time T::*dateTimeType) : name(name), updatable(updatable), type(data_type::date_time) { this->value.dateTimeType = dateTimeType; };
-						exported column_definition(std::string name, bool updatable, util::data_stream T::*binaryType) : name(name), updatable(updatable), type(data_type::data_stream) { this->value.binaryType = binaryType; };
+						exported column_definition(std::string name, bool updatable, uint64 T::*uint64_type) : name(name), updatable(updatable), type(data_type::uint64) { this->value.uint64_type = uint64_type; };
+						exported column_definition(std::string name, bool updatable, uint32 T::*uint32_type) : name(name), updatable(updatable), type(data_type::uint32) { this->value.uint32_type = uint32_type; };
+						exported column_definition(std::string name, bool updatable, uint16 T::*uint16_type) : name(name), updatable(updatable), type(data_type::uint16) { this->value.uint16_type = uint16_type; };
+						exported column_definition(std::string name, bool updatable, uint8 T::*uint8_type) : name(name), updatable(updatable), type(data_type::uint8) { this->value.uint8_type = uint8_type; };
+						exported column_definition(std::string name, bool updatable, int64 T::*int64_type) : name(name), updatable(updatable), type(data_type::int64) { this->value.int64_type = int64_type; };
+						exported column_definition(std::string name, bool updatable, int32 T::*int32_type) : name(name), updatable(updatable), type(data_type::int32) { this->value.int32_type = int32_type; };
+						exported column_definition(std::string name, bool updatable, int16 T::*int16_type) : name(name), updatable(updatable), type(data_type::int16) { this->value.int16_type = int16_type; };
+						exported column_definition(std::string name, bool updatable, int8 T::*int8_type) : name(name), updatable(updatable), type(data_type::int8) { this->value.int8_type = int8_type; };
+						exported column_definition(std::string name, bool updatable, float64 T::*float64_type) : name(name), updatable(updatable), type(data_type::float64) { this->value.float64_type = float64_type; };
+						exported column_definition(std::string name, bool updatable, float32 T::*float32_type) : name(name), updatable(updatable), type(data_type::float32) { this->value.float32_type = float32_type; };
+						exported column_definition(std::string name, bool updatable, bool T::*boolean_type) : name(name), updatable(updatable), type(data_type::bool) { this->value.boolean_type = boolean_type; };
+						exported column_definition(std::string name, bool updatable, std::string T::*string_type) : name(name), updatable(updatable), type(data_type::string) { this->value.string_type = string_type; };
+						exported column_definition(std::string name, bool updatable, date_time T::*dateTime_type) : name(name), updatable(updatable), type(data_type::date_time) { this->value.dateTime_type = dateTime_type; };
+						exported column_definition(std::string name, bool updatable, util::data_stream T::*binary_type) : name(name), updatable(updatable), type(data_type::data_stream) { this->value.binary_type = binary_type; };
 
 					private:
 						std::string name;
@@ -41,86 +54,92 @@ namespace util {
 						data_type type;
 
 						union value_types {
-							uint64 T::*uint64Type;
-							uint32 T::*uint32Type;
-							uint16 T::*uint16Type;
-							float64 T::*float64Type;
-							bool T::*booleanType;
-							std::string T::*stringType;
-							date_time T::*dateTimeType;
-							util::data_stream T::*binaryType;
+							uint64 T::*uint64_type;
+							uint32 T::*uint32_type;
+							uint16 T::*uint16_type;
+							uint8 T::*uint8_type;
+							int64 T::*int64_type;
+							int32 T::*int32_type;
+							int16 T::*int16_type;
+							int8 T::*int8_type;
+							float64 T::*float64_type;
+							float32 T::*float32_type;
+							bool T::*boolean_type;
+							std::string T::*string_type;
+							date_time T::*dateTime_type;
+							util::data_stream T::*binary_type;
 						} value;
 
-						friend class table_binder<T>;
+						friend class table_binder<T, C, Q>;
 				};
 
-				exported table_binder(std::string name, bool lockSelectedRow) {
+				exported table_binder(C& conn, std::string name, bool lock_row = true) : db(conn), select_by_id_query("", &conn), update_query("", &conn), insert_query("", &conn), delete_query("", &conn) {
 					this->name = name;
-					this->lockStatement = lockSelectedRow ? " FOR UPDATE;" : "";
+					this->lock_stmt = lock_row ? " FOR UPDATE;" : "";
 				}
 
-				exported void prepateStatements() {
-					this->generateSelectById();
-					this->generateUpdate();
-					this->generateInsert();
-					this->generateDelete();
+				exported void prepare_stmts() {
+					this->generate_select_by_id();
+					this->generate_update ();
+					this->generate_insert();
+					this->generate_delete();
 				}
 
-				exported void addColumnDefinition(column_definition column_definition) {
-					this->columnDefinitions.push_back(column_definition);
+				exported void add_def(column_definition def) {
+					this->defs.push_back(def);
 				}
 
-				template<typename U> exported T executeSelectSingleByField(const Connection& db, std::string field, U value) const {
-					auto query = db.newQuery("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lockStatement);
-					query.addParameter(value);
-					return this->fillObjectFromQuery(query);
+				template<typename U> exported T select_one_by_field(std::string field, U value) {
+					auto query = Q("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lock_stmt, &this->db);
+					query.add_para(value);
+					return this->fill_one(query);
 				}
 
-				template<typename U> exported std::vector<T> executeSelectManyByField(const Connection& db, std::string field, U value) const {
-					auto query = db.newQuery("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lockStatement);
-					query.addParameter(value);
-					return this->fillObjectsFromQuery(query);
+				template<typename U> exported std::vector<T> select_by_field(std::string field, U value) {
+					auto query = Q("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lock_stmt, &this->db);
+					query.add_para(value);
+					return this->fill(query);
 				}
 
-				exported T executeSelectById(const Connection& db, uint64 id) const {
-					auto query = db.newQuery(this->selectByIdQueryString);
-					query.addParameter(id);
-					return this->fillObjectFromQuery(query);
+				exported T select_by_id(connection& db, PType id) {
+					this->select_by_id_query.reset();
+					this->select_by_id_query.add_para(id);
+					return this->fill_one(this->select_by_id_query);
 				}
 
-				exported void executeDelete(const Connection& db, T& object) const {
-					auto query = db.newQuery(this->deleteQueryString);
-					query.addParameter(object.id);
-					query.execute();
+				exported void remove(connection& db, T& object) {
+					this->delete_query.reset();
+					this->delete_query.add_para(id);
+					this->delete_query.execute();
 				}
 
-				exported void executeInsert(const Connection& db, T& object) const {
-					auto query = db.newQuery(this->insertQueryString);
+				exported void insert(connection& db, T& object) {
+					this->insert_query.reset();
 
-					for (auto i : this->columnDefinitions)
-						this->addQueryParameter(i, query, object);
+					for (auto i : this->defs)
+						this->add_para(i, this->insert_query, object);
 
-					query.execute();
+					this->insert_query.execute();
 				}
 
-				exported void executeUpdate(const Connection& db, T& object) const {
-					auto query = db.newQuery(this->updateQueryString);
+				exported void update(connection& db, T& object) {
+					this->update_query.reset();
 
-					for (auto i : this->columnDefinitions)
-					if (i.updatable)
-						this->addQueryParameter(i, query, object);
+					for (auto i : this->defs)
+						if (i.updatable)
+							this->add_para(i, this->update_query, object);
 
-					query.addParameter(object.id);
-					query.execute();
+					this->update_query.add_para(object.id);
+					this->update_query.execute();
 				}
 
-				exported T fillObjectFromQuery(Query& query) const {
+				exported T fill_one(Q& query) {
 					T result;
 
 					query.execute();
-					if (query.advanceToNextRow()) {
-						for (auto i : this->columnDefinitions) {
-							this->setObjectField(i, query, result);
+					if (query.advance_row()) {
+						for (auto i : this->defs) {
+							this->set_value(i, query, result);
 						}
 					}
 					else {
@@ -130,15 +149,15 @@ namespace util {
 					return result;
 				}
 
-				exported std::vector<T> fillObjectsFromQuery(Query& query) const {
+				exported std::vector<T> fill(Q& query) {
 					std::vector<T> result;
-					query.execute();
 
-					while (query.advanceToNextRow()) {
+					query.execute();
+					while (query.advance_row()) {
 						T current;
 
-						for (auto i : this->columnDefinitions)
-							this->setObjectField(i, query, current);
+						for (auto i : this->defs)
+							this->set_value(i, query, current);
 
 						result.push_back(current);
 					}
@@ -147,55 +166,69 @@ namespace util {
 				}
 
 			private:
-				std::vector<column_definition> columnDefinitions;
+				C& db;
+
+				Q select_by_id_query;
+				Q delete_query;
+				Q insert_query;
+				Q update_query;
+
+				std::vector<column_definition> defs;
 				std::string name;
-				std::string lockStatement;
+				std::string lock_stmt;
 
-				std::string selectByIdQueryString;
-				std::string deleteQueryString;
-				std::string insertQueryString;
-				std::string updateQueryString;
-
-				void addQueryParameter(column_definition& column, Query& query, T& object) const {
+				void add_para(column_definition& column, Q& query, T& object) {
 					switch (column.type) {
-						case column_definition::data_type::uint64: query.addParameter(object.*(column.value.uint64Type)); break;
-						case column_definition::data_type::uint32: query.addParameter(object.*(column.value.uint32Type)); break;
-						case column_definition::data_type::uint16: query.addParameter(object.*(column.value.uint16Type)); break;
-						case column_definition::data_type::float64: query.addParameter(object.*(column.value.float64Type)); break;
-						case column_definition::data_type::bool: query.addParameter(object.*(column.value.booleanType)); break;
-						case column_definition::data_type::string: query.addParameter(object.*(column.value.stringType)); break;
-						case column_definition::data_type::date_time: query.addParameter(static_cast<uint64>(std::chrono::duration_cast<std::chrono::milliseconds>(epoch - (object.*(column.value.dateTimeType))).count())); break;
-						case column_definition::data_type::data_stream: query.addParameter(object.*(column.value.binaryType)); break;
+						case column_definition::data_type::uint64: query.add_para(object.*(column.value.uint64_type)); break;
+						case column_definition::data_type::uint32: query.add_para(object.*(column.value.uint32_type)); break;
+						case column_definition::data_type::uint16: query.add_para(object.*(column.value.uint16_type)); break;
+						case column_definition::data_type::uint8: query.add_para(object.*(column.value.uint8_type)); break;
+						case column_definition::data_type::int64: query.add_para(object.*(column.value.int64_type)); break;
+						case column_definition::data_type::int32: query.add_para(object.*(column.value.int32_type)); break;
+						case column_definition::data_type::int16: query.add_para(object.*(column.value.int16_type)); break;
+						case column_definition::data_type::int8: query.add_para(object.*(column.value.int8_type)); break;
+						case column_definition::data_type::float64: query.add_para(object.*(column.value.float64_type)); break;
+						case column_definition::data_type::float32: query.add_para(object.*(column.value.float32_type)); break;
+						case column_definition::data_type::bool: query.add_para(object.*(column.value.boolean_type)); break;
+						case column_definition::data_type::string: query.add_para(object.*(column.value.string_type)); break;
+						case column_definition::data_type::date_time: query.add_para(since_epoch(object.*(column.value.dateTime_type))); break;
+						case column_definition::data_type::data_stream: query.add_para(object.*(column.value.binary_type)); break;
 					}
 				}
 
-				void setObjectField(column_definition& column, Query& query, T& object) const {
+				void set_value(column_definition& column, Q& query, T& object) {
 					switch (column.type) {
-						case column_definition::data_type::uint64: object.*(column.value.uint64Type) = query.getUInt64(column.name); break;
-						case column_definition::data_type::uint32: object.*(column.value.uint32Type) = query.getUInt32(column.name); break;
-						case column_definition::data_type::uint16: object.*(column.value.uint16Type) = query.getUInt16(column.name); break;
-						case column_definition::data_type::float64: object.*(column.value.float64Type) = query.getFloat64(column.name); break;
-						case column_definition::data_type::bool: object.*(column.value.booleanType) = query.getBool(column.name); break;
-						case column_definition::data_type::string: object.*(column.value.stringType) = query.getString(column.name); break;
-						case column_definition::data_type::date_time: object.*(column.value.dateTimeType) = epoch + std::chrono::milliseconds(query.getUInt64(column.name)); break;
-						case column_definition::data_type::data_stream: object.*(column.value.binaryType) = query.getDataStream(column.name); break;
+						case column_definition::data_type::uint64: object.*(column.value.uint64_type) = query.get_uint64(column.name); break;
+						case column_definition::data_type::uint32: object.*(column.value.uint32_type) = query.get_uint32(column.name); break;
+						case column_definition::data_type::uint16: object.*(column.value.uint16_type) = query.get_uint16(column.name); break;
+						case column_definition::data_type::uint8: object.*(column.value.uint8_type) = query.get_uint8(column.name); break;
+						case column_definition::data_type::int64: object.*(column.value.int64_type) = query.get_int64(column.name); break;
+						case column_definition::data_type::int32: object.*(column.value.int32_type) = query.get_int32(column.name); break;
+						case column_definition::data_type::int16: object.*(column.value.int16_type) = query.get_int16(column.name); break;
+						case column_definition::data_type::int8: object.*(column.value.int8_type) = query.get_int8(column.name); break;
+						case column_definition::data_type::float64: object.*(column.value.float64_type) = query.get_float64(column.name); break;
+						case column_definition::data_type::float32: object.*(column.value.float32_type) = query.get_float32(column.name); break;
+						case column_definition::data_type::bool: object.*(column.value.boolean_type) = query.get_bool(column.name); break;
+						case column_definition::data_type::string: object.*(column.value.string_type) = query.get_string(column.name); break;
+						case column_definition::data_type::date_time: object.*(column.value.dateTime_type) = from_epoch(query.get_uint64(column.name)); break;
+						case column_definition::data_type::data_stream: object.*(column.value.binary_type) = query.get_data_stream(column.name); break;
 					}
 				}
 
-				void generateSelectById() {
-					this->selectByIdQueryString = "SELECT * FROM " + this->name + " WHERE Id = $1" + this->lockStatement;
+				void generate_select_by_id() {
+					this->select_by_id_query.query_str = "SELECT * FROM " + this->name + " WHERE " + PName + " = $1" + this->lock_stmt;
 				}
 
-				void generateDelete() {
-					this->deleteQueryString = "DELETE FROM " + this->name + " WHERE Id = $1;";
+				void generate_delete() {
+					this->delete_query.query_str = "DELETE FROM " + this->name + " WHERE Id = $1;";
 				}
 
-				void generateInsert() {
+				void generate_insert() {
 					std::stringstream query;
 					query << "INSERT INTO " << this->name << " (";
 
 					bool isFirst = true;
-					for (auto i : this->columnDefinitions) {
+					for (auto i : this->defs) {
 						if (!isFirst)
 							query << ", ";
 						else
@@ -207,7 +240,7 @@ namespace util {
 					isFirst = true;
 
 					word columnIndex = 0;
-					for (auto i : this->columnDefinitions) {
+					for (auto i : this->defs) {
 						if (!isFirst)
 							query << ", ";
 						else
@@ -217,28 +250,29 @@ namespace util {
 
 					query << ");";
 
-					this->insertQueryString = query.str();
+					this->insert_query.query_str = query.str();
 				}
 
-				void generateUpdate() {
+				void generate_update() {
 					std::stringstream query;
 					query << "UPDATE " << this->name << " SET ";
 
 					word columnIndex = 0;
 					bool isFirst = true;
-					for (auto i : this->columnDefinitions) {
+					for (auto i : this->defs) {
 						if (i.updatable) {
 							if (!isFirst)
 								query << ", ";
 							else
 								isFirst = false;
+
 							query << i.name << " = $" << ++columnIndex;
 						}
 					}
 
 					query << " WHERE Id = $" << columnIndex + 1;
 
-					this->updateQueryString = query.str();
+					this->update_query.query_str = query.str();
 				}
 		};
 	}

@@ -4,7 +4,6 @@
 	#define WINDOWS
 	#define exported  __declspec(dllexport)
 	#define threadlocal __declspec(thread)
-	#define _CRT_SECURE_NO_WARNINGS
 #elif defined __unix__
 	#define POSIX
 	#define exported __attribute__((visibility ("default")))
@@ -27,7 +26,10 @@ typedef float float32;
 typedef std::chrono::system_clock::time_point date_time;
 
 namespace util {
-	static date_time epoch;
+	extern date_time epoch;
+
+	inline uint64 since_epoch(const date_time& dt);
+	inline date_time from_epoch(uint64 val);
 }
 
 #ifdef WINDOWS

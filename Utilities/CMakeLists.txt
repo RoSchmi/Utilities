@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 2.8.8)
 project(Utilities)
 
 set(util_sources Cryptography.cpp DataStream.cpp Misc.cpp
-	Socket.cpp TCPConnection.cpp TCPServer.cpp
-	WebSocketConnection.cpp SQLDatabase.cpp RequestServer.cpp)
+	Socket.cpp TCPConnection.cpp TCPServer.cpp Common.cpp
+	WebSocketConnection.cpp SQL\Database.cpp SQL\PostgreSQL.cpp RequestServer.cpp)
 
 file(GLOB util_headers *.h)
 
