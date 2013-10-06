@@ -38,7 +38,7 @@ query connection::operator<<(string query_str) {
 	return this->new_query(query_str);
 }
 
-query::query(string query_str, connection* connection) : sql::query(query_str, connection) {
+query::query(string query_str, connection* conn) : sql::query(query_str, conn) {
 	this->para_index = 0;
 	this->result = nullptr;
 }

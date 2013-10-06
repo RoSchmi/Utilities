@@ -33,14 +33,14 @@ namespace util {
 					query& operator=(const query& other) = delete;
 					query& operator=(query&& other) = delete;
 
-					exported query(std::string query_str = "", connection* connection = nullptr);
+					exported query(std::string query_str = "", connection* conn = nullptr);
 					exported query(query&& other);
 					exported virtual ~query();
 
 					exported void reset_result();
 					exported void reset_paras();
 					exported virtual void reset() override;
-					exported virtual void execute(sql::connection* connection = nullptr) override;
+					exported virtual void execute(sql::connection* conn = nullptr) override;
 					exported virtual bool is_column_null() const override;
 
 					exported virtual void add_para(const uint8* para, int32 length) override;

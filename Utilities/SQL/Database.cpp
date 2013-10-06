@@ -21,8 +21,8 @@ bool connection::connected() const {
 	return this->is_connected;
 }
 
-query::query(string query_str, connection* connection) {
-	this->conn = connection;
+query::query(string query_str, connection* conn) {
+	this->conn = conn;
 	this->query_str = query_str;
 	this->row_count = 0;
 	this->row = -1;

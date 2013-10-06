@@ -59,12 +59,12 @@ namespace util {
 				query& operator=(const query& other) = delete;
 				query& operator=(query&& other) = delete;
 
-				exported query(std::string query_str = "", connection* connection = nullptr);
+				exported query(std::string query_str = "", connection* conn = nullptr);
 				exported query(query&& other);
 				exported virtual ~query() = 0;
 
 				exported virtual void reset() = 0;
-				exported virtual void execute(connection* connection = nullptr) = 0;
+				exported virtual void execute(connection* conn = nullptr) = 0;
 				exported virtual word rows() const;
 				exported virtual bool advance_row();
 				exported virtual bool is_column_null() const = 0;
