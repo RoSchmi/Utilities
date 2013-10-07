@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
 #include <libpq-fe.h>
 
@@ -10,8 +11,8 @@
 namespace util {
 	namespace sql {
 		namespace postgres {
-
 			class connection;
+			template<typename T, typename P> class table_binder;
 
 			class query : public sql::query {
 				static const word MAX_PARAMETERS = 25;
@@ -27,6 +28,8 @@ namespace util {
 					query(const query& other) = delete;
 					query& operator=(const query& other) = delete;
 					query& operator=(query&& other) = delete;
+
+					typedef connection connection_type;
 
 					exported query(std::string query_str = "", connection* conn = nullptr);
 					exported query(query&& other);
@@ -115,6 +118,9 @@ namespace util {
 
 					friend class query;
 
+					typedef query query_type;
+					template<typename T, typename P> using binder_type = table_binder<T, P>;
+
 					exported connection(const parameters& parameters);
 					exported virtual ~connection();
 
@@ -123,6 +129,87 @@ namespace util {
 					exported virtual void begin_transaction() override;
 					exported virtual void rollback_transaction() override;
 					exported virtual void commit_transaction() override;
+			};
+
+			template<typename T, typename P> class table_binder : public sql::table_binder<T, connection, P> {
+				std::string lock_stmt;
+
+				virtual void generate_select_by_id() override {
+					this->select_by_id_query.query_str = "SELECT * FROM " + this->name + " WHERE id = $1" + this->lock_stmt;
+				}
+
+				virtual void generate_delete() override {
+					this->delete_query.query_str = "DELETE FROM " + this->name + " WHERE Id = $1;";
+				}
+
+				virtual void generate_insert() override {
+					std::stringstream qry;
+					qry << "INSERT INTO " << this->name << " (";
+
+					bool isFirst = true;
+					for (auto i : this->defs) {
+						if (!isFirst)
+							qry << ", ";
+						else
+							isFirst = false;
+						qry << i.name;
+					}
+
+					qry << ") VALUES (";
+					isFirst = true;
+
+					word column_index = 0;
+					for (auto i : this->defs) {
+						if (!isFirst)
+							qry << ", ";
+						else
+							isFirst = false;
+						qry << "$" << ++column_index;
+					}
+
+					qry << ");";
+
+					this->insert_query.query_str = qry.str();
+				}
+
+				virtual void generate_update() override {
+					std::stringstream qry;
+					qry << "UPDATE " << this->name << " SET ";
+
+					word column_index = 0;
+					bool isFirst = true;
+					for (auto i : this->defs) {
+						if (i.updatable) {
+							if (!isFirst)
+								qry << ", ";
+							else
+								isFirst = false;
+
+							qry << i.name << " = $" << ++column_index;
+						}
+					}
+
+					qry << " WHERE Id = $" << column_index + 1;
+
+					this->update_query.query_str = qry.str();
+				}
+
+				public:
+					exported table_binder(postgres::connection& conn, std::string name, bool lock_row = true) : sql::table_binder<T, connection, P>(conn, name) {
+						this->lock_stmt = lock_row ? " FOR UPDATE;" : "";
+					}
+
+					template<typename U> exported T select_one_by_field(std::string field, U value) {
+						query qry = this->db << ("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lock_stmt);
+						qry << value;
+						return this->fill_one(qry);
+					}
+
+					template<typename U> exported std::vector<T> select_by_field(std::string field, U value) {
+						query qry = this->db << ("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lock_stmt);
+						qry << value;
+						return this->fill(qry);
+					}
 			};
 		}
 	}

@@ -4,14 +4,6 @@ using namespace std;
 using namespace util;
 using namespace util::sql;
 
-db_object<>::db_object() {
-	this->valid = true;
-}
-
-db_object<>::operator bool() {
-	return this->valid;
-}
-
 db_exception::db_exception(string message) {
 	this->message = message;
 }

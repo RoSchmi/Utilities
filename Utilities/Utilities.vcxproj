@@ -11,8 +11,6 @@
     <ClInclude Include="Net\Socket.h" />
     <ClInclude Include="SQL\Database.h" />
     <ClInclude Include="SQL\PostgreSQL.h" />
-    <ClInclude Include="SQL\PostgreSQLBinder.h" />
-    <ClInclude Include="SQL\TableBinder.h" />
     <ClInclude Include="Net\TCPConnection.h" />
     <ClInclude Include="Net\TCPServer.h" />
     <ClInclude Include="Net\WebSocketConnection.h" />
