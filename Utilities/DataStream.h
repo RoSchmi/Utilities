@@ -21,7 +21,7 @@ namespace util {
 
 		static const word MINIMUM_SIZE = 32;
 		static const word GROWTH = 2;
-		static const word STRING_LENGTH = 2;
+		typedef uint16 string_length_type;
 
 		public:
 			/**

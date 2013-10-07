@@ -163,7 +163,7 @@ void data_stream::write(cstr data) {
 }
 
 void data_stream::write(const string& data) {
-	word size = static_cast<word>(data.size());
+	auto size = static_cast<string_length_type>(data.size());
 
 	this->write(size);
 	this->write(reinterpret_cast<const uint8*>(data.data()), size);
@@ -196,7 +196,7 @@ const uint8* data_stream::read(word count) {
 }
 
 string data_stream::read_string() {
-	word length = reinterpret_cast<word>(this->read(data_stream::STRING_LENGTH));
+	auto length = this->read<string_length_type>();
 
 	return string(reinterpret_cast<cstr>(this->read(length)), length);
 }
