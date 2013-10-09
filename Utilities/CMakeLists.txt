@@ -7,6 +7,8 @@ set(util_sources Cryptography.cpp DataStream.cpp Misc.cpp
 	Net/WebSocketConnection.cpp SQL/Database.cpp SQL/PostgreSQL.cpp Net/RequestServer.cpp)
 
 file(GLOB util_headers *.h)
+file(GLOB sql_headers SQL/*.h)
+file(GLOB net_headers Net/*.h)
 
 add_library(UtilitiesObjects OBJECT ${util_sources})
 add_library(Utilities SHARED $<TARGET_OBJECTS:UtilitiesObjects>)
@@ -28,6 +30,8 @@ if(NOT WIN32)
 	target_link_libraries(Utilities rt)
 	set_target_properties(UtilitiesStatic PROPERTIES OUTPUT_NAME Utilities)
 	install(FILES ${util_headers} DESTINATION include/Utilities)
+	install(FILES ${sql_headers} DESTINATION include/Utilities/SQL)
+	install(FILES ${net_headers} DESTINATION include/Utilities/Net)
 	install(FILES ${CMAKE_BINARY_DIR}/libUtilities.a DESTINATION lib)
 	install(FILES ${CMAKE_BINARY_DIR}/libUtilities.so DESTINATION lib)
 endif()

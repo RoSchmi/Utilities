@@ -15,7 +15,7 @@
 	static bool winsock_initialized = false;
 #elif defined POSIX
 	#include <sys/select.h>
-	#include <sys/Socket.h>
+	#include <sys/socket.h>
 	#include <sys/types.h>
 	#include <netinet/in.h>
 	#include <unistd.h>
@@ -68,7 +68,7 @@ int prep_socket(socket::families family, socket::types type, string address, str
 
 	if (is_listener)
 		hints.ai_flags = AI_PASSIVE;
-		
+
 	if (::getaddrinfo(address != "" ? address.c_str() : nullptr, port.c_str(), &hints, &server_addr_info) != 0 || server_addr_info == nullptr)
 		throw socket::invalid_address_exception();
 
@@ -115,9 +115,9 @@ socket::socket() {
 
 socket::socket(families family, types type, string address, string port) : socket(family, type) {
 	addrinfo* server_addr_info;
-	
+
 	this->raw_socket = prep_socket(family, type, address, port, false, &server_addr_info);
-	
+
 	if (::connect(this->raw_socket, server_addr_info->ai_addr, static_cast<int>(server_addr_info->ai_addrlen)) != 0) {
 		#ifdef WINDOWS
 			::closesocket(this->raw_socket);
@@ -126,12 +126,12 @@ socket::socket(families family, types type, string address, string port) : socke
 		#endif
 
 		::freeaddrinfo(server_addr_info);
-		
+
 		throw could_not_connect_exception();
 	}
 
 	this->connected = true;
-	
+
 	::freeaddrinfo(server_addr_info);
 }
 
@@ -145,7 +145,7 @@ socket::socket(families family, types type, string port) : socket(family, type) 
 
 	if (::listen(this->raw_socket, SOMAXCONN) != 0)
 		goto error;
-	
+
 	::freeaddrinfo(server_addr_info);
 
 	return;
@@ -158,7 +158,7 @@ error:
 #endif
 
 	freeaddrinfo(server_addr_info);
-	
+
 	throw could_not_listen_exception();
 }
 
@@ -174,7 +174,7 @@ socket::~socket() {
 net::socket& socket::operator=(socket&& other) {
 	if (this->connected)
 		this->close();
-		
+
 	this->type = other.type;
 	this->family = other.family;
 
@@ -227,7 +227,7 @@ net::socket socket::accept() {
 	if (new_socket.raw_socket == -1)
 		return new_socket;
 #endif
-	
+
 	new_socket.connected = true;
 
 	if (remote_address.ss_family == AF_INET) {
@@ -294,9 +294,9 @@ bool socket::data_available() const {
 	timeval timeout;
 	timeout.tv_usec = 250;
 	timeout.tv_sec = 0;
-	
+
 	FD_SET(this->raw_socket, &read_set);
-	
+
 #ifdef WINDOWS
 	return ::select(0, &read_set, nullptr, nullptr, &timeout) > 0;
 #elif defined POSIX
