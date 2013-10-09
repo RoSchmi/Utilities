@@ -9,6 +9,7 @@
     <ClInclude Include="Misc.h" />
     <ClInclude Include="Net\RequestServer.h" />
     <ClInclude Include="Net\Socket.h" />
+    <ClInclude Include="Optional.h" />
     <ClInclude Include="SQL\Database.h" />
     <ClInclude Include="SQL\PostgreSQL.h" />
     <ClInclude Include="Net\TCPConnection.h" />
