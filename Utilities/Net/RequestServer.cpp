@@ -11,16 +11,13 @@ request_server::request_server() {
 	this->valid = false;
 }
 
-request_server::request_server(string port, bool uses_websockets, word workers, uint16 retry_code, on_request_callback on_request, on_connect_callback on_connect, on_disconnect_callback on_disconnect, void* state) : request_server(vector<string>{ port }, vector<bool>{ uses_websockets }, workers, retry_code, on_request, on_connect, on_disconnect, state) {
+request_server::request_server(string port, word workers, uint16 retry_code, void* state, bool uses_websockets) : request_server(vector<string>{ port }, workers, retry_code, state, vector<bool>{ uses_websockets }) {
 	
 }
 
-request_server::request_server(vector<string> ports, vector<bool> uses_websockets, word workers, uint16 retry_code, on_request_callback on_request, on_connect_callback on_connect, on_disconnect_callback on_disconnect, void* state) {
+request_server::request_server(vector<string> ports, word workers, uint16 retry_code, void* state, vector<bool> uses_websockets) {
 	this->running = false;
 	this->valid = true;
-	this->on_connect = on_connect;
-	this->on_disconnect = on_disconnect;
-	this->on_request = on_request;
 	this->retry_code = retry_code;
 	this->state = state;
 	this->workers = workers;
@@ -42,9 +39,6 @@ request_server& request_server::operator = (request_server&& other) {
 		throw cant_move_running_server_exception();
 
 	this->valid = other.valid.load();
-	this->on_connect = other.on_connect;
-	this->on_disconnect = other.on_disconnect;
-	this->on_request = other.on_request;
 	this->retry_code = other.retry_code;
 	this->state = other.state;
 	this->workers = other.workers;
@@ -96,14 +90,14 @@ tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_
 	this->client_lock.lock();
 
 	this->clients.push_back(move(connection));
-	auto& newReference = this->clients.back();
+	auto& ref = this->clients.back();
 
-	if (call_on_connect && this->on_connect)
-		this->on_connect(newReference, this->state);
+	if (call_on_connect)
+		this->on_connect(ref, this->state);
 
 	this->client_lock.unlock();
 
-	return newReference;
+	return ref;
 }
 
 void request_server::on_client_connect(tcp_connection&& connection, void* serverState) {
@@ -112,9 +106,7 @@ void request_server::on_client_connect(tcp_connection&& connection, void* server
 	self.client_lock.lock();
 
 	self.clients.push_back(move(connection));
-	if (self.on_connect)
-		self.on_connect(self.clients.back(), self.state);
-
+	self.on_connect(self.clients.back(), self.state);
 	self.client_lock.unlock();
 }
 
@@ -134,18 +126,18 @@ void request_server::incoming_run(word worker_number) {
 		message response(request.connection, id);
 
 		switch (this->on_request(request.connection, this->state, worker_number, category, method, request.data, response.data)) {
-			case request_result::SUCCESS:
+			case request_result::success:
 				this->enqueue_outgoing(move(response));
 
 				break;
-			case request_result::RETRY_LATER:
+			case request_result::retry_later:
 				if (++request.attempts >= request_server::MAX_RETRIES)
 					this->enqueue_incoming(move(request));
 				else
 					response.data.write(this->retry_code);
 
 				break;
-			case request_result::NO_RESPONSE:
+			case request_result::no_response:
 				break;
 		}
 	}
@@ -175,21 +167,21 @@ void request_server::io_run() {
 	}
 }
 
-void request_server::enqueue_incoming(message&& m) {
+void request_server::enqueue_incoming(message m) {
 	if (!this->running)
 		return;
 
 	this->incoming.enqueue(move(m));
 }
 
-void request_server::enqueue_outgoing(message&& m) {
+void request_server::enqueue_outgoing(message m) {
 	if (!this->running)
 		return;
 
 	this->incoming.enqueue(move(m));
 }
 
-request_server::message::message(tcp_connection& connection, tcp_connection::message&& message) : connection(connection), data(message.data, message.length) {
+request_server::message::message(tcp_connection& connection, tcp_connection::message message) : connection(connection), data(message.data, message.length) {
 	this->attempts = 0;
 }
 

@@ -4,11 +4,11 @@
 #include <vector>
 #include <list>
 #include <thread>
-#include <functional>
 
 #include "../Common.h"
 #include "../DataStream.h"
 #include "../WorkQueue.h"
+#include "../Event.h"
 #include "TCPServer.h"
 
 namespace util {
@@ -20,7 +20,7 @@ namespace util {
 					word attempts;
 					data_stream data;
 
-					message(tcp_connection& connection, tcp_connection::message&& message);
+					message(tcp_connection& connection, tcp_connection::message message);
 					message(tcp_connection& connection, data_stream&& data);
 					message(tcp_connection& connection, const uint8* data, word length);
 					message(tcp_connection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
@@ -34,9 +34,9 @@ namespace util {
 				};
 
 				enum class request_result {
-					SUCCESS,
-					NO_RESPONSE,
-					RETRY_LATER
+					success,
+					no_response,
+					retry_later
 				};
 
 				class cant_move_running_server_exception {};
@@ -44,20 +44,16 @@ namespace util {
 
 				static const word MAX_RETRIES = 5;
 
-				typedef std::function<request_result(tcp_connection& connection, void* state, word worker_number, uint8 category, uint8 method, data_stream& parameters, data_stream& response)> on_request_callback;
-				typedef std::function<void(tcp_connection& connection, void* state)> on_connect_callback;
-				typedef std::function<void(tcp_connection& connection, void* state)> on_disconnect_callback;
-
 				exported request_server();
-				exported request_server(std::string port, bool uses_websockets, word workers, uint16 retry_code, on_request_callback on_request, on_connect_callback on_connect, on_disconnect_callback on_disconnect, void* state = nullptr);
-				exported request_server(std::vector<std::string> ports, std::vector<bool> uses_websockets, word workers, uint16 retry_code, on_request_callback on_request, on_connect_callback on_connect, on_disconnect_callback on_disconnect, void* state = nullptr);
+				exported request_server(std::string port, word workers, uint16 retry_code, void* state = nullptr, bool uses_websockets = false);
+				exported request_server(std::vector<std::string> ports, word workers, uint16 retry_code, void* state = nullptr, std::vector<bool> uses_websockets = { });
 				exported request_server(request_server&& other);
 				exported ~request_server();
 
 				exported request_server& operator=(request_server&& other); 
 
-				exported void enqueue_incoming(message&& message);
-				exported void enqueue_outgoing(message&& message);
+				exported void enqueue_incoming(message message);
+				exported void enqueue_outgoing(message message);
 
 				exported void start();
 				exported void stop();
@@ -66,14 +62,14 @@ namespace util {
 				request_server(const request_server& other) = delete;
 				request_server& operator=(const request_server& other) = delete;
 
+				event_single<request_result, tcp_connection&, void*, word, uint8, uint8, data_stream&, data_stream&> on_request;
+				event<void, tcp_connection&, void*> on_connect;
+				event<void, tcp_connection&, void*> on_disconnect;
+
 			private:
 				std::list<tcp_server> servers;
 				std::vector<tcp_connection> clients;
 				std::mutex client_lock;
-
-				on_request_callback on_request;
-				on_connect_callback on_connect;
-				on_disconnect_callback on_disconnect;
 
 				work_queue<message> incoming;
 				work_queue<message> outgoing;
