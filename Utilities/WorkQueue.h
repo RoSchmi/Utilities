@@ -31,7 +31,7 @@ namespace util {
 				this->cv.notify_one();
 			}
 
-			void dequeue(T& target, std::chrono::duration timeout) {
+			void dequeue(T& target, std::chrono::seconds timeout) {
 				std::unique_lock<std::mutex> lock(this->lock);
 
 				while (this->items.empty())
@@ -52,7 +52,7 @@ namespace util {
 				this->items.pop();
 			}
 
-			T dequeue(std::chrono::duration timeout) {
+			T dequeue(std::chrono::seconds timeout) {
 				std::unique_lock<std::mutex> lock(this->lock);
 
 				while (this->items.empty())
