@@ -26,7 +26,7 @@ namespace util {
 
 			template<typename... V> std::vector<T> operator()(V&&... paras) {
 				std::vector<T> results;
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				for (auto i : this->registered)
 					results.push_back(i(std::forward<V>(paras)...));
@@ -40,8 +40,8 @@ namespace util {
 			}
 
 			event& operator=(event&& other) {
-				std::unique_lock<mutex> lck1(this->lock);
-				std::unique_lock<mutex> lck2(other.lock);
+				std::unique_lock<std::mutex> lck1(this->lock);
+				std::unique_lock<std::mutex> lck2(other.lock);
 
 				this->registered = std::move(other.registered);
 
@@ -49,7 +49,7 @@ namespace util {
 			}
 
 			void operator+=(handler hndlr) {
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				this->registered.push_back(hndlr);
 
@@ -58,7 +58,7 @@ namespace util {
 			}
 
 			void operator-=(handler hndlr) {
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
 				if (pos != this->registered.end())
@@ -88,7 +88,7 @@ namespace util {
 			std::mutex lock;
 
 			template<typename... U> void operator()(U&&... paras) {
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				for (auto i : this->registered)
 					i(std::forward<U>(paras)...);
@@ -100,8 +100,8 @@ namespace util {
 			}
 
 			event& operator=(event&& other) {
-				std::unique_lock<mutex> lck1(this->lock);
-				std::unique_lock<mutex> lck2(other.lock);
+				std::unique_lock<std::mutex> lck1(this->lock);
+				std::unique_lock<std::mutex> lck2(other.lock);
 
 				this->registered = std::move(other.registered);
 
@@ -109,7 +109,7 @@ namespace util {
 			}
 
 			void operator+=(handler hndlr) {
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				this->registered.push_back(hndlr);
 
@@ -118,7 +118,7 @@ namespace util {
 			}
 
 			void operator-=(handler hndlr) {
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
 				if (pos != this->registered.end())
@@ -148,7 +148,7 @@ namespace util {
 			std::mutex lock;
 
 			template<typename... V> T operator()(V&&... paras) {
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				return this->registered(std::forward<V>(paras)...);
 			}
@@ -159,8 +159,8 @@ namespace util {
 			}
 
 			event_single& operator=(event_single&& other) {
-				std::unique_lock<mutex> lck1(this->lock);
-				std::unique_lock<mutex> lck2(other.lock);
+				std::unique_lock<std::mutex> lck1(this->lock);
+				std::unique_lock<std::mutex> lck2(other.lock);
 
 				this->registered = other.registered;
 				other.registered = nullptr;
@@ -169,7 +169,7 @@ namespace util {
 			}
 
 			void operator+=(handler hndlr) {
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				this->registered = hndlr;
 
@@ -178,7 +178,7 @@ namespace util {
 			}
 
 			void operator-=(handler hndlr) {
-				std::unique_lock<mutex> lck(this->lock);
+				std::unique_lock<std::mutex> lck(this->lock);
 
 				if (hndlr == this->registered)
 					this->registered = nullptr;
