@@ -6,9 +6,9 @@
 #include <utility>
 
 namespace util {
-	template<typename T, typename... args> class event {
+	template<typename T, typename... U> class event {
 		public:
-			typedef T(*handler)(args...);
+			typedef T(*handler)(U...);
 
 			event() = default;
 			event(const event& other) = delete;
@@ -19,17 +19,47 @@ namespace util {
 			std::mutex lock;
 
 		public:
-			event(event&& other);
-			event& operator=(event&& other);
+			event(event&& other) {
+				*this = std::move(other);
+			}
 
-			std::vector<T> operator()(args&&... paras);
-			void operator+=(handler hndlr);
-			void operator-=(handler hndlr);
+			event& operator=(event&& other) {
+				std::unique_lock<mutex> lck1(this->lock);
+				std::unique_lock<mutex> lck2(other.lock);
+
+				this->registered = std::move(other.registered);
+
+				return *this;
+			}
+
+			template<typename... V> std::vector<T> operator()(V&&... paras) {
+				std::vector<T> results;
+				std::unique_lock<mutex> lck(this->lock);
+
+				for (auto i : this->registered)
+					results.push_back(i(std::forward<V>(paras)...));
+
+				return results;
+			}
+
+			void operator+=(handler hndlr) {
+				std::unique_lock<mutex> lck(this->lock);
+
+				this->registered.push_back(hndlr);
+			}
+
+			void operator-=(handler hndlr) {
+				std::unique_lock<mutex> lck(this->lock);
+
+				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
+				if (pos != this->registered.end())
+					this->registered.erase(pos);
+			}
 	};
 
-	template<typename... args> class event<void, args...> {
+	template<typename... T> class event<void, T...> {
 		public:
-			typedef void(*handler)(args...);
+			typedef void(*handler)(T...);
 
 			event() = default;
 			event(const event& other) = delete;
@@ -40,87 +70,86 @@ namespace util {
 			std::mutex lock;
 
 		public:
-			event(event&& other);
-			event& operator=(event&& other);
+			event(event&& other) {
+				*this = std::move(other);
+			}
 
-			void operator()(args&&... paras);
-			void operator+=(handler hndlr);
-			void operator-=(handler hndlr);
+			event& operator=(event&& other) {
+				std::unique_lock<mutex> lck1(this->lock);
+				std::unique_lock<mutex> lck2(other.lock);
+
+				this->registered = std::move(other.registered);
+
+				return *this;
+			}
+
+			template<typename... U> void operator()(U&&... paras) {
+				std::unique_lock<mutex> lck(this->lock);
+
+				for (auto i : this->registered)
+					i(std::forward<U>(paras)...);
+			}
+
+			void operator+=(handler hndlr) {
+				std::unique_lock<mutex> lck(this->lock);
+
+				this->registered.push_back(hndlr);
+			}
+
+			void operator-=(handler hndlr) {
+				std::unique_lock<mutex> lck(this->lock);
+
+				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
+				if (pos != this->registered.end())
+					this->registered.erase(pos);
+			}
 	};
-}
 
-namespace util {
-	using namespace std;
+	template<typename T, typename... U> class event_single {
+		public:
+			typedef T(*handler)(U...);
 
-	template<typename T, typename... args> event<T, args...>::event(event&& other) {
-		*this = move(other);
-	}
+			event_single() = default;
+			event_single(const event_single& other) = delete;
+			event_single& operator=(const event_single& other) = delete;
 
-	template<typename T, typename... args> event<T, args...>& event<T, args...>::operator=(event&& other) {
-		unique_lock<mutex> lck1(this->lock);
-		unique_lock<mutex> lck2(other.lock);
+		private:
+			handler registered;
+			std::mutex lock;
 
-		this->registered = move(other.registered);
+		public:
+			event_single(event_single&& other) {
+				*this = std::move(other);
+			}
 
-		return *this;
-	}
+			event_single& operator=(event_single&& other) {
+				std::unique_lock<mutex> lck1(this->lock);
+				std::unique_lock<mutex> lck2(other.lock);
 
-	template<typename T, typename... args> vector<T> event<T, args...>::operator()(args&&... paras) {
-		vector<T> results;
-		unique_lock<mutex> lck(this->lock);
+				this->registered = other.registered;
+				other.registered = nullptr;
 
-		for (auto i : this->registered)
-			results.push_back(i(forward<args>(paras)...));
+				return *this;
+			}
+		public:
 
-		return results;
-	}
+			template<typename... V> T operator()(V&&... paras) {
+				std::unique_lock<mutex> lck(this->lock);
 
-	template<typename T, typename... args> void event<T, args...>::operator+=(handler hndlr) {
-		unique_lock<mutex> lck(this->lock);
+				return this->registered(std::forward<V>(paras)...);
+			}
 
-		this->registered.push_back(hndlr);
-	}
+			void operator+=(handler hndlr) {
+				std::unique_lock<mutex> lck(this->lock);
 
-	template<typename T, typename... args> void event<T, args...>::operator-=(handler hndlr) {
-		unique_lock<mutex> lck(this->lock);
+				this->registered = hndlr;
+			}
 
-		auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
-		if (pos != this->registered.end())
-			this->registered.erase(pos);
-	}
+			void operator-=(handler hndlr) {
+				std::unique_lock<mutex> lck(this->lock);
 
-
-	template<typename... args> event<void, args...>::event(event&& other) {
-		*this = move(other);
-	}
-
-	template<typename... args> event<void, args...>& event<void, args...>::operator=(event&& other) {
-		unique_lock<mutex> lck1(this->lock);
-		unique_lock<mutex> lck2(other.lock);
-
-		this->registered = move(other.registered);
-
-		return *this;
-	}
-
-	template<typename... args> void event<void, args...>::operator()(args&&... paras) {
-		unique_lock<mutex> lck(this->lock);
-
-		for (auto i : this->registered)
-			i(forward<args>(paras)...);
-	}
-
-	template<typename... args> void event<void, args...>::operator+=(handler hndlr) {
-		unique_lock<mutex> lck(this->lock);
-
-		this->registered.push_back(hndlr);
-	}
-
-	template<typename... args> void event<void, args...>::operator-=(handler hndlr) {
-		unique_lock<mutex> lck(this->lock);
-
-		auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
-		if (pos != this->registered.end())
-			this->registered.erase(pos);
-	}
+				if (hndlr == this->registered)
+					this->registered = nullptr;
+			}
+	};
 }
