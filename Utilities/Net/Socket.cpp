@@ -53,8 +53,8 @@ int prep_socket(socket::families family, socket::types type, string address, str
 	memset(&hints, 0, sizeof(addrinfo));
 
 	switch (family) {
-		case socket::families::IPV4: hints.ai_family = AF_INET; break;
-		case socket::families::IPV6: hints.ai_family = AF_INET6; break;
+		case socket::families::ipv4: hints.ai_family = AF_INET; break;
+		case socket::families::ipv6: hints.ai_family = AF_INET6; break;
 		#ifdef WINDOWS
 		case socket::families::IPAny: hints.ai_family = AF_INET6; break;
 		#elif defined POSIX
@@ -63,7 +63,7 @@ int prep_socket(socket::families family, socket::types type, string address, str
 	}
 
 	switch (type) {
-		case socket::types::TCP: hints.ai_socktype = SOCK_STREAM; break;
+		case socket::types::tcp: hints.ai_socktype = SOCK_STREAM; break;
 	}
 
 	if (is_listener)
@@ -273,7 +273,7 @@ word socket::write(const uint8* buffer, word count) {
 	return static_cast<word>(::send(this->raw_socket, reinterpret_cast<const char*>(buffer), static_cast<int>(count), 0));
 }
 
-array<uint8, socket::ADDRESS_LENGTH> socket::remote_address() const {
+array<uint8, socket::address_length> socket::remote_address() const {
 	if (!this->connected)
 		throw not_connected_exception();
 

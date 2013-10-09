@@ -12,10 +12,10 @@ namespace util {
 		class tcp_connection {
 			public:
 				///The number of bytes used to determine the message length.
-				static const word MESSAGE_LENGTH_BYTES = 2;
+				static const word message_length_bytes = 2;
 
 				///The maximum length a message may be including the leading length bytes.
-				static const word MESSAGE_MAX_SIZE = 0xFFFF + MESSAGE_LENGTH_BYTES;
+				static const word message_max_size = 0xFFFF + message_length_bytes;
 
 				///Represents a message that is generated when reading from the connection.
 				struct exported message {
@@ -92,7 +92,7 @@ namespace util {
 
 				///Gets the IP address of the underlying socket.
 				///@return The IP address.
-				exported std::array<uint8, socket::ADDRESS_LENGTH> address() const;
+				exported std::array<uint8, socket::address_length> address() const;
 
 				///Gets the underlying socket.
 				///@return The socket.
@@ -142,7 +142,7 @@ namespace util {
 				bool connected;
 				std::vector<message> queued;
 
-				bool ensure_write(const uint8* toWrite, word writeAmount);
+				bool ensure_write(const uint8* data, word count);
 		};
 	}
 }

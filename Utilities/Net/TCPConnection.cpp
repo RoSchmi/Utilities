@@ -15,18 +15,18 @@ tcp_connection::tcp_connection() {
 	this->buffer = nullptr;
 }
 
-tcp_connection::tcp_connection(std::string address, std::string port, void* state) : connection(socket::families::IPAny, socket::types::TCP, address, port) {
+tcp_connection::tcp_connection(std::string address, std::string port, void* state) : connection(socket::families::IPAny, socket::types::tcp, address, port) {
 	this->received = 0;
 	this->state = nullptr;
 	this->connected = true;
-	this->buffer = new uint8[tcp_connection::MESSAGE_MAX_SIZE];
+	this->buffer = new uint8[tcp_connection::message_max_size];
 }
 
 tcp_connection::tcp_connection(socket&& sock) : connection(move(sock)) {
 	this->received = 0;
 	this->state = nullptr;
 	this->connected = true;
-	this->buffer = new uint8[tcp_connection::MESSAGE_MAX_SIZE];
+	this->buffer = new uint8[tcp_connection::message_max_size];
 }
 
 tcp_connection::tcp_connection(tcp_connection&& other) : connection(move(other.connection)) {
@@ -61,7 +61,7 @@ tcp_connection::~tcp_connection() {
 		delete[] this->buffer;
 }
 
-array<uint8, socket::ADDRESS_LENGTH> tcp_connection::address() const {
+array<uint8, socket::address_length> tcp_connection::address() const {
 	if (!this->connected)
 		throw not_connected_exception();
 
@@ -92,7 +92,7 @@ vector<tcp_connection::message> tcp_connection::read(word wait_for) {
 		return messages;
 
 	do {
-		word received = this->connection.read(this->buffer + this->received, tcp_connection::MESSAGE_MAX_SIZE - this->received);
+		word received = this->connection.read(this->buffer + this->received, tcp_connection::message_max_size - this->received);
 		this->received += received;
 
 		if (received == 0) {
@@ -101,12 +101,12 @@ vector<tcp_connection::message> tcp_connection::read(word wait_for) {
 			return messages;
 		}
 	
-		while (this->received >= tcp_connection::MESSAGE_LENGTH_BYTES) {
+		while (this->received >= tcp_connection::message_length_bytes) {
 			sword length = reinterpret_cast<uint16*>(this->buffer)[0];
-			sword remaining = this->received - tcp_connection::MESSAGE_LENGTH_BYTES - length;
+			sword remaining = this->received - tcp_connection::message_length_bytes - length;
 
 			if (remaining >= 0) {
-				messages.emplace_back(this->buffer + tcp_connection::MESSAGE_LENGTH_BYTES, length);
+				messages.emplace_back(this->buffer + tcp_connection::message_length_bytes, length);
 				memcpy(this->buffer, this->buffer + this->received - remaining, remaining);
 				this->received = remaining;
 			}
@@ -126,7 +126,7 @@ bool tcp_connection::send(const uint8* buffer, word length) {
 	if (length > 0xFFFF)
 		throw message_too_long_exception();
 
-	if (!this->ensure_write(reinterpret_cast<uint8*>(&length), tcp_connection::MESSAGE_LENGTH_BYTES))
+	if (!this->ensure_write(reinterpret_cast<uint8*>(&length), tcp_connection::message_length_bytes))
 		return false;
 
 	if (!this->ensure_write(buffer, length))
@@ -157,7 +157,7 @@ bool tcp_connection::send_queued() {
 	if (length > 0xFFFF)
 		throw message_too_long_exception();
 
-	if (!this->ensure_write(reinterpret_cast<uint8*>(&length), tcp_connection::MESSAGE_LENGTH_BYTES))
+	if (!this->ensure_write(reinterpret_cast<uint8*>(&length), tcp_connection::message_length_bytes))
 		goto error;
 			
 	for (auto& i : this->queued)

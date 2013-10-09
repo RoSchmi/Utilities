@@ -45,8 +45,8 @@ namespace util {
 				static const word MAX_RETRIES = 5;
 
 				exported request_server();
-				exported request_server(std::string port, word workers, uint16 retry_code, void* state = nullptr, bool uses_websockets = false);
-				exported request_server(std::vector<std::string> ports, word workers, uint16 retry_code, void* state = nullptr, std::vector<bool> uses_websockets = { });
+				exported request_server(std::string port, word workers, uint16 retry_code, bool uses_websockets = false);
+				exported request_server(std::vector<std::string> ports, word workers, uint16 retry_code, std::vector<bool> uses_websockets = { });
 				exported request_server(request_server&& other);
 				exported ~request_server();
 
@@ -62,9 +62,10 @@ namespace util {
 				request_server(const request_server& other) = delete;
 				request_server& operator=(const request_server& other) = delete;
 
-				event_single<request_result, tcp_connection&, void*, word, uint8, uint8, data_stream&, data_stream&> on_request;
-				event<void, tcp_connection&, void*> on_connect;
-				event<void, tcp_connection&, void*> on_disconnect;
+				event_single<request_server, request_result, tcp_connection&, word, uint8, uint8, data_stream&, data_stream&, void*> on_request;
+				event<request_server, void, tcp_connection&, void*> on_connect;
+				event<request_server, void, tcp_connection&, void*> on_disconnect;
+				void* state;
 
 			private:
 				std::list<tcp_server> servers;
@@ -75,7 +76,6 @@ namespace util {
 				work_queue<message> outgoing;
 
 				uint16 retry_code;
-				void* state;
 				word workers;
 
 				std::thread io_worker;

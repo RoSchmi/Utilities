@@ -24,15 +24,15 @@ namespace util {
 		 */
 		class exported socket {
 			public:	
-				static const uint16 ADDRESS_LENGTH = 16;
+				static const uint16 address_length = 16;
 
 				enum class types {
-					TCP
+					tcp
 				};
 
 				enum class families {
-					IPV4,
-					IPV6,
+					ipv4,
+					ipv6,
 					IPAny
 				};
 
@@ -83,7 +83,7 @@ namespace util {
 				 * returned from @a accept(). Is always an IPv6 address (for now),
 				 * but will sometimes be an IPv4 mapped address
 				 */
-				std::array<uint8, socket::ADDRESS_LENGTH> remote_address() const;
+				std::array<uint8, socket::address_length> remote_address() const;
 
 				/**
 				 * @returns true if socket is connected, false otherwise
@@ -102,7 +102,7 @@ namespace util {
 				types type;
 				families family;
 				bool connected;
-				std::array<uint8, socket::ADDRESS_LENGTH> endpoint_address;
+				std::array<uint8, socket::address_length> endpoint_address;
 			
 				#ifdef WINDOWS
 				uintptr raw_socket;

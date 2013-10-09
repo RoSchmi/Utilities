@@ -32,7 +32,7 @@ websocket_connection::~websocket_connection() {
 }
 
 bool websocket_connection::handshake() {
-	word received = this->connection.read(this->buffer + this->received, tcp_connection::MESSAGE_MAX_SIZE - this->received);
+	word received = this->connection.read(this->buffer + this->received, tcp_connection::message_max_size - this->received);
 	this->received += received;
 
 	if (received == 0)
@@ -95,7 +95,7 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 
 	do {
 		while (this->received > 0) {
-			word received = this->connection.read(this->buffer_start + this->received, tcp_connection::MESSAGE_MAX_SIZE - this->received);
+			word received = this->connection.read(this->buffer_start + this->received, tcp_connection::message_max_size - this->received);
 			this->received += received;
 
 			if (received == 0) {

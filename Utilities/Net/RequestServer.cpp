@@ -11,19 +11,23 @@ request_server::request_server() {
 	this->valid = false;
 }
 
-request_server::request_server(string port, word workers, uint16 retry_code, void* state, bool uses_websockets) : request_server(vector<string>{ port }, workers, retry_code, state, vector<bool>{ uses_websockets }) {
+request_server::request_server(string port, word workers, uint16 retry_code, bool uses_websockets) : request_server(vector<string>{ port }, workers, retry_code, vector<bool>{ uses_websockets }) {
 	
 }
 
-request_server::request_server(vector<string> ports, word workers, uint16 retry_code, void* state, vector<bool> uses_websockets) {
+request_server::request_server(vector<string> ports, word workers, uint16 retry_code, vector<bool> uses_websockets) {
 	this->running = false;
 	this->valid = true;
 	this->retry_code = retry_code;
-	this->state = state;
+	this->state = nullptr;
 	this->workers = workers;
 
-	for (word i = 0; i < ports.size(); i++)
-		this->servers.emplace_back(ports[i], request_server::on_client_connect, this, uses_websockets[i]);
+	for (word i = 0; i < ports.size(); i++) {
+		this->servers.emplace_back(ports[i], uses_websockets[i]);
+		auto& server = this->servers.back();
+		server.on_connect += request_server::on_client_connect;
+		server.state = this;
+	}
 }
 
 request_server::request_server(request_server&& other) {
@@ -125,7 +129,7 @@ void request_server::incoming_run(word worker_number) {
 
 		message response(request.connection, id);
 
-		switch (this->on_request(request.connection, this->state, worker_number, category, method, request.data, response.data)) {
+		switch (this->on_request(request.connection, worker_number, category, method, request.data, response.data, this->state)) {
 			case request_result::success:
 				this->enqueue_outgoing(move(response));
 
