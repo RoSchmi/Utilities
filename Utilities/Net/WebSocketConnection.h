@@ -10,20 +10,20 @@ namespace util {
 	namespace net {
 		class websocket_connection : public tcp_connection {
 				enum class op_codes {
-					CONTINUATION = 0x0,
-					TEXT = 0x1,
-					BINARY = 0x2,
-					CLOSE = 0x8,
-					PING = 0x9,
-					PONG = 0xA
+					continuation = 0x0,
+					textn = 0x1,
+					binary = 0x2,
+					close = 0x8,
+					ping = 0x9,
+					pong = 0xA
 				};
 
 				enum class close_codes : uint16 {
-					NORMAL = 1000,
-					SERVER_SHUTDOWN = 1001,
-					PROTOCAL_ERROR = 1002,
-					INVALID_DATA_TYPE = 1003,
-					MESSAGE_TOO_BIG = 1009
+					normal = 1000,
+					server_shutdown = 1001,
+					protocal_error = 1002,
+					invalid_data_type = 1003,
+					message_too_big = 1009
 				};
 	
 				uint8* buffer_start;

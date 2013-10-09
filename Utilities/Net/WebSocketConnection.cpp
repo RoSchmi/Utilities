@@ -114,7 +114,7 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 				word header_end = 2;
 
 				if (!mask || RSV1 || RSV2 || RSV3) {
-					this->close(close_codes::PROTOCAL_ERROR);
+					this->close(close_codes::protocal_error);
 					goto close;
 				}
 
@@ -123,7 +123,7 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 					header_end += 2;
 				}
 				else if (length == 127) {
-					this->close(close_codes::MESSAGE_TOO_BIG);
+					this->close(close_codes::message_too_big);
 					goto close;
 				}
 
@@ -135,24 +135,24 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 					break;
 
 				switch (static_cast<op_codes>(code)) {
-					case op_codes::TEXT: 
-						this->close(close_codes::INVALID_DATA_TYPE);
+					case op_codes::text: 
+						this->close(close_codes::invalid_data_type);
 						goto close;
 
-					case op_codes::CLOSE:
-						this->close(close_codes::NORMAL);
+					case op_codes::close:
+						this->close(close_codes::normal);
 						goto close;
 
-					case op_codes::PONG:
+					case op_codes::pong:
 						continue;
 
-					case op_codes::PING: 
+					case op_codes::ping: 
 						if (length > 125) {
-							this->close(close_codes::MESSAGE_TOO_BIG);
+							this->close(close_codes::message_too_big);
 							goto close;
 						}
 
-						this->buffer[0] = 128 | static_cast<uint8>(op_codes::PONG);
+						this->buffer[0] = 128 | static_cast<uint8>(op_codes::pong);
 
 						if (!this->ensure_write(this->buffer_start, header_end + length)) {
 							tcp_connection::close();
@@ -161,8 +161,8 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 
 						continue;
 
-					case op_codes::CONTINUATION:
-					case op_codes::BINARY:					
+					case op_codes::continuation:
+					case op_codes::binary:					
 						for (word i = 0; i < length; i++)
 							payload_buffer[i] ^= mask_buffer[i % 4];
 
@@ -179,7 +179,7 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 						continue;
 
 					default:
-						this->close(close_codes::PROTOCAL_ERROR);
+						this->close(close_codes::protocal_error);
 						goto close;
 				}
 			}
@@ -197,7 +197,7 @@ bool websocket_connection::send(const uint8* data, word length) {
 	if (!this->connected)
 		throw tcp_connection::not_connected_exception();
 
-	return this->send(data, length, op_codes::BINARY);
+	return this->send(data, length, op_codes::binary);
 }
 
 bool websocket_connection::send(const uint8* data, word length, op_codes code) {
@@ -239,7 +239,7 @@ bool websocket_connection::send_queued() {
 	for (auto& i : this->queued)
 		length += i.length;
 
-	bytes[0] = 128 | static_cast<uint8>(op_codes::BINARY);
+	bytes[0] = 128 | static_cast<uint8>(op_codes::binary);
 
 	if (length <= 125) {
 		bytes[1] = static_cast<uint8>(length);
@@ -274,11 +274,11 @@ void websocket_connection::close(close_codes code) {
 	if (!this->connected)
 		throw tcp_connection::not_connected_exception();
 
-	this->send(reinterpret_cast<uint8*>(&code), sizeof(code), op_codes::CLOSE);
+	this->send(reinterpret_cast<uint8*>(&code), sizeof(code), op_codes::close);
 	
 	tcp_connection::close();
 }
 
 void websocket_connection::close() {
-	this->close(close_codes::SERVER_SHUTDOWN);
+	this->close(close_codes::server_shutdown);
 }
