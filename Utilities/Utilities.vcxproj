@@ -14,6 +14,7 @@
     <ClInclude Include="Net\TCPConnection.h" />
     <ClInclude Include="Net\TCPServer.h" />
     <ClInclude Include="Net\WebSocketConnection.h" />
+    <ClInclude Include="WorkQueue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
