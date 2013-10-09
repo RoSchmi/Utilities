@@ -9,6 +9,8 @@
 	#define exported __attribute__((visibility ("default")))
 	// assume we have __thread. It's implemented by gcc, icc, and clang.
 	#define threadlocal __thread
+#else
+#error Platform not supported.
 #endif
 
 #include <chrono>
@@ -28,8 +30,8 @@ typedef std::chrono::system_clock::time_point date_time;
 namespace util {
 	extern date_time epoch;
 
-	inline uint64 since_epoch(const date_time& dt);
-	inline date_time from_epoch(uint64 val);
+	uint64 since_epoch(const date_time& dt);
+	date_time from_epoch(uint64 val);
 }
 
 #ifdef WINDOWS

@@ -4,13 +4,11 @@
 #include <vector>
 #include <list>
 #include <thread>
-#include <queue>
-#include <mutex>
-#include <condition_variable>
 #include <functional>
 
 #include "../Common.h"
 #include "../DataStream.h"
+#include "../WorkQueue.h"
 #include "TCPServer.h"
 
 namespace util {
@@ -77,12 +75,8 @@ namespace util {
 				on_connect_callback on_connect;
 				on_disconnect_callback on_disconnect;
 
-				std::queue<message> incoming;
-				std::queue<message> outgoing;
-				std::mutex incoming_lock;
-				std::mutex outgoing_lock;
-				std::condition_variable incoming_cv;
-				std::condition_variable outgoing_cv;
+				work_queue<message> incoming;
+				work_queue<message> outgoing;
 
 				uint16 retry_code;
 				void* state;

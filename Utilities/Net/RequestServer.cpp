@@ -122,16 +122,7 @@ void request_server::incoming_run(word worker_number) {
 	while (this->running) {
 		this_thread::sleep_for(chrono::microseconds(500));
 
-		unique_lock<mutex> lock(this->incoming_lock);
-
-		while (this->incoming.empty())
-			if (this->incoming_cv.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
-				continue;
-		
-		message request(move(this->incoming.front()));
-		this->incoming.pop();
-
-		lock.unlock();
+		message request = this->incoming.dequeue(chrono::seconds(5));
 
 		if (request.data.size() < 4)
 			continue;
@@ -164,15 +155,8 @@ void request_server::outgoing_run() {
 	while (this->running) {
 		this_thread::sleep_for(chrono::microseconds(500));
 
-		unique_lock<mutex> lock(this->outgoing_lock);
-
-		while (this->outgoing.empty())
-			if (this->outgoing_cv.wait_for(lock, chrono::milliseconds(5000)) == cv_status::timeout)
-				continue;
-
-		auto& message = this->outgoing.front();
-		message.connection.send(message.data.data(), static_cast<uint16>(message.data.size()));
-		this->outgoing.pop();
+		message m = this->outgoing.dequeue(chrono::seconds(5));
+		m.connection.send(m.data.data(), m.data.size());
 	}
 }
 
@@ -191,22 +175,18 @@ void request_server::io_run() {
 	}
 }
 
-void request_server::enqueue_incoming(message&& message) {
+void request_server::enqueue_incoming(message&& m) {
 	if (!this->running)
 		return;
 
-	unique_lock<mutex> lock(this->incoming_lock);
-	this->incoming.push(move(message));
-	this->incoming_cv.notify_one();
+	this->incoming.enqueue(move(m));
 }
 
-void request_server::enqueue_outgoing(message&& message) {
+void request_server::enqueue_outgoing(message&& m) {
 	if (!this->running)
 		return;
 
-	unique_lock<mutex> lock(this->outgoing_lock);
-	this->outgoing.push(move(message));
-	this->outgoing_cv.notify_one();
+	this->incoming.enqueue(move(m));
 }
 
 request_server::message::message(tcp_connection& connection, tcp_connection::message&& message) : connection(connection), data(message.data, message.length) {
