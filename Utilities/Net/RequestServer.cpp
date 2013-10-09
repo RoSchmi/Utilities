@@ -115,10 +115,12 @@ void request_server::on_client_connect(tcp_connection&& connection, void* server
 }
 
 void request_server::incoming_run(word worker_number) {
+	message request;
+
 	while (this->running) {
 		this_thread::sleep_for(chrono::microseconds(500));
 
-		message request = this->incoming.dequeue(chrono::seconds(5));
+		this->incoming.dequeue(request, chrono::seconds(5));
 
 		if (request.data.size() < 4)
 			continue;
@@ -148,10 +150,11 @@ void request_server::incoming_run(word worker_number) {
 }
 
 void request_server::outgoing_run() {
+	message m;
+
 	while (this->running) {
 		this_thread::sleep_for(chrono::microseconds(500));
-
-		message m = this->outgoing.dequeue(chrono::seconds(5));
+		this->outgoing.dequeue(m, chrono::seconds(5));
 		m.connection.send(m.data.data(), m.data.size());
 	}
 }

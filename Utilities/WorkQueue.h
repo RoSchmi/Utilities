@@ -9,7 +9,7 @@
 
 namespace util {
 	template<typename T> class work_queue {
-		static_assert(std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, "typename T must be move assignable and constructible.");
+		static_assert(std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, "work_queue type T must be move assignable and constructible.");
 
 		std::queue<T> items;
 		std::mutex lock;
@@ -31,15 +31,17 @@ namespace util {
 				this->cv.notify_one();
 			}
 
-			void dequeue(T& target, std::chrono::seconds timeout) {
+			bool dequeue(T& target, std::chrono::seconds timeout) {
 				std::unique_lock<std::mutex> lock(this->lock);
 
-				while (this->items.empty())
+				if (this->items.empty())
 					if (this->cv.wait_for(lock, timeout) == std::cv_status::timeout)
-						continue;
+						return false;
 
 				target = std::move(this->items.front());
 				this->items.pop();
+
+				return true;
 			}
 
 			void dequeue(T& target) {
@@ -50,19 +52,6 @@ namespace util {
 
 				target = std::move(this->items.front());
 				this->items.pop();
-			}
-
-			T dequeue(std::chrono::seconds timeout) {
-				std::unique_lock<std::mutex> lock(this->lock);
-
-				while (this->items.empty())
-					if (this->cv.wait_for(lock, timeout) == std::cv_status::timeout)
-						continue;
-
-				T request(std::move(this->items.front()));
-				this->items.pop();
-
-				return std::move(request);
 			}
 
 			T dequeue() {

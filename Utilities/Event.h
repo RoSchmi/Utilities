@@ -17,6 +17,10 @@ namespace util {
 			event& operator=(const event& other) = delete;
 
 		private:
+			typedef void(*on_change)();
+
+			on_change event_added;
+			on_change event_removed;
 			std::vector<handler> registered;
 			std::mutex lock;
 
@@ -29,6 +33,7 @@ namespace util {
 
 				return results;
 			}
+
 		public:
 			event(event&& other) {
 				*this = std::move(other);
@@ -47,6 +52,9 @@ namespace util {
 				std::unique_lock<mutex> lck(this->lock);
 
 				this->registered.push_back(hndlr);
+
+				if (this->event_added)
+					this->event_added();
 			}
 
 			void operator-=(handler hndlr) {
@@ -55,6 +63,9 @@ namespace util {
 				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
 				if (pos != this->registered.end())
 					this->registered.erase(pos);
+
+				if (this->event_removed)
+					this->event_removed();
 			}
 	};
 
@@ -69,15 +80,18 @@ namespace util {
 			event& operator=(const event& other) = delete;
 
 		private:
+			typedef void(*on_change)();
+
+			on_change event_added;
+			on_change event_removed;
 			std::vector<handler> registered;
 			std::mutex lock;
 
-			void operator-=(handler hndlr) {
+			template<typename... U> void operator()(U&&... paras) {
 				std::unique_lock<mutex> lck(this->lock);
 
-				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
-				if (pos != this->registered.end())
-					this->registered.erase(pos);
+				for (auto i : this->registered)
+					i(std::forward<U>(paras)...);
 			}
 
 		public:
@@ -94,17 +108,24 @@ namespace util {
 				return *this;
 			}
 
-			template<typename... U> void operator()(U&&... paras) {
-				std::unique_lock<mutex> lck(this->lock);
-
-				for (auto i : this->registered)
-					i(std::forward<U>(paras)...);
-			}
-
 			void operator+=(handler hndlr) {
 				std::unique_lock<mutex> lck(this->lock);
 
 				this->registered.push_back(hndlr);
+
+				if (this->event_added)
+					this->event_added();
+			}
+
+			void operator-=(handler hndlr) {
+				std::unique_lock<mutex> lck(this->lock);
+
+				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
+				if (pos != this->registered.end())
+					this->registered.erase(pos);
+
+				if (this->event_removed)
+					this->event_removed();
 			}
 	};
 
@@ -119,6 +140,10 @@ namespace util {
 			event_single& operator=(const event_single& other) = delete;
 
 		private:
+			typedef void(*on_change)();
+
+			on_change event_added;
+			on_change event_removed;
 			handler registered;
 			std::mutex lock;
 
@@ -147,6 +172,9 @@ namespace util {
 				std::unique_lock<mutex> lck(this->lock);
 
 				this->registered = hndlr;
+
+				if (this->event_added)
+					this->event_added();
 			}
 
 			void operator-=(handler hndlr) {
@@ -154,6 +182,9 @@ namespace util {
 
 				if (hndlr == this->registered)
 					this->registered = nullptr;
+
+				if (this->event_removed)
+					this->event_removed();
 			}
 	};
 }

@@ -11,7 +11,7 @@ namespace util {
 		class websocket_connection : public tcp_connection {
 				enum class op_codes {
 					continuation = 0x0,
-					textn = 0x1,
+					text = 0x1,
 					binary = 0x2,
 					close = 0x8,
 					ping = 0x9,
