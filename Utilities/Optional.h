@@ -63,6 +63,10 @@ namespace util {
 				return this->is_set;
 			}
 
+			operator T() {
+				return this->type;
+			}
+
 			T& operator*() {
 				return this->type;
 			}
@@ -106,6 +110,10 @@ namespace util {
 
 			operator bool() const {
 				return this->type != nullptr;
+			}
+
+			operator T() {
+				return this->type;
 			}
 
 			T& operator*() {

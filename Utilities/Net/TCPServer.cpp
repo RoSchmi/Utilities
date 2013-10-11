@@ -16,7 +16,6 @@ tcp_server::tcp_server() {
 tcp_server::tcp_server(string port, bool is_websocket) {
 	this->is_websocket = is_websocket;
 	this->active = false;
-	this->state = nullptr;
 	this->port = port;
 	this->valid = true;
 }
@@ -35,7 +34,6 @@ tcp_server& tcp_server::operator=(tcp_server&& other) {
 
 	this->is_websocket = other.is_websocket;
 	this->valid = other.valid.load();
-	this->state = other.state;
 	this->port = other.port;
 	this->active = false;
 
@@ -71,6 +69,6 @@ void tcp_server::accept_worker_run() {
 	while (this->active) {
 		socket acceptedSocket = this->listener.accept();
 		if (acceptedSocket.is_connected())
-			this->on_connect(!this->is_websocket ? tcp_connection(move(acceptedSocket)) : websocket_connection(move(acceptedSocket)), this->state);
+			this->on_connect(!this->is_websocket ? tcp_connection(move(acceptedSocket)) : websocket_connection(move(acceptedSocket)));
 	}
 }

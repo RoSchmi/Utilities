@@ -132,7 +132,17 @@ namespace util {
 				///Destructs the instance.
 				exported virtual ~tcp_connection();
 
+#ifdef WINDOWS
+				//Hack to work around the fact that std::bind inappropraitely binds to rvalues.
+				//http://connect.microsoft.com/VisualStudio/feedback/details/717188/bug-concerning-rvalue-references-and-std-function-std-bind-in-vc11
+				//The copy constructor actually moves from the other object and uses a const_cast.
+				//TCPServer on_connect also passes by value instead of by move, change that back to move when this is fixed.
+				tcp_connection(const tcp_connection& other);
+#elif defined POSIX
 				tcp_connection(const tcp_connection& other) = delete;
+#endif
+
+
 				tcp_connection& operator=(const tcp_connection& other) = delete;
 
 			protected:

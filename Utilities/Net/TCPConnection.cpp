@@ -39,6 +39,12 @@ tcp_connection::tcp_connection(tcp_connection&& other) : connection(move(other.c
 	other.connected = false;
 }
 
+#ifdef WINDOWS
+tcp_connection::tcp_connection(const tcp_connection& other) {
+	*this = move(const_cast<tcp_connection&>(other));
+}
+#endif
+
 tcp_connection& tcp_connection::operator = (tcp_connection&& other) {
 	this->close();
 

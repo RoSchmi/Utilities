@@ -4,24 +4,24 @@
 #include <algorithm>
 #include <mutex>
 #include <utility>
+#include <functional>
 
 namespace util {
 	template<typename C, typename T, typename... U> class event {
 		public:
-			typedef T(*handler)(U...);
+			typedef std::function<T(U...)> func_type;
 
 			friend C;
 
 			event() = default;
+			~event() = default;
 			event(const event& other) = delete;
 			event& operator=(const event& other) = delete;
 
 		private:
-			typedef void(*on_change)();
-
-			on_change event_added;
-			on_change event_removed;
-			std::vector<handler> registered;
+			std::function<void()> event_added;
+			std::function<void()> event_removed;
+			std::vector<func_type> registered;
 			std::mutex lock;
 
 			template<typename... V> std::vector<T> operator()(V&&... paras) {
@@ -48,7 +48,7 @@ namespace util {
 				return *this;
 			}
 
-			void operator+=(handler hndlr) {
+			void operator+=(func_type hndlr) {
 				std::unique_lock<std::mutex> lck(this->lock);
 
 				this->registered.push_back(hndlr);
@@ -57,10 +57,10 @@ namespace util {
 					this->event_added();
 			}
 
-			void operator-=(handler hndlr) {
+			void operator-=(func_type hndlr) {
 				std::unique_lock<std::mutex> lck(this->lock);
 
-				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
+				auto pos = std::find(this->registered.begin(), this->registered.end(), hndlr);
 				if (pos != this->registered.end())
 					this->registered.erase(pos);
 
@@ -71,20 +71,19 @@ namespace util {
 
 	template<typename C, typename... T> class event<C, void, T...> {
 		public:
-			typedef void(*handler)(T...);
+			typedef std::function<void(T...)> func_type;
 
 			friend C;
 
 			event() = default;
+			~event() = default;
 			event(const event& other) = delete;
 			event& operator=(const event& other) = delete;
 
 		private:
-			typedef void(*on_change)();
-
-			on_change event_added;
-			on_change event_removed;
-			std::vector<handler> registered;
+			std::function<void()> event_added;
+			std::function<void()> event_removed;
+			std::vector<func_type> registered;
 			std::mutex lock;
 
 			template<typename... U> void operator()(U&&... paras) {
@@ -108,7 +107,7 @@ namespace util {
 				return *this;
 			}
 
-			void operator+=(handler hndlr) {
+			void operator+=(func_type hndlr) {
 				std::unique_lock<std::mutex> lck(this->lock);
 
 				this->registered.push_back(hndlr);
@@ -117,34 +116,34 @@ namespace util {
 					this->event_added();
 			}
 
-			void operator-=(handler hndlr) {
+			void operator-=(func_type hndlr) {
 				std::unique_lock<std::mutex> lck(this->lock);
 
-				auto pos = find(this->registered.begin(), this->registered.end(), hndlr);
+				auto pos = std::find(this->registered.begin(), this->registered.end(), hndlr);
 				if (pos != this->registered.end())
 					this->registered.erase(pos);
 
 				if (this->event_removed)
 					this->event_removed();
 			}
-	};
-
+	}; 
+	
 	template<typename C, typename T, typename... U> class event_single {
 		public:
-			typedef T(*handler)(U...);
+			typedef T(*ptr_type)(U...);
+			typedef std::function<T(U...)> func_type;
 
 			friend C;
 
 			event_single() = default;
+			~event_single() = default;
 			event_single(const event_single& other) = delete;
 			event_single& operator=(const event_single& other) = delete;
 
 		private:
-			typedef void(*on_change)();
-
-			on_change event_added;
-			on_change event_removed;
-			handler registered;
+			std::function<void()> event_added;
+			std::function<void()> event_removed;
+			func_type registered;
 			std::mutex lock;
 
 			template<typename... V> T operator()(V&&... paras) {
@@ -168,19 +167,23 @@ namespace util {
 				return *this;
 			}
 
-			void operator+=(handler hndlr) {
+			void operator+=(func_type func) {
 				std::unique_lock<std::mutex> lck(this->lock);
 
-				this->registered = hndlr;
+				this->registered = func;
 
 				if (this->event_added)
 					this->event_added();
+
 			}
 
-			void operator-=(handler hndlr) {
+			void operator-=(func_type func) {
 				std::unique_lock<std::mutex> lck(this->lock);
 
-				if (hndlr == this->registered)
+				if (!this->registered.target<ptr_type>() || !func.target<ptr_type>())
+					return;
+
+				if (*this->registered.target<ptr_type>() == *func.target<ptr_type>())
 					this->registered = nullptr;
 
 				if (this->event_removed)

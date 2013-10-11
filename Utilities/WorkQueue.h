@@ -1,11 +1,11 @@
 #pragma once
 
-#include <chrono>
 #include <utility>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 #include <type_traits>
+#include <atomic>
 
 namespace util {
 	template<typename T> class work_queue {
@@ -14,16 +14,34 @@ namespace util {
 		std::queue<T> items;
 		std::mutex lock;
 		std::condition_variable cv;
+		std::atomic<bool> alive;
 
 		public:
+			class waiter_killed_exception {};
+
 			work_queue(const work_queue& other) = delete;
-			work_queue(work_queue&& other) = delete;
-
 			work_queue& operator=(const work_queue& other) = delete;
-			work_queue& operator=(work_queue&& other) = delete;
 
-			work_queue() = default;
-			~work_queue() = default;
+			work_queue() {
+				this->alive = true;
+			}
+
+			~work_queue() {
+				this->kill_waiters();
+			}
+
+			work_queue(work_queue&& other) {
+				*this = std::move(other);
+			}
+
+			work_queue& operator=(work_queue&& other) {
+				std::unique_lock<std::mutex> lck1(this->lock);
+				std::unique_lock<std::mutex> lck2(other.lock);
+
+				this->items = std::move(other.items);
+
+				return *this;
+			}
 
 			void enqueue(T&& item) {
 				std::unique_lock<std::mutex> lock(this->lock);
@@ -31,12 +49,15 @@ namespace util {
 				this->cv.notify_one();
 			}
 
-			bool dequeue(T& target, std::chrono::seconds timeout) {
+			bool dequeue(T& target) {
 				std::unique_lock<std::mutex> lock(this->lock);
 
-				if (this->items.empty())
-					if (this->cv.wait_for(lock, timeout) == std::cv_status::timeout)
+				while (this->items.empty()) {
+					this->cv.wait(lock);
+
+					if (!this->alive)
 						return false;
+				}
 
 				target = std::move(this->items.front());
 				this->items.pop();
@@ -44,26 +65,25 @@ namespace util {
 				return true;
 			}
 
-			void dequeue(T& target) {
-				std::unique_lock<std::mutex> lock(this->lock);
-
-				while (this->items.empty())
-					this->cv.wait(lock);
-
-				target = std::move(this->items.front());
-				this->items.pop();
-			}
-
 			T dequeue() {
 				std::unique_lock<std::mutex> lock(this->lock);
 
-				while (this->items.empty())
+				while (this->items.empty()) {
 					this->cv.wait(lock);
+
+					if (!this->alive)
+						throw waiter_killed_exception();
+				}
 
 				T request(std::move(this->items.front()));
 				this->items.pop();
 
 				return std::move(request);
+			}
+
+			void kill_waiters() {
+				this->alive = false;
+				this->cv.notify_all();
 			}
 	};
 }

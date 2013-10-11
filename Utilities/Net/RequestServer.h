@@ -7,7 +7,7 @@
 
 #include "../Common.h"
 #include "../DataStream.h"
-#include "../WorkQueue.h"
+#include "../WorkProcessor.h"
 #include "../Event.h"
 #include "TCPServer.h"
 
@@ -42,7 +42,7 @@ namespace util {
 				class cant_move_running_server_exception {};
 				class cant_start_default_constructed_exception {};
 
-				static const word MAX_RETRIES = 5;
+				static const word max_retries = 5;
 
 				exported request_server();
 				exported request_server(std::string port, word workers, uint16 retry_code, bool uses_websockets = false);
@@ -58,37 +58,32 @@ namespace util {
 				exported void start();
 				exported void stop();
 				exported tcp_connection& adopt(tcp_connection&& connection, bool call_on_connect = false);
-
+				
 				request_server(const request_server& other) = delete;
 				request_server& operator=(const request_server& other) = delete;
 
-				event_single<request_server, request_result, tcp_connection&, word, uint8, uint8, data_stream&, data_stream&, void*> on_request;
-				event<request_server, void, tcp_connection&, void*> on_connect;
-				event<request_server, void, tcp_connection&, void*> on_disconnect;
-				void* state;
+				event_single<request_server, request_result, tcp_connection&, word, uint8, uint8, data_stream&, data_stream&> on_request;
+				event<request_server, void, tcp_connection&> on_connect;
+				event<request_server, void, tcp_connection&> on_disconnect;
 
 			private:
 				std::list<tcp_server> servers;
 				std::vector<tcp_connection> clients;
 				std::mutex client_lock;
 
-				work_queue<message> incoming;
-				work_queue<message> outgoing;
+				work_processor<message> incoming;
+				work_processor<message> outgoing;
 
 				uint16 retry_code;
-				word workers;
 
 				std::thread io_worker;
-				std::thread outgoing_worker;
-				std::vector<std::thread> incoming_workers;
 				std::atomic<bool> running;
 				std::atomic<bool> valid;
 
-				void incoming_run(word worker_number);
-				void outgoing_run();
+				void on_client_connect(tcp_connection connection);
+				void on_incoming(word worker_number, message& response);
+				void on_outgoing(word worker_number, message& response);
 				void io_run();
-
-				static void on_client_connect(tcp_connection&& connection, void* serverState);
 		};
 	}
 }
