@@ -1,6 +1,5 @@
 #pragma once
 
-#include <thread>
 #include <vector>
 #include <atomic>
 #include <chrono>
@@ -11,6 +10,7 @@
 #include "Event.h"
 #include "Optional.h"
 #include "WorkQueue.h"
+#include "Timer.h"
 
 namespace util {
 	template<typename T> class work_processor {
@@ -20,18 +20,12 @@ namespace util {
 		private:
 			work_queue<T> queue;
 			std::atomic<bool> running;
-			std::vector<std::thread> workers;
-			std::chrono::milliseconds delay;
-			word worker_count;
+			std::vector<timer<word>> workers;
 
-			void run(word worker) {
+			void tick(word worker) {
 				try {
-					while (this->running) {
-						std::this_thread::sleep_for(this->delay);
-
-						T item(this->queue.dequeue());
-						this->on_item(worker, item);
-					}
+					T item(this->queue.dequeue());
+					this->on_item(worker, item);
 				}
 				catch (work_queue<T>::waiter_killed_exception) {
 					return;
@@ -43,13 +37,17 @@ namespace util {
 			work_processor& operator=(const work_processor& other) = delete;
 
 			work_processor(word worker_count = 0, std::chrono::milliseconds delay = std::chrono::milliseconds(25)) {
-				this->delay = delay;
-				this->worker_count = worker_count;
+				this->running = false;
+
+				for (word i = 0; i < worker_count; i++) {
+					this->workers.emplace_back(delay, i);
+					auto& w = this->workers.back();
+					w.on_tick += std::bind(&work_processor::tick, this, placeholders::_1);
+				}
 			}
 
 			work_processor(work_processor&& other) {
 				this->running = false;
-
 				*this = std::move(other);
 			}
 
@@ -63,16 +61,10 @@ namespace util {
 				other.stop();
 				this->stop();
 
-				this->delay = other.delay;
-				this->worker_count = other.worker_count;
 				this->running = false;
 				this->queue = std::move(other.queue);
 				this->on_item = std::move(other.on_item);
-
-				this->on_item.event_added = std::bind(&work_processor::start, this);
-				this->on_item.event_removed = std::bind(&work_processor::stop, this);
-				other.on_item.event_added = nullptr;
-				other.on_item.event_removed = nullptr;
+				this->workers = std::move(other.workers);
 
 				if (was_running)
 					this->start();
@@ -85,20 +77,21 @@ namespace util {
 			}
 
 			void start() {
-				this->running = true;
+				if (this->running)
+					return;
 
-				for (word i = 0; i < this->worker_count; i++)
-					this->workers.emplace_back(&work_processor::run, this, i);
+				for (auto& i : this->workers)
+					i.start();
 			}
 
 			void stop() {
 				if (!this->running)
 					return;
 
-				this->running = false;
-				this->queue.kill_waiters();
 				for (auto& i : this->workers)
-					i.join();
+					i.stop();
+
+				this->queue.kill_waiters();
 			}
 	};
 }
