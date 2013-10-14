@@ -180,10 +180,10 @@ namespace util {
 			void operator-=(func_type func) {
 				std::unique_lock<std::mutex> lck(this->lock);
 
-				if (!this->registered.target<ptr_type>() || !func.target<ptr_type>())
+				if (!this->registered.template target<ptr_type>() || !func.template target<ptr_type>())
 					return;
 
-				if (*this->registered.target<ptr_type>() == *func.target<ptr_type>())
+				if (*this->registered.template target<ptr_type>() == *func.template target<ptr_type>())
 					this->registered = nullptr;
 
 				if (this->event_removed)

@@ -28,7 +28,7 @@ namespace util {
 			timer(std::chrono::microseconds interval, U... paras) {
 				this->interval = interval;
 				this->running = false;
-				this->bound = std::bind(&timer::fire, placeholders::_1, paras...);
+				this->bound = std::bind(&timer::fire, std::placeholders::_1, paras...);
 			}
 
 			timer(timer&& other) {

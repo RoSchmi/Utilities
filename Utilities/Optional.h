@@ -77,7 +77,7 @@ namespace util {
 	};
 
 	template<typename T> class optional<T&> {
-		std::remove_reference_t<T>* type;
+		std::remove_reference<T>* type;
 
 		public:
 			optional() {

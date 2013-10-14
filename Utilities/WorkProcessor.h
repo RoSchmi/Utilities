@@ -27,7 +27,7 @@ namespace util {
 					T item(this->queue.dequeue());
 					this->on_item(worker, item);
 				}
-				catch (work_queue<T>::waiter_killed_exception) {
+				catch (typename work_queue<T>::waiter_killed_exception) {
 					return;
 				}
 			}
@@ -42,7 +42,7 @@ namespace util {
 				for (word i = 0; i < worker_count; i++) {
 					this->workers.emplace_back(delay, i);
 					auto& w = this->workers.back();
-					w.on_tick += std::bind(&work_processor::tick, this, placeholders::_1);
+					w.on_tick += std::bind(&work_processor::tick, this, std::placeholders::_1);
 				}
 			}
 
