@@ -126,8 +126,8 @@ namespace util {
 				if (this->event_removed)
 					this->event_removed();
 			}
-	}; 
-	
+	};
+
 	template<typename C, typename T, typename... U> class event_single {
 		public:
 			typedef T(*ptr_type)(U...);

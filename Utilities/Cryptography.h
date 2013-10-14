@@ -15,7 +15,7 @@ namespace util {
 
 		extern std::random_device device;
 		extern std::mt19937_64 generator;
-		
+
 		/**
 		 * Take SHA2-512 of @a length bytes from @a source
 		 */

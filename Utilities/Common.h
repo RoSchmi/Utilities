@@ -36,7 +36,7 @@ namespace util {
 
 #ifdef WINDOWS
 
-#if defined _WIN64	
+#if defined _WIN64
 typedef uint64 word;
 typedef int64 sword;
 #else

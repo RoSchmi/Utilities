@@ -18,7 +18,7 @@ namespace util {
 		void fire(U... paras) {
 			this->on_tick(paras...);
 		}
-	
+
 		public:
 			timer(const timer& other) = delete;
 			timer& operator=(const timer& other) = delete;
@@ -51,29 +51,29 @@ namespace util {
 
 				return *this;
 			}
-	
+
 			void start() {
 				if (this->running)
 					return;
-	
+
 				this->running = true;
 				this->worker = std::thread(&timer::run, this);
 			}
-	
+
 			void stop() {
 				if (!this->running)
 					return;
-	
+
 				this->running = false;
 				this->worker.join();
 			}
-	
+
 			void run() {
 				while (this->running) {
 					std::this_thread::sleep_for(this->interval);
 					this->bound(this);
 				}
 			}
-	
+
 	};
 }

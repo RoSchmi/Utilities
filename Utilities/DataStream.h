@@ -33,7 +33,7 @@ namespace util {
 			* Thrown when a string read by read_utf8 is not valid utf8.
 			*/
 			class string_not_utf8 {};
-			
+
 			data_stream();
 			data_stream(uint8* data, word length);
 			data_stream(const uint8* data, word length);

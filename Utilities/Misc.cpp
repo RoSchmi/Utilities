@@ -4,7 +4,7 @@ using namespace std;
 using namespace util;
 
 string misc::base64_encode(const uint8* data, word length) {
-	static cstr characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; 
+	static cstr characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	static uint8 endTable[] = { 0, 2, 1 };
 
 	string result;
