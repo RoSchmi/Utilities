@@ -15,7 +15,7 @@ tcp_connection::tcp_connection() {
 	this->buffer = nullptr;
 }
 
-tcp_connection::tcp_connection(std::string address, std::string port, void* state) : connection(socket::families::IPAny, socket::types::tcp, address, port) {
+tcp_connection::tcp_connection(std::string address, std::string port, void* state) : connection(socket::families::ip_any, socket::types::tcp, address, port) {
 	this->received = 0;
 	this->state = nullptr;
 	this->connected = true;

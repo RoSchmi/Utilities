@@ -62,7 +62,7 @@ complete:
 	key.write(this->buffer + keyPos, keyEnd - keyPos);
 	key.write("258EAFA5-E914-47DA-95CA-C5AB0DC85B11", 36);
 
-	string base64 = misc::base64_encode(crypto::calculate_sha1(key.data(), key.size()).data(), crypto::SHA1_LENGTH);
+	string base64 = misc::base64_encode(crypto::calculate_sha1(key.data(), key.size()).data(), crypto::sha1_length);
 
 	data_stream response;
 	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 57);

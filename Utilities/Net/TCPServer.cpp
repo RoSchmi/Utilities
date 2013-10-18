@@ -52,7 +52,7 @@ void tcp_server::start() {
 		return;
 
 	this->active = true;
-	this->listener = socket(socket::families::IPAny, socket::types::tcp, this->port);
+	this->listener = socket(socket::families::ip_any, socket::types::tcp, this->port);
 	this->accept_worker = thread(&tcp_server::accept_worker_run, this);
 }
 
