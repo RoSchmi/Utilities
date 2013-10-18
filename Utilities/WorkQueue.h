@@ -7,6 +7,8 @@
 #include <type_traits>
 #include <atomic>
 
+#include "Common.h"
+
 namespace util {
 	template<typename T> class work_queue {
 		static_assert(std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, "work_queue type T must be move assignable and constructible.");
@@ -22,19 +24,19 @@ namespace util {
 			work_queue(const work_queue& other) = delete;
 			work_queue& operator=(const work_queue& other) = delete;
 
-			work_queue() {
+			exported work_queue() {
 				this->alive = true;
 			}
 
-			~work_queue() {
+			exported ~work_queue() {
 				this->kill_waiters();
 			}
 
-			work_queue(work_queue&& other) {
+			exported work_queue(work_queue&& other) {
 				*this = std::move(other);
 			}
 
-			work_queue& operator=(work_queue&& other) {
+			exported work_queue& operator=(work_queue&& other) {
 				std::unique_lock<std::mutex> lck1(this->lock);
 				std::unique_lock<std::mutex> lck2(other.lock);
 
@@ -43,13 +45,13 @@ namespace util {
 				return *this;
 			}
 
-			void enqueue(T&& item) {
+			exported void enqueue(T&& item) {
 				std::unique_lock<std::mutex> lock(this->lock);
 				this->items.push(std::move(item));
 				this->cv.notify_one();
 			}
 
-			bool dequeue(T& target) {
+			exported bool dequeue(T& target) {
 				std::unique_lock<std::mutex> lock(this->lock);
 
 				while (this->items.empty()) {
@@ -65,7 +67,7 @@ namespace util {
 				return true;
 			}
 
-			T dequeue() {
+			exported T dequeue() {
 				std::unique_lock<std::mutex> lock(this->lock);
 
 				while (this->items.empty()) {
@@ -81,7 +83,7 @@ namespace util {
 				return std::move(request);
 			}
 
-			void kill_waiters() {
+			exported void kill_waiters() {
 				this->alive = false;
 				this->cv.notify_all();
 			}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Common.h"
+
 #include <utility>
 #include <type_traits>
 
@@ -8,120 +10,130 @@ namespace util {
 		T type;
 		bool is_set;
 
-		public:
-			optional() {
-				this->is_set = false;
-			}
+	public:
+		optional& operator=(const optional& other) = delete;
+		optional& operator=(optional&& other) = delete;
+		optional(const optional& other) = delete;
+		optional(optional&& other) = delete;
 
-			optional(const T& obj) : type(obj) {
-				this->is_set = true;
-			}
+		exported optional() {
+			this->is_set = false;
+		}
 
-			optional(T&& obj) : type(std::move(obj)) {
-				this->is_set = true;
-			}
+		exported optional(const T& obj) : type(obj) {
+			this->is_set = true;
+		}
 
-			void operator=(const T& obj) {
-				this->type = obj;
-				this->is_set = true;
-			}
+		exported optional(T&& obj) : type(std::move(obj)) {
+			this->is_set = true;
+		}
 
-			void operator=(T&& obj) {
-				this->type = std::move(obj);
-				this->is_set = true;
-			}
+		exported void operator=(const T& obj) {
+			this->type = obj;
+			this->is_set = true;
+		}
 
-			void set(const T& obj) {
-				this->type = obj;
-				this->is_set = true;
-			}
+		exported void operator=(T&& obj) {
+			this->type = std::move(obj);
+			this->is_set = true;
+		}
 
-			void set(T&& obj) {
-				this->type = std::move(obj);
-				this->is_set = true;
-			}
+		exported void set(const T& obj) {
+			this->type = obj;
+			this->is_set = true;
+		}
 
-			T value() {
-				return this->type;
-			}
+		exported void set(T&& obj) {
+			this->type = std::move(obj);
+			this->is_set = true;
+		}
 
-			T&& extract() {
-				this->is_set = false;
-				return std::move(this->type);
-			}
+		exported T value() {
+			return this->type;
+		}
 
-			void clear() {
-				this->is_set = false;
-				this->type = T();
-			}
+		exported T&& extract() {
+			this->is_set = false;
+			return std::move(this->type);
+		}
 
-			bool valid() const {
-				return this->is_set;
-			}
+		exported void clear() {
+			this->is_set = false;
+			this->type = T();
+		}
 
-			operator bool() const {
-				return this->is_set;
-			}
+		exported bool valid() const {
+			return this->is_set;
+		}
 
-			operator T() {
-				return this->type;
-			}
+		exported operator bool() const {
+			return this->is_set;
+		}
 
-			T& operator*() {
-				return this->type;
-			}
+		exported operator T() {
+			return this->type;
+		}
 
-			T& operator->() {
-				return this->type;
-			}
+		exported T& operator*() {
+			return this->type;
+		}
+
+		exported T* operator->() {
+			return &this->type;
+		}
 	};
 
 	template<typename T> class optional<T&> {
 		std::remove_reference<T>* type;
 
-		public:
-			optional() {
-				this->type = nullptr;
-			}
+	public:
+		optional& operator=(const optional& other) = delete;
+		optional& operator=(optional&& other) = delete;
+		optional(const optional& other) = delete;
+		optional(optional&& other) = delete;
 
-			optional(T& obj) : type(&obj) {
+		exported optional() {
+			this->type = nullptr;
+		}
 
-			}
+		exported optional(T& obj) : type(&obj) {
 
-			void operator=(T& obj) {
-				this->type = &obj;
-			}
+		}
 
-			void set(T& obj) {
-				this->type = &obj;
-			}
+		exported void operator=(T& obj) {
+			this->type = &obj;
+		}
 
-			void clear() {
-				this->type = nullptr;
-			}
+		exported void set(T& obj) {
+			this->type = &obj;
+		}
 
-			T& value() {
-				return *this->type;
-			}
+		exported void clear() {
+			this->type = nullptr;
+		}
 
-			bool valid() const {
-				return this->type != nullptr;
-			}
+		exported T& value() {
+			return *this->type;
+		}
 
-			operator bool() const {
-				return this->type != nullptr;
-			}
+		exported bool valid() const {
+			return this->type != nullptr;
+		}
 
-			operator T() {
-				return this->type;
-			}
+		exported operator bool() const {
+			return this->type != nullptr;
+		}
 
-			T& operator*() {
-				return *this->type;
-			}
+		exported operator T() {
+			return this->type;
+		}
 
-			T& operator->() {
-				return *this->type;
-			}
+		exported T& operator*() {
+			return *this->type;
+		}
+
+		exported T* operator->() {
+			return this->type;
+		}
 	};
 }

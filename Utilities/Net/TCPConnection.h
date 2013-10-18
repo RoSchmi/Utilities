@@ -142,7 +142,6 @@ namespace util {
 				tcp_connection(const tcp_connection& other) = delete;
 #endif
 
-
 				tcp_connection& operator=(const tcp_connection& other) = delete;
 
 			protected:

@@ -62,9 +62,9 @@ namespace util {
 				request_server(const request_server& other) = delete;
 				request_server& operator=(const request_server& other) = delete;
 
-				event_single<request_server, request_result, tcp_connection&, word, uint8, uint8, data_stream&, data_stream&> on_request;
-				event<request_server, void, tcp_connection&> on_connect;
-				event<request_server, void, tcp_connection&> on_disconnect;
+				event_single<request_result, tcp_connection&, word, uint8, uint8, data_stream&, data_stream&> on_request;
+				event<tcp_connection&> on_connect;
+				event<tcp_connection&> on_disconnect;
 
 			private:
 				std::list<tcp_server> servers;

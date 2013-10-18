@@ -23,19 +23,19 @@ namespace util {
 			timer(const timer& other) = delete;
 			timer& operator=(const timer& other) = delete;
 
-			event<timer, void, U...> on_tick;
+			event<U...> on_tick;
 
-			timer(std::chrono::microseconds interval, U... paras) {
+			exported timer(std::chrono::microseconds interval, U... paras) {
 				this->interval = interval;
 				this->running = false;
 				this->bound = std::bind(&timer::fire, std::placeholders::_1, paras...);
 			}
 
-			timer(timer&& other) {
+			exported timer(timer&& other) {
 				*this = std::move(other);
 			}
 
-			timer& operator=(timer&& other) {
+			exported timer& operator=(timer&& other) {
 				bool was_running = other.running.load();
 
 				this->stop();
@@ -52,7 +52,7 @@ namespace util {
 				return *this;
 			}
 
-			void start() {
+			exported void start() {
 				if (this->running)
 					return;
 
@@ -60,7 +60,7 @@ namespace util {
 				this->worker = std::thread(&timer::run, this);
 			}
 
-			void stop() {
+			exported void stop() {
 				if (!this->running)
 					return;
 
@@ -68,7 +68,7 @@ namespace util {
 				this->worker.join();
 			}
 
-			void run() {
+			exported void run() {
 				while (this->running) {
 					std::this_thread::sleep_for(this->interval);
 					this->bound(this);

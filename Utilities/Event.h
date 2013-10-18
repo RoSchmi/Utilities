@@ -6,188 +6,103 @@
 #include <utility>
 #include <functional>
 
+#include "Common.h"
+
 namespace util {
-	template<typename C, typename T, typename... U> class event {
-		public:
-			typedef std::function<T(U...)> func_type;
+	template<typename... U> class event {
+	public:
+		typedef std::function<void(U...)> handler_type;
 
-			friend C;
+		event() = default;
+		event(const event& other) = delete;
+		event& operator=(const event& other) = delete;
 
-			event() = default;
-			~event() = default;
-			event(const event& other) = delete;
-			event& operator=(const event& other) = delete;
+	private:
+		std::vector<handler_type> handlers;
+		std::mutex lock;
 
-		private:
-			std::function<void()> event_added;
-			std::function<void()> event_removed;
-			std::vector<func_type> registered;
-			std::mutex lock;
+	public:
+		std::function<void()> event_added;
+		std::function<void()> event_removed;
 
-			template<typename... V> std::vector<T> operator()(V&&... paras) {
-				std::vector<T> results;
-				std::unique_lock<std::mutex> lck(this->lock);
+		exported event(event&& other) {
+			*this = std::move(other);
+		}
 
-				for (auto i : this->registered)
-					results.push_back(i(std::forward<V>(paras)...));
+		exported event& operator=(event&& other) {
+			std::unique_lock<std::mutex> lck1(this->lock);
+			std::unique_lock<std::mutex> lck2(other.lock);
 
-				return results;
-			}
+			this->handlers = std::move(other.handlers);
 
-		public:
-			event(event&& other) {
-				*this = std::move(other);
-			}
+			return *this;
+		}
 
-			event& operator=(event&& other) {
-				std::unique_lock<std::mutex> lck1(this->lock);
-				std::unique_lock<std::mutex> lck2(other.lock);
+		exported void operator+=(handler_type hndlr) {
+			std::unique_lock<std::mutex> lck(this->lock);
 
-				this->registered = std::move(other.registered);
+			this->handlers.push_back(hndlr);
 
-				return *this;
-			}
+			if (this->event_added)
+				this->event_added();
+		}
 
-			void operator+=(func_type hndlr) {
-				std::unique_lock<std::mutex> lck(this->lock);
+		template<typename... V> exported void operator()(V&&... paras) {
+			std::unique_lock<std::mutex> lck(this->lock);
 
-				this->registered.push_back(hndlr);
-
-				if (this->event_added)
-					this->event_added();
-			}
-
-			void operator-=(func_type hndlr) {
-				std::unique_lock<std::mutex> lck(this->lock);
-
-				auto pos = std::find(this->registered.begin(), this->registered.end(), hndlr);
-				if (pos != this->registered.end())
-					this->registered.erase(pos);
-
-				if (this->event_removed)
-					this->event_removed();
-			}
+			for (auto i : this->handlers)
+				i(std::forward<V>(paras)...);
+		}
 	};
 
-	template<typename C, typename... T> class event<C, void, T...> {
-		public:
-			typedef std::function<void(T...)> func_type;
+	template<typename T, typename... U> class event_single {
+	public:
+		typedef std::function<T(U...)> handler_type;
 
-			friend C;
+		class event_already_set {};
 
-			event() = default;
-			~event() = default;
-			event(const event& other) = delete;
-			event& operator=(const event& other) = delete;
+		event_single() = default;
+		event_single(const event_single& other) = delete;
+		event_single& operator=(const event_single& other) = delete;
 
-		private:
-			std::function<void()> event_added;
-			std::function<void()> event_removed;
-			std::vector<func_type> registered;
-			std::mutex lock;
+	private:
+		handler_type handler;
+		std::mutex lock;
 
-			template<typename... U> void operator()(U&&... paras) {
-				std::unique_lock<std::mutex> lck(this->lock);
+	public:
+		std::function<void()> event_added;
+		std::function<void()> event_removed;
 
-				for (auto i : this->registered)
-					i(std::forward<U>(paras)...);
-			}
+		exported event_single(event_single&& other) {
+			*this = std::move(other);
+		}
 
-		public:
-			event(event&& other) {
-				*this = std::move(other);
-			}
+		exported event_single& operator=(event_single&& other) {
+			std::unique_lock<std::mutex> lck1(this->lock);
+			std::unique_lock<std::mutex> lck2(other.lock);
 
-			event& operator=(event&& other) {
-				std::unique_lock<std::mutex> lck1(this->lock);
-				std::unique_lock<std::mutex> lck2(other.lock);
+			this->handler = other.handler;
+			other.handler = nullptr;
 
-				this->registered = std::move(other.registered);
+			return *this;
+		}
 
-				return *this;
-			}
+		exported void operator+=(handler_type func) {
+			std::unique_lock<std::mutex> lck(this->lock);
 
-			void operator+=(func_type hndlr) {
-				std::unique_lock<std::mutex> lck(this->lock);
+			if (this->handler)
+				throw event_already_set();
 
-				this->registered.push_back(hndlr);
+			this->handler = func;
 
-				if (this->event_added)
-					this->event_added();
-			}
+			if (this->event_added)
+				this->event_added();
+		}
 
-			void operator-=(func_type hndlr) {
-				std::unique_lock<std::mutex> lck(this->lock);
+		template<typename... V> exported T operator()(V&&... paras) {
+			std::unique_lock<std::mutex> lck(this->lock);
 
-				auto pos = std::find(this->registered.begin(), this->registered.end(), hndlr);
-				if (pos != this->registered.end())
-					this->registered.erase(pos);
-
-				if (this->event_removed)
-					this->event_removed();
-			}
-	};
-
-	template<typename C, typename T, typename... U> class event_single {
-		public:
-			typedef T(*ptr_type)(U...);
-			typedef std::function<T(U...)> func_type;
-
-			friend C;
-
-			event_single() = default;
-			~event_single() = default;
-			event_single(const event_single& other) = delete;
-			event_single& operator=(const event_single& other) = delete;
-
-		private:
-			std::function<void()> event_added;
-			std::function<void()> event_removed;
-			func_type registered;
-			std::mutex lock;
-
-			template<typename... V> T operator()(V&&... paras) {
-				std::unique_lock<std::mutex> lck(this->lock);
-
-				return this->registered(std::forward<V>(paras)...);
-			}
-
-		public:
-			event_single(event_single&& other) {
-				*this = std::move(other);
-			}
-
-			event_single& operator=(event_single&& other) {
-				std::unique_lock<std::mutex> lck1(this->lock);
-				std::unique_lock<std::mutex> lck2(other.lock);
-
-				this->registered = other.registered;
-				other.registered = nullptr;
-
-				return *this;
-			}
-
-			void operator+=(func_type func) {
-				std::unique_lock<std::mutex> lck(this->lock);
-
-				this->registered = func;
-
-				if (this->event_added)
-					this->event_added();
-
-			}
-
-			void operator-=(func_type func) {
-				std::unique_lock<std::mutex> lck(this->lock);
-
-				if (!this->registered.template target<ptr_type>() || !func.template target<ptr_type>())
-					return;
-
-				if (*this->registered.template target<ptr_type>() == *func.template target<ptr_type>())
-					this->registered = nullptr;
-
-				if (this->event_removed)
-					this->event_removed();
-			}
+			return this->handler(std::forward<V>(paras)...);
+		}
 	};
 }

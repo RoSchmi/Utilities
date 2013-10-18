@@ -8,14 +8,15 @@
 
 #include "Common.h"
 #include "Event.h"
-#include "Optional.h"
 #include "WorkQueue.h"
 #include "Timer.h"
 
 namespace util {
 	template<typename T> class work_processor {
+		static_assert(std::is_move_constructible<T>::value, "work_processor type T must be move constructible.");
+
 		public:
-			event_single<work_processor, void, word, T&> on_item;
+			event_single<void, word, T&> on_item;
 
 		private:
 			work_queue<T> queue;
@@ -36,26 +37,25 @@ namespace util {
 			work_processor(const work_processor& other) = delete;
 			work_processor& operator=(const work_processor& other) = delete;
 
-			work_processor(word worker_count = 0, std::chrono::milliseconds delay = std::chrono::milliseconds(25)) {
+			exported work_processor(word worker_count = 0, std::chrono::milliseconds delay = std::chrono::milliseconds(25)) {
 				this->running = false;
 
 				for (word i = 0; i < worker_count; i++) {
 					this->workers.emplace_back(delay, i);
-					auto& w = this->workers.back();
-					w.on_tick += std::bind(&work_processor::tick, this, std::placeholders::_1);
+					this->workers.back().on_tick += std::bind(&work_processor::tick, this, std::placeholders::_1);
 				}
 			}
 
-			work_processor(work_processor&& other) {
+			exported work_processor(work_processor&& other) {
 				this->running = false;
 				*this = std::move(other);
 			}
 
-			~work_processor() {
+			exported ~work_processor() {
 				this->stop();
 			}
 
-			work_processor& operator=(work_processor&& other) {
+			exported work_processor& operator=(work_processor&& other) {
 				bool was_running = other.running.load();
 
 				other.stop();
@@ -72,11 +72,11 @@ namespace util {
 				return *this;
 			}
 
-			void add_work(T&& item) {
+			exported void add_work(T&& item) {
 				this->queue.enqueue(std::move(item));
 			}
 
-			void start() {
+			exported void start() {
 				if (this->running)
 					return;
 
@@ -84,7 +84,7 @@ namespace util {
 					i.start();
 			}
 
-			void stop() {
+			exported void stop() {
 				if (!this->running)
 					return;
 

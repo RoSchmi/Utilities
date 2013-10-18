@@ -28,7 +28,7 @@ namespace util {
 				tcp_server(const tcp_server& other) = delete;
 				tcp_server& operator=(const tcp_server& other) = delete;
 
-				event_single<tcp_server, void, tcp_connection> on_connect;
+				event_single<void, tcp_connection> on_connect;
 
 			private:
 				socket listener;

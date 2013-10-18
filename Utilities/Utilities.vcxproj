@@ -35,7 +35,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
-    <Text Include="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Doxyfile" />
