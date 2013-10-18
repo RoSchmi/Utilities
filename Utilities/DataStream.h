@@ -19,8 +19,8 @@ namespace util {
 		word written;
 		uint8* buffer;
 
-		static const word MINIMUM_SIZE = 32;
-		static const word GROWTH = 2;
+		static const word minimum_size = 32;
+		static const word growth = 2;
 		typedef uint16 string_length_type;
 
 		public:

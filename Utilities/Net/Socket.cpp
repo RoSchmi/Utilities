@@ -56,9 +56,9 @@ int prep_socket(socket::families family, socket::types type, string address, str
 		case socket::families::ipv4: hints.ai_family = AF_INET; break;
 		case socket::families::ipv6: hints.ai_family = AF_INET6; break;
 		#ifdef WINDOWS
-		case socket::families::IPAny: hints.ai_family = AF_INET6; break;
+		case socket::families::ip_any: hints.ai_family = AF_INET6; break;
 		#elif defined POSIX
-		case socket::families::IPAny: hints.ai_family = AF_UNSPEC; break;
+		case socket::families::ip_any: hints.ai_family = AF_UNSPEC; break;
 		#endif
 	}
 

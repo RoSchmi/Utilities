@@ -15,13 +15,13 @@ using namespace util::crypto;
 random_device crypto::device;
 mt19937_64 crypto::generator(crypto::device());
 
-array<uint8, crypto::SHA2_LENGTH> crypto::calculate_sha2(const uint8* source, word length) {
-	array<uint8, crypto::SHA2_LENGTH> result;
+array<uint8, crypto::sha2_length> crypto::calculate_sha2(const uint8* source, word length) {
+	array<uint8, crypto::sha2_length> result;
 
 #ifdef WINDOWS
 	HCRYPTPROV provider = 0;
 	HCRYPTHASH hasher = 0;
-	DWORD hash_length = crypto::SHA2_LENGTH;
+	DWORD hash_length = crypto::sha2_length;
 
 	CryptAcquireContext(&provider, nullptr, nullptr, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
 	CryptCreateHash(provider, CALG_SHA_512, 0, 0, &hasher);
@@ -44,13 +44,13 @@ array<uint8, crypto::SHA2_LENGTH> crypto::calculate_sha2(const uint8* source, wo
 	return result;
 }
 
-array<uint8, crypto::SHA1_LENGTH> crypto::calculate_sha1(const uint8* source, word length) {
-	array<uint8, crypto::SHA1_LENGTH> result;
+array<uint8, crypto::sha1_length> crypto::calculate_sha1(const uint8* source, word length) {
+	array<uint8, crypto::sha1_length> result;
 
 #ifdef WINDOWS
 	HCRYPTPROV provider = 0;
 	HCRYPTHASH hasher = 0;
-	DWORD hash_length = crypto::SHA1_LENGTH;
+	DWORD hash_length = crypto::sha1_length;
 
 	CryptAcquireContext(&provider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
 	CryptCreateHash(provider, CALG_SHA1, 0, 0, &hasher);

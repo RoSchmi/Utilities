@@ -15,12 +15,12 @@ namespace util {
 			template<typename T, typename P> class table_binder;
 
 			class query : public sql::query {
-				static const word MAX_PARAMETERS = 25;
+				static const word max_parameters = 25;
 
 				int32 para_index;
-				int8* para_values[MAX_PARAMETERS];
-				int32 para_lengths[MAX_PARAMETERS];
-				int32 para_formats[MAX_PARAMETERS];
+				int8* para_values[max_parameters];
+				int32 para_lengths[max_parameters];
+				int32 para_formats[max_parameters];
 
 				PGresult* result;
 

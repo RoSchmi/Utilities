@@ -10,8 +10,8 @@ namespace util {
 	 * Cryptographic utilities
 	 */
 	namespace crypto {
-		static const word SHA2_LENGTH = 64;
-		static const word SHA1_LENGTH = 20;
+		static const word sha2_length = 64;
+		static const word sha1_length = 20;
 
 		extern std::random_device device;
 		extern std::mt19937_64 generator;
@@ -19,12 +19,12 @@ namespace util {
 		/**
 		 * Take SHA2-512 of @a length bytes from @a source
 		 */
-		exported std::array<uint8, crypto::SHA2_LENGTH> calculate_sha2(const uint8* source, word length);
+		exported std::array<uint8, crypto::sha2_length> calculate_sha2(const uint8* source, word length);
 
 		/**
 		 * Take SHA1 of @a length bytes from @a source
 		 */
-		exported std::array<uint8, crypto::SHA1_LENGTH> calculate_sha1(const uint8* source, word length);
+		exported std::array<uint8, crypto::sha1_length> calculate_sha1(const uint8* source, word length);
 
 		/**
 		 * Write @a count random bytes to @a buffer

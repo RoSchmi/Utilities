@@ -33,7 +33,7 @@ namespace util {
 				enum class families {
 					ipv4,
 					ipv6,
-					IPAny
+					ip_any
 				};
 
 				socket(families family, types type, std::string address, std::string port);

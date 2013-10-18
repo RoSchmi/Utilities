@@ -10,8 +10,8 @@ using namespace util;
 data_stream::data_stream() {
 	this->cursor = 0;
 	this->written = 0;
-	this->allocation = data_stream::MINIMUM_SIZE;
-	this->buffer = new uint8[data_stream::MINIMUM_SIZE];
+	this->allocation = data_stream::minimum_size;
+	this->buffer = new uint8[data_stream::minimum_size];
 }
 
 data_stream::data_stream(uint8* data, word length) {
@@ -95,10 +95,10 @@ word data_stream::position() const {
 }
 
 void data_stream::resize(word size) {
-	word new_allocation = data_stream::MINIMUM_SIZE;
+	word new_allocation = data_stream::minimum_size;
 
 	while (new_allocation < size)
-		new_allocation *= data_stream::GROWTH;
+		new_allocation *= data_stream::growth;
 
 	if (new_allocation != this->allocation) {
 		uint8* new_buffer = new uint8[new_allocation];

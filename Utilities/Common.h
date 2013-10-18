@@ -1,14 +1,14 @@
 #pragma once
 
 #if defined _WIN64 || defined _WIN32
-	#define WINDOWS
-	#define exported  __declspec(dllexport)
-	#define threadlocal __declspec(thread)
+#define WINDOWS
+#define exported  __declspec(dllexport)
+#define threadlocal __declspec(thread)
 #elif defined __unix__
-	#define POSIX
-	#define exported __attribute__((visibility ("default")))
-	// assume we have __thread. It's implemented by gcc, icc, and clang.
-	#define threadlocal __thread
+#define POSIX
+#define exported __attribute__((visibility ("default")))
+// assume we have __thread. It's implemented by gcc, icc, and clang.
+#define threadlocal __thread
 #else
 #error Platform not supported.
 #endif
