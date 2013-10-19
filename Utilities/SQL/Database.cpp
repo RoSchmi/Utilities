@@ -13,6 +13,10 @@ connection::connection() {
 	this->is_committed = false;
 }
 
+connection::~connection() {
+
+}
+
 bool connection::connected() const {
 	return this->is_connected;
 }
@@ -40,6 +44,10 @@ query::query(query&& other) {
 
 	other.query_str = "";
 	other.conn = nullptr;
+}
+
+query::~query() {
+
 }
 
 word query::rows() const {

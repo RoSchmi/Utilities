@@ -58,10 +58,10 @@ namespace util {
 				exported virtual bool advance_row();
 				exported virtual bool is_column_null() const = 0;
 
-				exported virtual void add_para(const uint8* para, int32 length) = 0;
+				exported virtual void add_para(const uint8* para, word length) = 0;
 				exported virtual void add_para(const std::string& para) = 0;
-				exported virtual void add_para(const date_time& para);
-				exported virtual void add_para(const data_stream& para);
+				exported virtual void add_para(const date_time& para) = 0;
+				exported virtual void add_para(const data_stream& para) = 0;
 				exported virtual void add_para(cstr para) = 0;
 				exported virtual void add_para(float64 para) = 0;
 				exported virtual void add_para(float32 para) = 0;
@@ -173,7 +173,6 @@ namespace util {
 				template<typename T, typename P> using binder_type = table_binder<T, connection, P>;
 
 				exported connection();
-
 				exported virtual ~connection() = 0;
 
 				exported bool connected() const;
@@ -253,6 +252,10 @@ namespace util {
 				exported table_binder(C& conn, std::string name) : db(conn), select_by_id_query("", &conn), update_query("", &conn), insert_query("", &conn), delete_query("", &conn) {
 					this->name = name;
 				}
+
+				exported virtual ~table_binder() = 0 {
+
+				};
 
 				exported void prepare_stmts() {
 					this->generate_select_by_id();

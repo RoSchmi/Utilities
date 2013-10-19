@@ -41,7 +41,7 @@ namespace util {
 					exported virtual void execute(sql::connection* conn = nullptr) override;
 					exported virtual bool is_column_null() const override;
 
-					exported virtual void add_para(const uint8* para, int32 length) override;
+					exported virtual void add_para(const uint8* para, word length) override;
 					exported virtual void add_para(const std::string& para) override;
 					exported virtual void add_para(const date_time& parameter) override;
 					exported virtual void add_para(const data_stream& parameter) override;
@@ -197,6 +197,10 @@ namespace util {
 				public:
 					exported table_binder(postgres::connection& conn, std::string name, bool lock_row = true) : sql::table_binder<T, connection, P>(conn, name) {
 						this->lock_stmt = lock_row ? " FOR UPDATE;" : "";
+					}
+
+					exported virtual ~table_binder() {
+
 					}
 
 					template<typename U> exported T select_one_by_field(std::string field, U value) {

@@ -139,8 +139,8 @@ bool query::is_column_null() const {
 	return PQgetisnull(this->result, static_cast<const int>(this->row), static_cast<const int>(this->column)) == 1;
 }
 
-void query::add_para(const uint8* para, int32 length) {
-	this->para_lengths[this->para_index] = length; 
+void query::add_para(const uint8* para, word length) {
+	this->para_lengths[this->para_index] = static_cast<int32>(length); 
 	this->para_formats[this->para_index] = 1; //binary type
 	this->para_values[this->para_index] = new int8[length];
 	memcpy(this->para_values[this->para_index], para, length);
@@ -159,6 +159,14 @@ void query::add_para(const string& para) {
 
 void query::add_para(const date_time& para) {
 	this->add_para(since_epoch(para));
+}
+
+void query::add_para(const data_stream& para) {
+	this->add_para(para.data(), para.size());
+}
+
+void query::add_para(cstr para) {
+	this->add_para(reinterpret_cast<const uint8*>(para), strlen(para));
 }
 
 void query::add_para(float64 para) {
