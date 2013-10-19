@@ -46,7 +46,7 @@ namespace util {
 
 				exported request_server();
 				exported request_server(std::string port, word workers, uint16 retry_code, bool uses_websockets = false);
-				exported request_server(std::vector<std::string> ports, word workers, uint16 retry_code, std::vector<bool> uses_websockets = { });
+				exported request_server(std::vector<std::string> ports, word workers, uint16 retry_code, std::vector<bool> uses_websockets = std::vector<bool>());
 				exported request_server(request_server&& other);
 				exported ~request_server();
 

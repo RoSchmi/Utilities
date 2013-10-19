@@ -25,7 +25,7 @@ request_server::request_server(vector<string> ports, word workers, uint16 retry_
 	this->outgoing.on_item += std::bind(&request_server::on_outgoing, this, placeholders::_1, placeholders::_2);
 
 	for (word i = 0; i < ports.size(); i++) {
-		this->servers.emplace_back(ports[i], uses_websockets[i]);
+		this->servers.emplace_back(ports[i], i < uses_websockets.size() ? uses_websockets[i] : false);
 		auto& server = this->servers.back();
 		server.on_connect += std::bind(&request_server::on_client_connect, this, placeholders::_1);
 	}
