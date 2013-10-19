@@ -171,7 +171,7 @@ request_server::message::message(tcp_connection& connection, tcp_connection::mes
 	this->attempts = 0;
 }
 
-request_server::message::message(tcp_connection& connection, data_stream&& data) : connection(connection), data(move(data)) {
+request_server::message::message(tcp_connection& connection, data_stream data) : connection(connection), data(move(data)) {
 	this->attempts = 0;
 }
 

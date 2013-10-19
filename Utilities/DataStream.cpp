@@ -118,6 +118,15 @@ void data_stream::resize(word size) {
 	}
 }
 
+void data_stream::shrink_written(word size) {
+	if (size > this->written)
+		throw invalid_size();
+
+	this->written = size;
+	if (this->cursor > this->written)
+		this->cursor = this->written;
+}
+
 void data_stream::reset() {
 	this->cursor = 0;
 	this->written = 0;

@@ -21,7 +21,7 @@ namespace util {
 					data_stream data;
 
 					message(tcp_connection& connection, tcp_connection::message message);
-					message(tcp_connection& connection, data_stream&& data);
+					message(tcp_connection& connection, data_stream data);
 					message(tcp_connection& connection, const uint8* data, word length);
 					message(tcp_connection& connection, uint16 id, uint8 category = 0, uint8 method = 0);
 					message(message&& other);

@@ -34,6 +34,8 @@ namespace util {
 			*/
 			class string_not_utf8 {};
 
+			class invalid_size {};
+
 			data_stream();
 			data_stream(uint8* data, word length);
 			data_stream(const uint8* data, word length);
@@ -45,6 +47,8 @@ namespace util {
 			data_stream& operator=(const data_stream& other);
 
 			void resize(word size);
+
+			void shrink_written(word size);
 
 			/**
 			* @returns read-only reference to internal buffer
