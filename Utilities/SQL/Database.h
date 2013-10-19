@@ -11,8 +11,8 @@
 namespace util {
 	namespace sql {
 		template<typename P> struct db_object {
-			exported db_object() : id(P()) {}
-			exported virtual ~db_object() = 0;
+			exported db_object() : id(P()), valid(false) {}
+			exported virtual ~db_object() = 0 {};
 
 			exported operator bool() { return this->valid; }
 
@@ -305,9 +305,9 @@ namespace util {
 
 					qry.execute();
 					if (qry.advance_row()) {
-						for (auto i : this->defs) {
+						for (auto i : this->defs)
 							this->set_value(i, qry, result);
-						}
+						result.valid = true;
 					}
 					else {
 						result.valid = false;
@@ -326,6 +326,7 @@ namespace util {
 						for (auto i : this->defs)
 							this->set_value(i, qry, current);
 
+						current.valid = true;
 						result.push_back(current);
 					}
 
