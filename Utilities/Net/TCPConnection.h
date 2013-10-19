@@ -78,8 +78,7 @@ namespace util {
 				///Constructs a new tcp_connection by establishing a new connection to the specified address and port.
 				///@param address The address to connect to. 
 				///@param port The port to connect to. 
-				///@param state The state to store in this instance. 
-				exported tcp_connection(std::string address, std::string port, void* state = nullptr);
+				exported tcp_connection(std::string address, std::string port);
 
 				///Constructs this connection by moving from another connection.
 				///@param other The message to move from. 
