@@ -157,6 +157,7 @@ void request_server::enqueue_incoming(message m) {
 	if (!this->running)
 		return;
 
+	m.data.seek(0);
 	this->incoming.add_work(move(m));
 }
 
@@ -164,6 +165,7 @@ void request_server::enqueue_outgoing(message m) {
 	if (!this->running)
 		return;
 
+	m.data.seek(0);
 	this->outgoing.add_work(move(m));
 }
 
