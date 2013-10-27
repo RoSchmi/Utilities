@@ -27,8 +27,14 @@ namespace util {
 				std::string message;
 		};
 
+		class synchronization_exception {
+			public:
+				exported synchronization_exception();
+
+		};
+
 		class connection;
-		template<typename T, typename C, typename P> class table_binder;
+		template<typename T, typename C, typename I> class table_binder;
 
 		class query {
 			protected:
@@ -169,26 +175,33 @@ namespace util {
 					std::string password;
 				};
 
+				enum class isolation_level {
+					read_uncommitted,
+					read_committed,
+					repeatable_read,
+					serializable
+				};
+
 				typedef query query_type;
-				template<typename T, typename P> using binder_type = table_binder<T, connection, P>;
+				template<typename T, typename I> using binder_type = table_binder<T, connection, I>;
 
 				exported connection();
 				exported virtual ~connection() = 0;
 
 				exported bool connected() const;
 				exported bool committed() const;
-				exported virtual void begin_transaction() = 0;
+				exported virtual void begin_transaction(isolation_level level = isolation_level::serializable) = 0;
 				exported virtual void rollback_transaction() = 0;
 				exported virtual void commit_transaction() = 0;
 		};
 
-		template<typename T, typename C, typename P> class table_binder {
+		template<typename T, typename C, typename I> class table_binder {
 			static_assert(std::is_base_of<connection, C>::value && !std::is_same<connection, C>::value, "typename C must derive from, but not be, util::sql::connection.");
 
 			public:
 				typedef C connection_type;
 				typedef T object_type;
-				typedef P id_type;
+				typedef I id_type;
 
 				class column_definition {
 					public:
@@ -246,7 +259,7 @@ namespace util {
 							util::data_stream T::*binary_type;
 						} value;
 
-						friend class table_binder<T, C, P>;
+						friend class table_binder<T, C, I>;
 				};
 
 				exported table_binder(C& conn, std::string name) : db(conn), select_by_id_query("", &conn), update_query("", &conn), insert_query("", &conn), delete_query("", &conn) {
@@ -268,7 +281,7 @@ namespace util {
 					this->defs.push_back(def);
 				}
 
-				exported T select_by_id(P id) {
+				exported T select_by_id(I id) {
 					this->select_by_id_query.reset();
 					this->select_by_id_query.add_para(id);
 					return this->fill_one(this->select_by_id_query);
@@ -386,6 +399,48 @@ namespace util {
 				virtual void generate_delete() = 0;
 				virtual void generate_insert() = 0;
 				virtual void generate_update() = 0;
+		};
+
+		template<typename T, typename C, typename I> class db_table {
+			static_assert(std::is_base_of<connection, C>::value && !std::is_same<connection, C>::value, "typename C must derive from, but not be, util::sql::connection.");
+
+			public:
+				typedef T object_type;
+				typedef C connection_type;
+				typedef typename C::template binder_type<T, I> binder_type;
+
+				db_table(const db_table& other) = delete;
+				db_table(db_table&& other) = delete;
+				db_table& operator=(db_table&& other) = delete;
+				db_table& operator=(const db_table& other) = delete;
+
+				exported virtual ~db_table() {
+
+				}
+
+				exported db_table(connection_type& conn, std::string table_name) : db(conn), binder(conn, table_name) {
+
+				}
+
+				exported T get_by_id(I id) {
+					return this->binder.select_by_id(id);
+				}
+
+				exported virtual void update(object_type& object) {
+					this->binder.update(object);
+				}
+
+				exported virtual void insert(object_type& object) {
+					this->binder.insert(object);
+				}
+
+				exported virtual void remove(object_type& object) {
+					this->binder.remove(object);
+				}
+
+			protected:
+				connection_type& db;
+				binder_type binder;
 		};
 	}
 }

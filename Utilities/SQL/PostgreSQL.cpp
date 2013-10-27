@@ -30,11 +30,17 @@ connection::~connection() {
 		PQfinish(this->base_connection);
 }
 
-void connection::begin_transaction() {
+void connection::begin_transaction(isolation_level level) {
 	if (!this->is_committed)
 		throw db_exception("Transaction already begun.");
 
-	query("START TRANSACTION ISOLATION LEVEL REPEATABLE READ;", this).execute();
+	switch (level) {
+		case isolation_level::read_uncommitted: query("START TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;", this).execute(); break;
+		case isolation_level::read_committed: query("START TRANSACTION ISOLATION LEVEL READ COMMITTED;", this).execute(); break;
+		case isolation_level::repeatable_read: query("START TRANSACTION ISOLATION LEVEL REPEATABLE READ;", this).execute(); break;
+		case isolation_level::serializable: query("START TRANSACTION ISOLATION LEVEL SERIALIZABLE;", this).execute(); break;
+	}
+	
 	this->is_committed = false;
 }
 

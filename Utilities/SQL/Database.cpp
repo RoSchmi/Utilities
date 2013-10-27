@@ -8,6 +8,10 @@ db_exception::db_exception(string message) {
 	this->message = message;
 }
 
+synchronization_exception::synchronization_exception() {
+
+}
+
 connection::connection() {
 	this->is_connected = false;
 	this->is_committed = false;

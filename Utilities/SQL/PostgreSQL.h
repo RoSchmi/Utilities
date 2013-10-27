@@ -12,7 +12,7 @@ namespace util {
 	namespace sql {
 		namespace postgres {
 			class connection;
-			template<typename T, typename P> class table_binder;
+			template<typename T, typename I> class table_binder;
 
 			class query : public sql::query {
 				static const word max_parameters = 25;
@@ -119,19 +119,19 @@ namespace util {
 					friend class query;
 
 					typedef query query_type;
-					template<typename T, typename P> using binder_type = table_binder<T, P>;
+					template<typename T, typename I> using binder_type = table_binder<T, I>;
 
 					exported connection(const parameters& parameters);
 					exported virtual ~connection();
 
 					exported query new_query(std::string query_str = "");
 					exported query operator<<(std::string query_str);
-					exported virtual void begin_transaction() override;
+					exported virtual void begin_transaction(isolation_level level) override;
 					exported virtual void rollback_transaction() override;
 					exported virtual void commit_transaction() override;
 			};
 
-			template<typename T, typename P> class table_binder : public sql::table_binder<T, connection, P> {
+			template<typename T, typename I> class table_binder : public sql::table_binder<T, connection, I> {
 				std::string lock_stmt;
 
 				virtual void generate_select_by_id() override {
@@ -195,7 +195,7 @@ namespace util {
 				}
 
 				public:
-					exported table_binder(postgres::connection& conn, std::string name, bool lock_row = true) : sql::table_binder<T, connection, P>(conn, name) {
+					exported table_binder(postgres::connection& conn, std::string name, bool lock_row = true) : sql::table_binder<T, connection, I>(conn, name) {
 						this->lock_stmt = lock_row ? " FOR UPDATE;" : "";
 					}
 
