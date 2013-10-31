@@ -10,13 +10,13 @@
 
 namespace util {
 	namespace sql {
-		template<typename P> struct db_object {
-			exported db_object() : id(P()), valid(false) {}
-			exported virtual ~db_object() = 0 {};
+		template<typename I> struct object {
+			exported object() : id(I()), valid(false) {}
+			exported virtual ~object() = 0 {};
 
 			exported operator bool() { return this->valid; }
 
-			P id;
+			I id;
 			bool valid;
 		};
 
@@ -30,7 +30,6 @@ namespace util {
 		class synchronization_exception {
 			public:
 				exported synchronization_exception();
-
 		};
 
 		class connection;
@@ -287,27 +286,27 @@ namespace util {
 					return this->fill_one(this->select_by_id_query);
 				}
 
-				exported void remove(T& object) {
+				exported void remove(T& obj) {
 					this->delete_query.reset();
 					this->delete_query.add_para(object.id);
 					this->delete_query.execute();
 				}
 
-				exported void insert(T& object) {
+				exported void insert(T& obj) {
 					this->insert_query.reset();
 
 					for (auto i : this->defs)
-						this->add_para(i, this->insert_query, object);
+						this->add_para(i, this->insert_query, obj);
 
 					this->insert_query.execute();
 				}
 
-				exported void update(T& object) {
+				exported void update(T& obj) {
 					this->update_query.reset();
 
 					for (auto i : this->defs)
 					if (i.updatable)
-						this->add_para(i, this->update_query, object);
+						this->add_para(i, this->update_query, obj);
 
 					this->update_query.add_para(object.id);
 					this->update_query.execute();
@@ -357,7 +356,7 @@ namespace util {
 				std::vector<column_definition> defs;
 				std::string name;
 
-				void add_para(column_definition& column, typename C::query_type& qry, T& object) {
+				void add_para(column_definition& column, typename C::query_type& qry, T& obj) {
 					switch (column.type) {
 						case column_definition::data_type::uint64: qry.add_para(object.*(column.value.uint64_type)); break;
 						case column_definition::data_type::uint32: qry.add_para(object.*(column.value.uint32_type)); break;
@@ -376,22 +375,22 @@ namespace util {
 					}
 				}
 
-				void set_value(column_definition& column, typename C::query_type& qry, T& object) {
+				void set_value(column_definition& column, typename C::query_type& qry, T& obj) {
 					switch (column.type) {
-						case column_definition::data_type::uint64: object.*(column.value.uint64_type) = qry.get_uint64(column.name); break;
-						case column_definition::data_type::uint32: object.*(column.value.uint32_type) = qry.get_uint32(column.name); break;
-						case column_definition::data_type::uint16: object.*(column.value.uint16_type) = qry.get_uint16(column.name); break;
-						case column_definition::data_type::uint8: object.*(column.value.uint8_type) = qry.get_uint8(column.name); break;
-						case column_definition::data_type::int64: object.*(column.value.int64_type) = qry.get_int64(column.name); break;
-						case column_definition::data_type::int32: object.*(column.value.int32_type) = qry.get_int32(column.name); break;
-						case column_definition::data_type::int16: object.*(column.value.int16_type) = qry.get_int16(column.name); break;
-						case column_definition::data_type::int8: object.*(column.value.int8_type) = qry.get_int8(column.name); break;
-						case column_definition::data_type::float64: object.*(column.value.float64_type) = qry.get_float64(column.name); break;
-						case column_definition::data_type::float32: object.*(column.value.float32_type) = qry.get_float32(column.name); break;
-						case column_definition::data_type::boolean: object.*(column.value.boolean_type) = qry.get_bool(column.name); break;
-						case column_definition::data_type::string: object.*(column.value.string_type) = qry.get_string(column.name); break;
-						case column_definition::data_type::date_time: object.*(column.value.dateTime_type) = from_epoch(qry.get_uint64(column.name)); break;
-						case column_definition::data_type::data_stream: object.*(column.value.binary_type) = qry.get_data_stream(column.name); break;
+						case column_definition::data_type::uint64: obj.*(column.value.uint64_type) = qry.get_uint64(column.name); break;
+						case column_definition::data_type::uint32: obj.*(column.value.uint32_type) = qry.get_uint32(column.name); break;
+						case column_definition::data_type::uint16: obj.*(column.value.uint16_type) = qry.get_uint16(column.name); break;
+						case column_definition::data_type::uint8: obj.*(column.value.uint8_type) = qry.get_uint8(column.name); break;
+						case column_definition::data_type::int64: obj.*(column.value.int64_type) = qry.get_int64(column.name); break;
+						case column_definition::data_type::int32: obj.*(column.value.int32_type) = qry.get_int32(column.name); break;
+						case column_definition::data_type::int16: obj.*(column.value.int16_type) = qry.get_int16(column.name); break;
+						case column_definition::data_type::int8: obj.*(column.value.int8_type) = qry.get_int8(column.name); break;
+						case column_definition::data_type::float64: obj.*(column.value.float64_type) = qry.get_float64(column.name); break;
+						case column_definition::data_type::float32: obj.*(column.value.float32_type) = qry.get_float32(column.name); break;
+						case column_definition::data_type::boolean: obj.*(column.value.boolean_type) = qry.get_bool(column.name); break;
+						case column_definition::data_type::string: obj.*(column.value.string_type) = qry.get_string(column.name); break;
+						case column_definition::data_type::date_time: obj.*(column.value.dateTime_type) = from_epoch(qry.get_uint64(column.name)); break;
+						case column_definition::data_type::data_stream: obj.*(column.value.binary_type) = qry.get_data_stream(column.name); break;
 					}
 				}
 
@@ -402,9 +401,10 @@ namespace util {
 		};
 
 		template<typename T, typename C, typename I> class db_table {
-			static_assert(std::is_base_of<connection, C>::value && !std::is_same<connection, C>::value, "typename C must derive from, but not be, util::sql::connection.");
-
 			public:
+				static_assert(std::is_base_of<connection, C>::value, "typename C must derive from util::sql::connection.");
+				static_assert(std::is_base_of<object<I>, T>::value, "typename T must derive from util::sql::object<I>.");
+
 				typedef T object_type;
 				typedef C connection_type;
 				typedef typename C::template binder_type<T, I> binder_type;
@@ -426,16 +426,16 @@ namespace util {
 					return this->binder.select_by_id(id);
 				}
 
-				exported virtual void update(object_type& object) {
-					this->binder.update(object);
+				exported virtual void update(object_type& obj) {
+					this->binder.update(obj);
 				}
 
-				exported virtual void insert(object_type& object) {
-					this->binder.insert(object);
+				exported virtual void insert(object_type& obj) {
+					this->binder.insert(obj);
 				}
 
-				exported virtual void remove(object_type& object) {
-					this->binder.remove(object);
+				exported virtual void remove(object_type& obj) {
+					this->binder.remove(obj);
 				}
 
 			protected:

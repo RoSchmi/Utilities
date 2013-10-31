@@ -35,6 +35,10 @@ namespace util {
 				*this = std::move(other);
 			}
 
+			exported ~timer() {
+				this->stop();
+			}
+
 			exported timer& operator=(timer&& other) {
 				bool was_running = other.running.load();
 

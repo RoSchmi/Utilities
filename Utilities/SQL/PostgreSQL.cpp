@@ -137,7 +137,11 @@ void query::execute(sql::connection* conn) {
 		this->row_count = atoi(PQcmdTuples(this->result));
 	}
 	else {
-		throw db_exception(PQresultErrorField(this->result, PG_DIAG_SQLSTATE));
+		char* error = PQresultErrorField(this->result, PG_DIAG_SQLSTATE);
+		if (strcmp(error, "40001") == 0 || strcmp(error, "40P01") == 0)
+			throw synchronization_exception();
+		else
+			throw db_exception(error);
 	}
 }
 
