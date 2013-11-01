@@ -11,7 +11,7 @@
 
 namespace util {
 	template<typename T> class work_queue {
-		static_assert(std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, "work_queue type T must be move assignable and constructible.");
+		static_assert(std::is_move_assignable<T>::value || std::is_move_constructible<T>::value, "work_queue type T must be move assignable and constructible.");
 
 		std::queue<T> items;
 		std::mutex lock;
