@@ -12,13 +12,15 @@ namespace util {
 	namespace sql {
 		template<typename I> struct object {
 			exported object() : id(I()), valid(false) {}
-			exported virtual ~object() = 0 {};
+			exported virtual ~object() = 0;
 
 			exported operator bool() { return this->valid; }
 
 			I id;
 			bool valid;
 		};
+
+		template<typename I> object<I>::~object() = default;
 
 		class db_exception {
 			public:
