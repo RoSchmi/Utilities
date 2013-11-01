@@ -288,7 +288,7 @@ namespace util {
 
 				exported void remove(T& obj) {
 					this->delete_query.reset();
-					this->delete_query.add_para(object.id);
+					this->delete_query.add_para(obj.id);
 					this->delete_query.execute();
 				}
 
@@ -305,10 +305,10 @@ namespace util {
 					this->update_query.reset();
 
 					for (auto i : this->defs)
-					if (i.updatable)
-						this->add_para(i, this->update_query, obj);
+						if (i.updatable)
+							this->add_para(i, this->update_query, obj);
 
-					this->update_query.add_para(object.id);
+					this->update_query.add_para(obj.id);
 					this->update_query.execute();
 				}
 
@@ -358,20 +358,20 @@ namespace util {
 
 				void add_para(column_definition& column, typename C::query_type& qry, T& obj) {
 					switch (column.type) {
-						case column_definition::data_type::uint64: qry.add_para(object.*(column.value.uint64_type)); break;
-						case column_definition::data_type::uint32: qry.add_para(object.*(column.value.uint32_type)); break;
-						case column_definition::data_type::uint16: qry.add_para(object.*(column.value.uint16_type)); break;
-						case column_definition::data_type::uint8: qry.add_para(object.*(column.value.uint8_type)); break;
-						case column_definition::data_type::int64: qry.add_para(object.*(column.value.int64_type)); break;
-						case column_definition::data_type::int32: qry.add_para(object.*(column.value.int32_type)); break;
-						case column_definition::data_type::int16: qry.add_para(object.*(column.value.int16_type)); break;
-						case column_definition::data_type::int8: qry.add_para(object.*(column.value.int8_type)); break;
-						case column_definition::data_type::float64: qry.add_para(object.*(column.value.float64_type)); break;
-						case column_definition::data_type::float32: qry.add_para(object.*(column.value.float32_type)); break;
-						case column_definition::data_type::boolean: qry.add_para(object.*(column.value.boolean_type)); break;
-						case column_definition::data_type::string: qry.add_para(object.*(column.value.string_type)); break;
-						case column_definition::data_type::date_time: qry.add_para(since_epoch(object.*(column.value.dateTime_type))); break;
-						case column_definition::data_type::data_stream: qry.add_para(object.*(column.value.binary_type)); break;
+						case column_definition::data_type::uint64: qry.add_para(obj.*(column.value.uint64_type)); break;
+						case column_definition::data_type::uint32: qry.add_para(obj.*(column.value.uint32_type)); break;
+						case column_definition::data_type::uint16: qry.add_para(obj.*(column.value.uint16_type)); break;
+						case column_definition::data_type::uint8: qry.add_para(obj.*(column.value.uint8_type)); break;
+						case column_definition::data_type::int64: qry.add_para(obj.*(column.value.int64_type)); break;
+						case column_definition::data_type::int32: qry.add_para(obj.*(column.value.int32_type)); break;
+						case column_definition::data_type::int16: qry.add_para(obj.*(column.value.int16_type)); break;
+						case column_definition::data_type::int8: qry.add_para(obj.*(column.value.int8_type)); break;
+						case column_definition::data_type::float64: qry.add_para(obj.*(column.value.float64_type)); break;
+						case column_definition::data_type::float32: qry.add_para(obj.*(column.value.float32_type)); break;
+						case column_definition::data_type::boolean: qry.add_para(obj.*(column.value.boolean_type)); break;
+						case column_definition::data_type::string: qry.add_para(obj.*(column.value.string_type)); break;
+						case column_definition::data_type::date_time: qry.add_para(since_epoch(obj.*(column.value.dateTime_type))); break;
+						case column_definition::data_type::data_stream: qry.add_para(obj.*(column.value.binary_type)); break;
 					}
 				}
 

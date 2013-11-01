@@ -148,6 +148,10 @@ void data_stream::adopt(uint8* buffer, word length) {
 	this->buffer = buffer;
 }
 
+void data_stream::write(const unique_ptr<uint8> ptr, word count) {
+	this->write(ptr.get(), count);
+}
+
 void data_stream::write(const uint8* data, word count) {
 	if (this->cursor + count >= this->allocation)
 		this->resize(this->cursor + count);

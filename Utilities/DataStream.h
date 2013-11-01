@@ -2,6 +2,7 @@
 
 #include <string>
 #include <type_traits>
+#include <memory>
 
 #include "Common.h"
 
@@ -86,6 +87,8 @@ namespace util {
 			* initialized up to offset @a length
 			*/
 			void adopt(uint8* buffer, word length);
+
+			void write(const std::unique_ptr<uint8> ptr, word count);
 
 			/**
 			* Write @a count bytes from @a bytes to the current location in
