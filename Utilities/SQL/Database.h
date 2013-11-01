@@ -267,9 +267,7 @@ namespace util {
 					this->name = name;
 				}
 
-				exported virtual ~table_binder() = 0 {
-
-				};
+				exported virtual ~table_binder() = 0;
 
 				exported void prepare_stmts() {
 					this->generate_select_by_id();
