@@ -400,6 +400,8 @@ namespace util {
 				virtual void generate_update() = 0;
 		};
 
+		template<typename T, typename C, typename I> table_binder<T, C, I>::~table_binder() {}
+
 		template<typename T, typename C, typename I> class db_table {
 			public:
 				static_assert(std::is_base_of<connection, C>::value, "typename C must derive from util::sql::connection.");
