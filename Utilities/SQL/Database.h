@@ -401,48 +401,5 @@ namespace util {
 		};
 
 		template<typename T, typename C, typename I> table_binder<T, C, I>::~table_binder() {}
-
-		template<typename T, typename C, typename I> class db_table {
-			public:
-				static_assert(std::is_base_of<connection, C>::value, "typename C must derive from util::sql::connection.");
-				static_assert(std::is_base_of<object<I>, T>::value, "typename T must derive from util::sql::object<I>.");
-
-				typedef T object_type;
-				typedef C connection_type;
-				typedef typename C::template binder_type<T, I> binder_type;
-
-				db_table(const db_table& other) = delete;
-				db_table(db_table&& other) = delete;
-				db_table& operator=(db_table&& other) = delete;
-				db_table& operator=(const db_table& other) = delete;
-
-				exported virtual ~db_table() {
-
-				}
-
-				exported db_table(connection_type& conn, std::string table_name) : db(conn), binder(conn, table_name) {
-
-				}
-
-				exported T get_by_id(I id) {
-					return this->binder.select_by_id(id);
-				}
-
-				exported virtual void update(object_type& obj) {
-					this->binder.update(obj);
-				}
-
-				exported virtual void insert(object_type& obj) {
-					this->binder.insert(obj);
-				}
-
-				exported virtual void remove(object_type& obj) {
-					this->binder.remove(obj);
-				}
-
-			protected:
-				connection_type& db;
-				binder_type binder;
-		};
 	}
 }
