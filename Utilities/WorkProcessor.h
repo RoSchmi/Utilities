@@ -13,7 +13,7 @@
 
 namespace util {
 	template<typename T> class work_processor {
-		static_assert(std::is_move_constructible<T>::value, "work_processor type T must be move constructible.");
+		static_assert(std::is_move_constructible<T>::value, "typename T must be move constructible.");
 
 		public:
 			event_single<void, word, T&> on_item;
