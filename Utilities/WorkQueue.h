@@ -52,6 +52,9 @@ namespace util {
 			}
 
 			exported bool dequeue(T& target) {
+				if (!this->alive)
+					return false;
+
 				std::unique_lock<std::mutex> lock(this->lock);
 
 				while (this->items.empty()) {
@@ -68,6 +71,9 @@ namespace util {
 			}
 
 			exported T dequeue() {
+				if (!this->alive)
+					throw waiter_killed_exception();
+
 				std::unique_lock<std::mutex> lock(this->lock);
 
 				while (this->items.empty()) {

@@ -12,6 +12,9 @@
 	#include <ws2tcpip.h>
 	#include <Windows.h>
 
+#define close_sock closesocket
+#define closed_socket INVALID_SOCKET
+
 	static bool winsock_initialized = false;
 #elif defined POSIX
 	#include <sys/select.h>
@@ -24,16 +27,32 @@
 	#include <stdio.h>
 	#include <string.h>
 	#include <endian.h>
+
+#define close_sock close
+#define closed_socket -1
+
 #endif
 
 using namespace std;
 using namespace util;
 using namespace util::net;
 
+endpoint::endpoint(std::string address, std::string port) : address(address), port(port) {
+
+}
+
+endpoint::endpoint(std::string port) : address(""), port(port) {
+
+}
+
+endpoint::endpoint() : address(""), port("") {
+
+}
+
 #ifdef WINDOWS
-uintptr prep_socket(socket::families family, socket::types type, string address, string port, bool is_listener, addrinfo** addr_info) {
+uintptr prep_socket(socket::families family, socket::types type, string address, string port, addrinfo** addr_info) {
 #elif defined POSIX
-int prep_socket(socket::families family, socket::types type, string address, string port, bool is_listener, addrinfo** addr_info) {
+int prep_socket(socket::families family, socket::types type, string address, string port, addrinfo** addr_info) {
 #endif
 	addrinfo hints;
 	addrinfo* server_addr_info;
@@ -66,28 +85,23 @@ int prep_socket(socket::families family, socket::types type, string address, str
 		case socket::types::tcp: hints.ai_socktype = SOCK_STREAM; break;
 	}
 
-	if (is_listener)
+	if (address == "")
 		hints.ai_flags = AI_PASSIVE;
 
 	if (::getaddrinfo(address != "" ? address.c_str() : nullptr, port.c_str(), &hints, &server_addr_info) != 0 || server_addr_info == nullptr)
 		throw socket::invalid_address_exception();
 
 	raw_socket = ::socket(server_addr_info->ai_family, server_addr_info->ai_socktype, server_addr_info->ai_protocol);
-#ifdef WINDOWS
-	if (raw_socket == INVALID_SOCKET) {
-		::closesocket(raw_socket);
+
+	if (raw_socket == closed_socket) {
+		::close_sock(raw_socket);
 		::freeaddrinfo(server_addr_info);
 		throw socket::could_not_create_exception();
 	}
+#ifdef WINDOWS
 	else {
 		int opt = 0;
 		::setsockopt(raw_socket, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&opt), sizeof(opt));
-	}
-#elif defined POSIX
-	if (raw_socket == -1) {
-		::close(raw_socket);
-		::freeaddrinfo(server_addr_info);
-		throw socket::could_not_create_exception();
 	}
 #endif
 
@@ -101,65 +115,52 @@ socket::socket(families family, types type) {
 	this->family = family;
 	this->connected = false;
 	this->endpoint_address.fill(0x00);
-
-	#ifdef WINDOWS
-		this->raw_socket = INVALID_SOCKET;
-	#elif defined POSIX
-		this->raw_socket = -1;
-	#endif
+	this->raw_socket = closed_socket;
 }
 
 socket::socket() {
 	this->connected = false;
 }
 
-socket::socket(families family, types type, string address, string port) : socket(family, type) {
+socket::socket(families family, types type, endpoint ep) : socket(family, type) {
 	addrinfo* server_addr_info;
 
-	this->raw_socket = prep_socket(family, type, address, port, false, &server_addr_info);
+	this->raw_socket = prep_socket(family, type, ep.address, ep.port, &server_addr_info);
 
-	if (::connect(this->raw_socket, server_addr_info->ai_addr, static_cast<int>(server_addr_info->ai_addrlen)) != 0) {
-		#ifdef WINDOWS
-			::closesocket(this->raw_socket);
-		#elif defined POSIX
-			::close(this->raw_socket);
-		#endif
+	if (ep.address != "") {
+		if (::connect(this->raw_socket, server_addr_info->ai_addr, static_cast<int>(server_addr_info->ai_addrlen)) != 0)
+			goto error;
 
-		::freeaddrinfo(server_addr_info);
-
-		throw could_not_connect_exception();
+		this->connected = true;
 	}
+	else {
+		if (::bind(this->raw_socket, server_addr_info->ai_addr, (int)server_addr_info->ai_addrlen) != 0)
+			goto error;
 
-	this->connected = true;
-
-	::freeaddrinfo(server_addr_info);
-}
-
-socket::socket(families family, types type, string port) : socket(family, type) {
-	addrinfo* server_addr_info;
-
-	this->raw_socket = prep_socket(family, type, "", port, true, &server_addr_info);
-
-	if (::bind(this->raw_socket, server_addr_info->ai_addr, (int)server_addr_info->ai_addrlen) != 0)
-		goto error;
-
-	if (::listen(this->raw_socket, SOMAXCONN) != 0)
-		goto error;
+		if (::listen(this->raw_socket, SOMAXCONN) != 0)
+			goto error;
+	}
 
 	::freeaddrinfo(server_addr_info);
 
 	return;
 
 error:
-#ifdef WINDOWS
-	::closesocket(this->raw_socket);
-#elif defined POSIX
-	::close(this->raw_socket);
-#endif
-
+	::close_sock(this->raw_socket);
 	freeaddrinfo(server_addr_info);
 
-	throw could_not_listen_exception();
+	if (ep.address != "")
+		throw could_not_connect_exception();
+	else
+		throw could_not_listen_exception();
+}
+
+socket::socket(families family, types type, string address, string port) : socket(family, type, endpoint(address, port)) {
+
+}
+
+socket::socket(families family, types type, string port) : socket(family, type, endpoint(port)) {
+
 }
 
 socket::socket(socket&& other) {
@@ -184,11 +185,7 @@ net::socket& socket::operator=(socket&& other) {
 	this->endpoint_address = other.endpoint_address;
 
 	this->raw_socket = other.raw_socket;
-#ifdef WINDOWS
-	other.raw_socket = INVALID_SOCKET;
-#elif defined POSIX
-	other.raw_socket = -1;
-#endif
+	other.raw_socket = closed_socket;
 
 	return *this;
 }
@@ -201,13 +198,11 @@ void socket::close() {
 
 #ifdef WINDOWS
 	::shutdown(this->raw_socket, SD_BOTH);
-	::closesocket(this->raw_socket);
-	this->raw_socket = INVALID_SOCKET;
 #elif defined POSIX
 	::shutdown(this->raw_socket, SHUT_RDWR);
-	::close(this->raw_socket);
-	this->raw_socket = -1;
 #endif
+	::close_sock(this->raw_socket);
+	this->raw_socket = closed_socket;
 }
 
 net::socket socket::accept() {
@@ -220,13 +215,11 @@ net::socket socket::accept() {
 
 #ifdef WINDOWS
 	new_socket.raw_socket = ::accept(this->raw_socket, reinterpret_cast<sockaddr*>(&remote_address), reinterpret_cast<int*>(&address_length));
-	if (new_socket.raw_socket == INVALID_SOCKET)
-		return new_socket;
 #elif defined POSIX
-	new_socket.raw_socket = ::accept(this->raw_socket, reinterpret_cast<sockaddr* > (&remote_address), reinterpret_cast<socklen_t*>(&address_length));
-	if (new_socket.raw_socket == -1)
-		return new_socket;
+	new_socket.raw_socket = ::accept(this->raw_socket, reinterpret_cast<sockaddr*>(&remote_address), reinterpret_cast<socklen_t*>(&address_length));
 #endif
+	if (new_socket.raw_socket == closed_socket)
+		return new_socket;
 
 	new_socket.connected = true;
 

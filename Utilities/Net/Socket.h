@@ -7,6 +7,15 @@
 
 namespace util {
 	namespace net {
+		struct endpoint {
+			std::string address;
+			std::string port;
+
+			exported endpoint(std::string address, std::string port);
+			exported endpoint(std::string port);
+			exported endpoint();
+		};
+
 		/**
 		 * socket, a bidirectional stream endpoint
 		 *
@@ -38,6 +47,7 @@ namespace util {
 
 				socket(families family, types type, std::string address, std::string port);
 				socket(families family, types type, std::string port);
+				socket(families family, types type, endpoint ep);
 				socket(socket&& other);
 				socket();
 				~socket();

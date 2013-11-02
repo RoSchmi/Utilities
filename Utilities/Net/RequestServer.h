@@ -10,6 +10,7 @@
 #include "../WorkProcessor.h"
 #include "../Event.h"
 #include "TCPServer.h"
+#include "TCPConnection.h"
 
 namespace util {
 	namespace net {
@@ -45,8 +46,8 @@ namespace util {
 				static const word max_retries = 5;
 
 				exported request_server();
-				exported request_server(std::string port, word workers, uint16 retry_code, bool uses_websockets = false);
-				exported request_server(std::vector<std::string> ports, word workers, uint16 retry_code, std::vector<bool> uses_websockets = std::vector<bool>());
+				exported request_server(net::endpoint port, word workers, uint16 retry_code, bool uses_websockets = false);
+				exported request_server(std::vector<net::endpoint> ports, word workers, uint16 retry_code, std::vector<bool> uses_websockets = std::vector<bool>());
 				exported request_server(request_server&& other);
 				exported ~request_server();
 
@@ -72,7 +73,7 @@ namespace util {
 				std::mutex client_lock;
 
 				work_processor<message> incoming;
-				work_processor<message> outgoing;
+				//work_processor<message> outgoing;
 
 				uint16 retry_code;
 

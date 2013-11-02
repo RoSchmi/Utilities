@@ -25,7 +25,7 @@ namespace util {
 
 			void tick(word worker) {
 				try {
-					T item(this->queue.dequeue());
+					T item(std::move(this->queue.dequeue()));
 					this->on_item(worker, item);
 				}
 				catch (typename work_queue<T>::waiter_killed_exception) {
@@ -37,7 +37,7 @@ namespace util {
 			work_processor(const work_processor& other) = delete;
 			work_processor& operator=(const work_processor& other) = delete;
 
-			exported work_processor(word worker_count = 0, std::chrono::milliseconds delay = std::chrono::milliseconds(25)) {
+			exported work_processor(word worker_count, std::chrono::milliseconds delay = std::chrono::milliseconds(25)) {
 				this->running = false;
 
 				for (word i = 0; i < worker_count; i++) {
@@ -80,6 +80,8 @@ namespace util {
 				if (this->running)
 					return;
 
+				this->running = true;
+
 				for (auto& i : this->workers)
 					i.start();
 			}
@@ -87,6 +89,8 @@ namespace util {
 			exported void stop() {
 				if (!this->running)
 					return;
+
+				this->running = false;
 
 				for (auto& i : this->workers)
 					i.stop();
