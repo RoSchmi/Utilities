@@ -44,7 +44,8 @@ data_stream::~data_stream() {
 	this->cursor = 0;
 	this->written = 0;
 
-	delete[] this->buffer;
+	if (this->buffer)
+		delete[] this->buffer;
 }
 
 data_stream& data_stream::operator=(data_stream&& other) {
