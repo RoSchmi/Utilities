@@ -110,6 +110,7 @@ void request_server::on_client_connect(tcp_connection connection) {
 
 void request_server::on_client_disconnect(tcp_connection& connection) {
 	unique_lock<recursive_mutex> lck(this->client_lock);
+	this->on_disconnect(connection);
 	auto iter = find_if(this->clients.begin(), this->clients.end(), [&connection](tcp_connection& conn) { return &conn == &connection; });
 	this->clients.erase(iter);
 }
@@ -184,6 +185,8 @@ void request_server::enqueue_outgoing(message m) {
 }
 
 request_server::message::message(tcp_connection& connection, tcp_connection::message message) : connection(connection), data(message.data, message.length) {
+	message.data = nullptr;
+	message.length = 0;
 	this->attempts = 0;
 }
 
