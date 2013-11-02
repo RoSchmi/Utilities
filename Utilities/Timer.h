@@ -32,6 +32,7 @@ namespace util {
 			}
 
 			exported timer(timer&& other) {
+				this->running = false;
 				*this = std::move(other);
 			}
 
