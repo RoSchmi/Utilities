@@ -130,8 +130,6 @@ socket::socket(families family, types type, endpoint ep) : socket(family, type) 
 	if (ep.address != "") {
 		if (::connect(this->raw_socket, server_addr_info->ai_addr, static_cast<int>(server_addr_info->ai_addrlen)) != 0)
 			goto error;
-
-		this->connected = true;
 	}
 	else {
 		if (::bind(this->raw_socket, server_addr_info->ai_addr, (int)server_addr_info->ai_addrlen) != 0)
@@ -140,6 +138,8 @@ socket::socket(families family, types type, endpoint ep) : socket(family, type) 
 		if (::listen(this->raw_socket, SOMAXCONN) != 0)
 			goto error;
 	}
+
+	this->connected = true;
 
 	::freeaddrinfo(server_addr_info);
 

@@ -73,7 +73,7 @@ namespace util {
 				std::mutex client_lock;
 
 				work_processor<message> incoming;
-				//work_processor<message> outgoing;
+				work_processor<message> outgoing;
 
 				uint16 retry_code;
 

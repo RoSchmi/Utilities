@@ -8,7 +8,7 @@ using namespace std;
 using namespace util;
 using namespace util::net;
 
-request_server::request_server() : incoming(0) { //, outgoing(0) {
+request_server::request_server() : incoming(0) , outgoing(0) {
 	this->running = false;
 	this->valid = false;
 }
@@ -17,7 +17,7 @@ request_server::request_server(endpoint port, word workers, uint16 retry_code) :
 	
 }
 
-request_server::request_server(vector<endpoint> ports, word workers, uint16 retry_code) : incoming(workers) { //, outgoing(workers) {
+request_server::request_server(vector<endpoint> ports, word workers, uint16 retry_code) : incoming(workers) , outgoing(workers) {
 	this->running = false;
 	this->valid = true;
 	this->retry_code = retry_code;
@@ -29,7 +29,7 @@ request_server::request_server(vector<endpoint> ports, word workers, uint16 retr
 	}
 }
 
-request_server::request_server(request_server&& other) : incoming(0) { //, outgoing(0) {
+request_server::request_server(request_server&& other) : incoming(0) , outgoing(0) {
 	if (other.running)
 		throw cant_move_running_server_exception();
 
@@ -46,7 +46,7 @@ request_server& request_server::operator = (request_server&& other) {
 	this->running = false;
 	this->servers = move(other.servers);
 	this->incoming = move(other.incoming);
-	//this->outgoing = move(other.outgoing);
+	this->outgoing = move(other.outgoing);
 
 	return *this;
 }
@@ -65,10 +65,10 @@ void request_server::start() {
 	this->running = true;
 
 	this->incoming.on_item += std::bind(&request_server::on_incoming, this, placeholders::_1, placeholders::_2);
-	//this->outgoing.on_item += std::bind(&request_server::on_outgoing, this, placeholders::_1, placeholders::_2);
+	this->outgoing.on_item += std::bind(&request_server::on_outgoing, this, placeholders::_1, placeholders::_2);
 
 	this->incoming.start();
-	//this->outgoing.start();
+	this->outgoing.start();
 	this->io_worker = thread(&request_server::io_run, this);
 
 	for (auto& i : this->servers)
@@ -86,7 +86,7 @@ void request_server::stop() {
 
 	this->io_worker.join();
 	this->incoming.stop();
-	//this->outgoing.stop();
+	this->outgoing.stop();
 }
 
 tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_connect) {
@@ -156,7 +156,7 @@ void request_server::enqueue_incoming(message m) {
 		return;
 
 	m.data.seek(0);
-	this->incoming.add_work(move(m));
+	//this->incoming.add_work(move(m));
 }
 
 void request_server::enqueue_outgoing(message m) {

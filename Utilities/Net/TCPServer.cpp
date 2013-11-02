@@ -65,8 +65,8 @@ void tcp_server::stop() {
 
 void tcp_server::accept_worker_run() {
 	while (this->active) {
-		socket acceptedSocket = this->listener.accept();
-		if (acceptedSocket.is_connected())
-			this->on_connect(!this->ep.is_websocket ? tcp_connection(move(acceptedSocket)) : websocket_connection(move(acceptedSocket)));
+		socket accepted = this->listener.accept();
+		if (accepted.is_connected())
+			this->on_connect(!this->ep.is_websocket ? tcp_connection(move(accepted)) : websocket_connection(move(accepted)));
 	}
 }

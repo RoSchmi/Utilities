@@ -92,10 +92,10 @@ namespace util {
 
 				this->running = false;
 
+				this->queue.kill_waiters();
+
 				for (auto& i : this->workers)
 					i.stop();
-
-				this->queue.kill_waiters();
 			}
 	};
 }
