@@ -3,6 +3,7 @@
 #include <utility>
 #include <functional>
 #include <memory>
+#include <algorithm>
 
 using namespace std;
 using namespace util;
@@ -90,7 +91,7 @@ void request_server::stop() {
 }
 
 tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_connect) {
-	unique_lock<mutex> lck(this->client_lock);
+	unique_lock<recursive_mutex> lck(this->client_lock);
 
 	this->clients.push_back(move(connection));
 	auto& ref = this->clients.back();
@@ -102,9 +103,15 @@ tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_
 }
 
 void request_server::on_client_connect(tcp_connection connection) {
-	unique_lock<mutex> lck(this->client_lock);
+	unique_lock<recursive_mutex> lck(this->client_lock);
 	this->clients.push_back(move(connection));
 	this->on_connect(this->clients.back());
+}
+
+void request_server::on_client_disconnect(tcp_connection& connection) {
+	unique_lock<recursive_mutex> lck(this->client_lock);
+	auto iter = find_if(this->clients.begin(), this->clients.end(), [&connection](tcp_connection& conn) { return &conn == &connection; });
+	this->clients.erase(iter);
 }
 
 void request_server::on_incoming(word worker_number, message& request) {
@@ -140,14 +147,23 @@ void request_server::on_outgoing(word worker_number, message& response) {
 
 void request_server::io_run() {
 	while (this->running) {
+		unique_lock<recursive_mutex> lck(this->client_lock);
+
+		for (auto& i : this->clients) {
+			if (i.data_available()) {
+				for (auto& k : i.read()) {
+					if (!k.closed) {
+						this->enqueue_incoming(message(i, move(k)));
+					}
+					else {
+						this->on_client_disconnect(i);
+						goto end;
+					}
+				}
+			}
+		}
+	end:
 		this_thread::sleep_for(chrono::microseconds(500));
-
-		unique_lock<mutex> lck(this->client_lock);
-
-		for (auto& i : this->clients)
-			if (i.data_available()) 
-				for (auto& k : i.read())
-					this->enqueue_incoming(message(i, move(k)));
 	}
 }
 
@@ -156,7 +172,7 @@ void request_server::enqueue_incoming(message m) {
 		return;
 
 	m.data.seek(0);
-	//this->incoming.add_work(move(m));
+	this->incoming.add_work(move(m));
 }
 
 void request_server::enqueue_outgoing(message m) {
@@ -164,7 +180,7 @@ void request_server::enqueue_outgoing(message m) {
 		return;
 
 	m.data.seek(0);
-	//this->outgoing.add_work(move(m));
+	this->outgoing.add_work(move(m));
 }
 
 request_server::message::message(tcp_connection& connection, tcp_connection::message message) : connection(connection), data(message.data, message.length) {

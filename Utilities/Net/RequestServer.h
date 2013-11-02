@@ -70,7 +70,7 @@ namespace util {
 			private:
 				std::list<tcp_server> servers;
 				std::vector<tcp_connection> clients;
-				std::mutex client_lock;
+				std::recursive_mutex client_lock;
 
 				work_processor<message> incoming;
 				work_processor<message> outgoing;
@@ -82,6 +82,7 @@ namespace util {
 				std::atomic<bool> valid;
 
 				void on_client_connect(tcp_connection connection);
+				void on_client_disconnect(tcp_connection& connection);
 				void on_incoming(word worker_number, message& response);
 				void on_outgoing(word worker_number, message& response);
 				void io_run();

@@ -94,9 +94,6 @@ vector<tcp_connection::message> tcp_connection::read(word wait_for) {
 
 	vector<tcp_connection::message> messages;
 
-	if (!this->connected)
-		return messages;
-
 	do {
 		word received = this->connection.read(this->buffer + this->received, tcp_connection::message_max_size - this->received);
 		this->received += received;
