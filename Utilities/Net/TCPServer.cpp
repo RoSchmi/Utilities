@@ -13,10 +13,9 @@ tcp_server::tcp_server() {
 	this->valid = false;
 }
 
-tcp_server::tcp_server(string port, bool is_websocket) {
-	this->is_websocket = is_websocket;
+tcp_server::tcp_server(endpoint ep) {
 	this->active = false;
-	this->port = port;
+	this->ep = ep;
 	this->valid = true;
 }
 
@@ -32,9 +31,8 @@ tcp_server& tcp_server::operator=(tcp_server&& other) {
 	if (other.active || this->active)
 		throw cant_move_running_server_exception();
 
-	this->is_websocket = other.is_websocket;
 	this->valid = other.valid.load();
-	this->port = other.port;
+	this->ep = other.ep;
 	this->active = false;
 
 	return *this;
@@ -52,7 +50,7 @@ void tcp_server::start() {
 		return;
 
 	this->active = true;
-	this->listener = socket(socket::families::ip_any, socket::types::tcp, this->port);
+	this->listener = socket(socket::families::ip_any, socket::types::tcp, this->ep);
 	this->accept_worker = thread(&tcp_server::accept_worker_run, this);
 }
 
@@ -69,6 +67,6 @@ void tcp_server::accept_worker_run() {
 	while (this->active) {
 		socket acceptedSocket = this->listener.accept();
 		if (acceptedSocket.is_connected())
-			this->on_connect(!this->is_websocket ? tcp_connection(move(acceptedSocket)) : websocket_connection(move(acceptedSocket)));
+			this->on_connect(!this->ep.is_websocket ? tcp_connection(move(acceptedSocket)) : websocket_connection(move(acceptedSocket)));
 	}
 }

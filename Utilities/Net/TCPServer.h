@@ -14,7 +14,7 @@ namespace util {
 		class tcp_server {
 			public:
 				exported tcp_server();
-				exported tcp_server(std::string port, bool is_websocket = false);
+				exported tcp_server(endpoint ep);
 				exported tcp_server(tcp_server&& other);
 				exported tcp_server& operator=(tcp_server&& other);
 				exported ~tcp_server();
@@ -32,11 +32,10 @@ namespace util {
 
 			private:
 				socket listener;
-				std::string port;
+				endpoint ep;
 				std::thread accept_worker;
 				std::atomic<bool> active;
 				std::atomic<bool> valid;
-				bool is_websocket;
 
 				void accept_worker_run();
 		};

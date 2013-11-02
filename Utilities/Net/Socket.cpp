@@ -37,15 +37,15 @@ using namespace std;
 using namespace util;
 using namespace util::net;
 
-endpoint::endpoint(std::string address, std::string port) : address(address), port(port) {
+endpoint::endpoint(std::string address, std::string port, bool is_websocket) : address(address), port(port), is_websocket(is_websocket) {
 
 }
 
-endpoint::endpoint(std::string port) : address(""), port(port) {
+endpoint::endpoint(std::string port, bool is_websocket) : address(""), port(port), is_websocket(is_websocket) {
 
 }
 
-endpoint::endpoint() : address(""), port("") {
+endpoint::endpoint() : address(""), port(""), is_websocket(false) {
 
 }
 
@@ -153,14 +153,6 @@ error:
 		throw could_not_connect_exception();
 	else
 		throw could_not_listen_exception();
-}
-
-socket::socket(families family, types type, string address, string port) : socket(family, type, endpoint(address, port)) {
-
-}
-
-socket::socket(families family, types type, string port) : socket(family, type, endpoint(port)) {
-
 }
 
 socket::socket(socket&& other) {

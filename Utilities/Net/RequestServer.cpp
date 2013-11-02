@@ -13,17 +13,17 @@ request_server::request_server() : incoming(0) { //, outgoing(0) {
 	this->valid = false;
 }
 
-request_server::request_server(endpoint port, word workers, uint16 retry_code, bool uses_websockets) : request_server(vector<endpoint>{ port }, workers, retry_code, vector<bool>{ uses_websockets }) {
+request_server::request_server(endpoint port, word workers, uint16 retry_code) : request_server(vector<endpoint>{ port }, workers, retry_code) {
 	
 }
 
-request_server::request_server(vector<endpoint> ports, word workers, uint16 retry_code, vector<bool> uses_websockets) : incoming(workers) { //, outgoing(workers) {
+request_server::request_server(vector<endpoint> ports, word workers, uint16 retry_code) : incoming(workers) { //, outgoing(workers) {
 	this->running = false;
 	this->valid = true;
 	this->retry_code = retry_code;
 
 	for (word i = 0; i < ports.size(); i++) {
-		this->servers.emplace_back(ports[i].port, i < uses_websockets.size() ? uses_websockets[i] : false);
+		this->servers.emplace_back(ports[i].port);
 		auto& server = this->servers.back();
 		server.on_connect += std::bind(&request_server::on_client_connect, this, placeholders::_1);
 	}
