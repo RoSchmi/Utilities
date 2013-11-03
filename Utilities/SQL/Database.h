@@ -235,7 +235,7 @@ namespace util {
 						exported column_definition(std::string name, bool updatable, float32 T::*float32_type) : name(name), updatable(updatable), type(data_type::float32) { this->value.float32_type = float32_type; };
 						exported column_definition(std::string name, bool updatable, bool T::*boolean_type) : name(name), updatable(updatable), type(data_type::boolean) { this->value.boolean_type = boolean_type; };
 						exported column_definition(std::string name, bool updatable, std::string T::*string_type) : name(name), updatable(updatable), type(data_type::string) { this->value.string_type = string_type; };
-						exported column_definition(std::string name, bool updatable, date_time T::*dateTime_type) : name(name), updatable(updatable), type(data_type::date_time) { this->value.dateTime_type = dateTime_type; };
+						exported column_definition(std::string name, bool updatable, date_time T::*date_time_type) : name(name), updatable(updatable), type(data_type::date_time) { this->value.date_time_type = date_time_type; };
 						exported column_definition(std::string name, bool updatable, util::data_stream T::*binary_type) : name(name), updatable(updatable), type(data_type::data_stream) { this->value.binary_type = binary_type; };
 
 						const std::string name;
@@ -256,7 +256,7 @@ namespace util {
 							float32 T::*float32_type;
 							bool T::*boolean_type;
 							std::string T::*string_type;
-							date_time T::*dateTime_type;
+							date_time T::*date_time_type;
 							util::data_stream T::*binary_type;
 						} value;
 
@@ -370,7 +370,7 @@ namespace util {
 						case column_definition::data_type::float32: qry.add_para(obj.*(column.value.float32_type)); break;
 						case column_definition::data_type::boolean: qry.add_para(obj.*(column.value.boolean_type)); break;
 						case column_definition::data_type::string: qry.add_para(obj.*(column.value.string_type)); break;
-						case column_definition::data_type::date_time: qry.add_para(since_epoch(obj.*(column.value.dateTime_type))); break;
+						case column_definition::data_type::date_time: qry.add_para(since_epoch(obj.*(column.value.date_time_type))); break;
 						case column_definition::data_type::data_stream: qry.add_para(obj.*(column.value.binary_type)); break;
 					}
 				}
@@ -389,7 +389,7 @@ namespace util {
 						case column_definition::data_type::float32: obj.*(column.value.float32_type) = qry.get_float32(column.name); break;
 						case column_definition::data_type::boolean: obj.*(column.value.boolean_type) = qry.get_bool(column.name); break;
 						case column_definition::data_type::string: obj.*(column.value.string_type) = qry.get_string(column.name); break;
-						case column_definition::data_type::date_time: obj.*(column.value.dateTime_type) = from_epoch(qry.get_uint64(column.name)); break;
+						case column_definition::data_type::date_time: obj.*(column.value.date_time_type) = from_epoch(qry.get_uint64(column.name)); break;
 						case column_definition::data_type::data_stream: obj.*(column.value.binary_type) = qry.get_data_stream(column.name); break;
 					}
 				}
