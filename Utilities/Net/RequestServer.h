@@ -4,6 +4,7 @@
 #include <vector>
 #include <list>
 #include <thread>
+#include <memory>
 
 #include "../Common.h"
 #include "../DataStream.h"
@@ -69,7 +70,7 @@ namespace util {
 
 			private:
 				std::list<tcp_server> servers;
-				std::vector<tcp_connection> clients;
+				std::vector<std::unique_ptr<tcp_connection>> clients;
 				std::recursive_mutex client_lock;
 
 				work_processor<message> incoming;
@@ -81,11 +82,15 @@ namespace util {
 				std::atomic<bool> running;
 				std::atomic<bool> valid;
 
-				void on_client_connect(tcp_connection connection);
+				void on_client_connect(std::unique_ptr<tcp_connection> connection);
 				void on_client_disconnect(tcp_connection& connection);
 				void on_incoming(word worker_number, message& response);
 				void on_outgoing(word worker_number, message& response);
 				void io_run();
+
+#ifdef WINDOWS
+				static void on_client_connect_hack(std::unique_ptr<tcp_connection> connection, void* state);
+#endif
 		};
 	}
 }

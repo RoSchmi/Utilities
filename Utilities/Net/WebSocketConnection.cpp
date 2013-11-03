@@ -21,7 +21,7 @@ websocket_connection::websocket_connection(websocket_connection&& other) : tcp_c
 }
 
 websocket_connection& websocket_connection::operator = (websocket_connection&& other) {
-	dynamic_cast<tcp_connection&>(*this) = move(dynamic_cast<tcp_connection&>(other));
+	static_cast<tcp_connection&>(*this) = move(static_cast<tcp_connection&>(other));
 	this->ready = other.ready;
 	this->buffer_start = other.buffer_start;
 	return *this;
@@ -39,14 +39,14 @@ bool websocket_connection::handshake() {
 		return true;
 
 	word i = 0, keyPos = 0, keyEnd = 0;
-	for (; i < this->received - 4; i++) {
-		if (i < this->received - 18 && memcmp("Sec-WebSocket-Key:", this->buffer + i, 18) == 0)
-			keyPos = 18;
+	for (; i <= this->received - 4; i++) {
+		if (i <= this->received - 18 && memcmp("Sec-WebSocket-Key:", this->buffer + i, 18) == 0)
+			keyPos = i + 18;
 
 		if (keyPos != 0 && keyEnd == 0 && this->buffer[i] == '\r' && this->buffer[i + 1] == '\n')
-			keyEnd = i - 1;
+			keyEnd = i;
 
-		if (this->buffer[i] == '\r' && this->buffer[i + 1] == '\n' && this->buffer[i + 2] == '\r' && this->buffer[i + 2] == '\n' && keyPos != 0)
+		if (this->buffer[i] == '\r' && this->buffer[i + 1] == '\n' && this->buffer[i + 2] == '\r' && this->buffer[i + 3] == '\n' && keyPos != 0)
 			goto complete;
 	}
 
@@ -65,7 +65,7 @@ complete:
 	string base64 = misc::base64_encode(crypto::calculate_sha1(key.data(), key.size()).data(), crypto::sha1_length);
 
 	data_stream response;
-	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 57);
+	response.write("HTTP/1.1 101 Switching Protocols\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 97);
 	response.write(base64.c_str(), base64.size());
 	response.write("\r\n\r\n", 4);
 	
@@ -94,15 +94,15 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 	}
 
 	do {
+		word received = this->connection.read(this->buffer_start + this->received, tcp_connection::message_max_size - this->received);
+		this->received += received;
+
+		if (received == 0) {
+			tcp_connection::close();
+			goto close;
+		}
+
 		while (this->received > 0) {
-			word received = this->connection.read(this->buffer_start + this->received, tcp_connection::message_max_size - this->received);
-			this->received += received;
-
-			if (received == 0) {
-				tcp_connection::close();
-				goto close;
-			}
-
 			if (this->received >= 2) {
 				bool RSV1 = (this->buffer_start[0] >> 6 & 0x1) != 0;
 				bool RSV2 = (this->buffer_start[0] >> 5 & 0x1) != 0;
@@ -128,8 +128,8 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 				}
 
 				auto mask_buffer = this->buffer_start + header_end;
-				auto payload_buffer = this->buffer_start + header_end + 4;
 				header_end += 4;
+				auto payload_buffer = this->buffer_start + header_end;
 
 				if (this->received < header_end + length)
 					break;
@@ -144,6 +144,8 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 						goto close;
 
 					case op_codes::pong:
+						this->received -= length + header_end;
+
 						continue;
 
 					case op_codes::ping: 
@@ -157,7 +159,9 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 						if (!this->ensure_write(this->buffer_start, header_end + length)) {
 							tcp_connection::close();
 							goto close;
-						} 
+						}
+
+						this->received -= length + header_end;
 
 						continue;
 
@@ -168,13 +172,15 @@ vector<tcp_connection::message> websocket_connection::read(word wait_for) {
 
 						if (FIN) {
 							messages.emplace_back(payload_buffer, length);
-							memcpy(payload_buffer + length, this->buffer, this->received - length - header_end);
+							memcpy(this->buffer, payload_buffer + length, this->received - length - header_end);
 							this->buffer_start = this->buffer;
 						}
 						else {
-							memcpy(this->buffer_start, this->buffer_start + header_end, this->received - header_end);
-							this->buffer_start += header_end;
+							memcpy(this->buffer_start, payload_buffer, length);
+							this->buffer_start += length;
 						}
+
+						this->received -= length + header_end;
 
 						continue;
 

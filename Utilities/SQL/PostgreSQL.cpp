@@ -12,7 +12,8 @@ using namespace util::sql::postgres;
 connection::connection(const sql::connection::parameters& paras) {
 	cstr keywords[] = { "host", "port", "dbname", "user", "password", nullptr };
 	cstr values[] = { paras.host.c_str(), paras.port.c_str(), paras.database.c_str(), paras.username.c_str(), paras.password.c_str(), nullptr };
-
+	
+	this->is_committed = true;
 	this->base_connection = PQconnectdbParams(keywords, values, false);
 
 	if (PQstatus(this->base_connection) != CONNECTION_OK) {

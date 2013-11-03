@@ -67,6 +67,10 @@ void tcp_server::accept_worker_run() {
 	while (this->active) {
 		socket accepted = this->listener.accept();
 		if (accepted.is_connected())
-			this->on_connect(!this->ep.is_websocket ? tcp_connection(move(accepted)) : websocket_connection(move(accepted)));
+#ifdef WINDOWS
+			this->on_connect(!this->ep.is_websocket ? make_unique<tcp_connection>(move(accepted)) : make_unique<websocket_connection>(move(accepted)), this->state);
+#else
+			this->on_connect(!this->ep.is_websocket ? make_unique<tcp_connection>(move(accepted)) : make_unique<websocket_connection>(move(accepted)));
+#endif
 	}
 }

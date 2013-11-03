@@ -3,6 +3,7 @@
 #include <thread>
 #include <atomic>
 #include <string>
+#include <memory>
 
 #include "../Common.h"
 #include "../Event.h"
@@ -28,8 +29,10 @@ namespace util {
 				tcp_server(const tcp_server& other) = delete;
 				tcp_server& operator=(const tcp_server& other) = delete;
 
-				event_single<void, tcp_connection> on_connect;
-
+				event_single<void, std::unique_ptr<tcp_connection>, void*> on_connect;
+#ifdef WINDOWS
+				void* state;
+#endif
 			private:
 				socket listener;
 				endpoint ep;

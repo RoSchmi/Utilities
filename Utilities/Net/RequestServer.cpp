@@ -9,6 +9,13 @@ using namespace std;
 using namespace util;
 using namespace util::net;
 
+#ifdef WINDOWS
+//Remove tcp_server::state once bind becomes move aware.
+void request_server::on_client_connect_hack(unique_ptr<tcp_connection> connection, void* state) {
+	reinterpret_cast<request_server*>(state)->on_client_connect(move(connection));
+}
+#endif
+
 request_server::request_server() : incoming(0) , outgoing(0) {
 	this->running = false;
 	this->valid = false;
@@ -26,7 +33,12 @@ request_server::request_server(vector<endpoint> ports, word workers, uint16 retr
 	for (word i = 0; i < ports.size(); i++) {
 		this->servers.emplace_back(ports[i]);
 		auto& server = this->servers.back();
-		server.on_connect += std::bind(&request_server::on_client_connect, this, placeholders::_1);
+#ifdef WINDOWS
+		server.state = this;
+		server.on_connect += &request_server::on_client_connect_hack;
+#else
+		server.on_connect += bind(&request_server::on_client_connect, this, placeholders::_1);
+#endif
 	}
 }
 
@@ -93,8 +105,8 @@ void request_server::stop() {
 tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_connect) {
 	unique_lock<recursive_mutex> lck(this->client_lock);
 
-	this->clients.push_back(move(connection));
-	auto& ref = this->clients.back();
+	this->clients.push_back(make_unique<tcp_connection>(move(connection)));
+	auto& ref = *this->clients.back();
 
 	if (call_on_connect)
 		this->on_connect(ref);
@@ -102,16 +114,16 @@ tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_
 	return ref;
 }
 
-void request_server::on_client_connect(tcp_connection connection) {
+void request_server::on_client_connect(unique_ptr<tcp_connection> connection) {
 	unique_lock<recursive_mutex> lck(this->client_lock);
 	this->clients.push_back(move(connection));
-	this->on_connect(this->clients.back());
+	this->on_connect(*this->clients.back());
 }
 
 void request_server::on_client_disconnect(tcp_connection& connection) {
 	unique_lock<recursive_mutex> lck(this->client_lock);
 	this->on_disconnect(connection);
-	auto iter = find_if(this->clients.begin(), this->clients.end(), [&connection](tcp_connection& conn) { return &conn == &connection; });
+	auto iter = find_if(this->clients.begin(), this->clients.end(), [&connection](unique_ptr<tcp_connection>& conn) { return conn.get() == &connection; });
 	this->clients.erase(iter);
 }
 
@@ -143,7 +155,11 @@ void request_server::on_incoming(word worker_number, message& request) {
 }
 
 void request_server::on_outgoing(word worker_number, message& response) {
-	response.connection.send(response.data.data(), response.data.size());
+	unique_lock<recursive_mutex> lck(this->client_lock);
+	auto iter = find_if(this->clients.begin(), this->clients.end(), [&response](unique_ptr<tcp_connection>& conn) { return conn.get() == &response.connection; });
+
+	if (iter != this->clients.end() && response.connection.base_socket().is_connected())
+		response.connection.send(response.data.data(), response.data.size());
 }
 
 void request_server::io_run() {
@@ -151,13 +167,13 @@ void request_server::io_run() {
 		unique_lock<recursive_mutex> lck(this->client_lock);
 
 		for (auto& i : this->clients) {
-			if (i.data_available()) {
-				for (auto& k : i.read()) {
+			if (i->data_available()) {
+				for (auto& k : i->read()) {
 					if (!k.closed) {
-						this->enqueue_incoming(message(i, move(k)));
+						this->enqueue_incoming(message(*i, move(k)));
 					}
 					else {
-						this->on_client_disconnect(i);
+						this->on_client_disconnect(*i);
 						goto end;
 					}
 				}
