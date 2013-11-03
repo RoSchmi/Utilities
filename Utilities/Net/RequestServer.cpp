@@ -24,7 +24,7 @@ request_server::request_server(vector<endpoint> ports, word workers, uint16 retr
 	this->retry_code = retry_code;
 
 	for (word i = 0; i < ports.size(); i++) {
-		this->servers.emplace_back(ports[i].port);
+		this->servers.emplace_back(ports[i]);
 		auto& server = this->servers.back();
 		server.on_connect += std::bind(&request_server::on_client_connect, this, placeholders::_1);
 	}
