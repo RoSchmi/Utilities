@@ -29,9 +29,11 @@ namespace util {
 				tcp_server(const tcp_server& other) = delete;
 				tcp_server& operator=(const tcp_server& other) = delete;
 
-				event_single<void, std::unique_ptr<tcp_connection>, void*> on_connect;
 #ifdef WINDOWS
+				event_single<void, std::unique_ptr<tcp_connection>, void*> on_connect;
 				void* state;
+#else
+				event_single<void, std::unique_ptr<tcp_connection>> on_connect;
 #endif
 			private:
 				socket listener;
