@@ -37,7 +37,7 @@ namespace util {
 			work_processor(const work_processor& other) = delete;
 			work_processor& operator=(const work_processor& other) = delete;
 
-			exported work_processor(word worker_count, std::chrono::milliseconds delay = std::chrono::milliseconds(25)) {
+			exported work_processor(word worker_count, std::chrono::microseconds delay = std::chrono::microseconds(0)) {
 				this->running = false;
 
 				for (word i = 0; i < worker_count; i++) {

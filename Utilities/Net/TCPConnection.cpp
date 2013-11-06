@@ -193,7 +193,7 @@ bool tcp_connection::ensure_write(const uint8* data, word count) {
 	for (word i = 0; i < 10 && sent < count; i++) {
 		sent += this->connection.write(data + sent, count - sent);
 
-		this_thread::sleep_for(chrono::milliseconds(i * 50));
+		this_thread::sleep_for(chrono::microseconds(i * 10));
 	}
 
 	return sent == count;

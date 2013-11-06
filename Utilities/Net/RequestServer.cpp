@@ -180,7 +180,7 @@ void request_server::io_run() {
 			}
 		}
 	end:
-		this_thread::sleep_for(chrono::microseconds(500));
+		this_thread::yield();
 	}
 }
 

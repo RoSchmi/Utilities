@@ -75,7 +75,11 @@ namespace util {
 
 			exported void run() {
 				while (this->running) {
-					std::this_thread::sleep_for(this->interval);
+					if (this->interval.count() == 0)
+						std::this_thread::yield();
+					else
+						std::this_thread::sleep_for(this->interval);
+
 					this->bound(this);
 				}
 			}
