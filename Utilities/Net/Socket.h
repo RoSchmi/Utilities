@@ -2,11 +2,19 @@
 
 #include <string>
 #include <array>
+#include <vector>
+#include <functional>
+#include <mutex>
+#include <memory>
 
 #include "../Common.h"
+#include "../Event.h"
+#include "../Timer.h"
 
 namespace util {
 	namespace net {
+		class tcp_connection;
+
 		struct endpoint {
 			std::string address;
 			std::string port;
@@ -119,7 +127,31 @@ namespace util {
 				int raw_socket;
 				#endif
 
+				friend class async_worker;
+
 				socket(families family, types type);
+		};
+
+		class async_worker {
+			std::vector<std::reference_wrapper<tcp_connection>> connections;
+			std::recursive_mutex lock;
+			timer<> timer;
+			word index;
+
+			void tick();
+
+			public:
+				async_worker();
+
+				void add(tcp_connection& s);
+				void remove(tcp_connection& s);
+
+				event_single<bool, tcp_connection&> on_data;
+
+				async_worker(const async_worker&) = delete;
+				async_worker(async_worker&&) = delete;
+				async_worker& operator==(const async_worker&) = delete;
+				async_worker& operator==(async_worker&&) = delete;
 		};
 
 		int16 host_to_net_int16(int16 value);

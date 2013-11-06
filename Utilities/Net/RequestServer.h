@@ -75,10 +75,10 @@ namespace util {
 
 				work_processor<message> incoming;
 				work_processor<message> outgoing;
+				async_worker io_worker;
 
 				uint16 retry_code;
 
-				std::thread io_worker;
 				std::atomic<bool> running;
 				std::atomic<bool> valid;
 
@@ -86,7 +86,7 @@ namespace util {
 				void on_client_disconnect(tcp_connection& connection);
 				void on_incoming(word worker_number, message& response);
 				void on_outgoing(word worker_number, message& response);
-				void io_run();
+				bool on_data(tcp_connection& connection);
 
 #ifdef WINDOWS
 				static void on_client_connect_hack(std::unique_ptr<tcp_connection> connection, void* state);

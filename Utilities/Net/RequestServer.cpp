@@ -29,6 +29,7 @@ request_server::request_server(vector<endpoint> ports, word workers, uint16 retr
 	this->running = false;
 	this->valid = true;
 	this->retry_code = retry_code;
+	this->io_worker.on_data += bind(&request_server::on_data, this, placeholders::_1);
 
 	for (word i = 0; i < ports.size(); i++) {
 		this->servers.emplace_back(ports[i]);
@@ -82,7 +83,6 @@ void request_server::start() {
 
 	this->incoming.start();
 	this->outgoing.start();
-	this->io_worker = thread(&request_server::io_run, this);
 
 	for (auto& i : this->servers)
 		i.start();
@@ -97,7 +97,6 @@ void request_server::stop() {
 
 	this->running = false;
 
-	this->io_worker.join();
 	this->incoming.stop();
 	this->outgoing.stop();
 }
@@ -116,6 +115,7 @@ tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_
 
 void request_server::on_client_connect(unique_ptr<tcp_connection> connection) {
 	unique_lock<recursive_mutex> lck(this->client_lock);
+	this->io_worker.add(*connection.get());
 	this->clients.push_back(move(connection));
 	this->on_connect(*this->clients.back());
 }
@@ -162,26 +162,17 @@ void request_server::on_outgoing(word worker_number, message& response) {
 		response.connection.send(response.data.data(), response.data.size());
 }
 
-void request_server::io_run() {
-	while (this->running) {
-		unique_lock<recursive_mutex> lck(this->client_lock);
-
-		for (auto& i : this->clients) {
-			if (i->data_available()) {
-				for (auto& k : i->read()) {
-					if (!k.closed) {
-						this->enqueue_incoming(message(*i, move(k)));
-					}
-					else {
-						this->on_client_disconnect(*i);
-						goto end;
-					}
-				}
-			}
+bool request_server::on_data(tcp_connection& connection) {
+	for (auto& k : connection.read()) {
+		if (!k.closed) {
+			this->enqueue_incoming(message(connection, move(k)));
 		}
-	end:
-		this_thread::yield();
+		else {
+			this->on_client_disconnect(connection);
+			return true;
+		}
 	}
+	return false;
 }
 
 void request_server::enqueue_incoming(message m) {

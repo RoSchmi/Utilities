@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cstring>
 
+#include "TCPConnection.h"
+
 #ifdef WINDOWS
 	#define WIN32_LEAN_AND_MEAN
 	#define FD_SETSIZE 1024
@@ -287,6 +289,57 @@ bool socket::data_available() const {
 #elif defined POSIX
 	return ::select(this->raw_socket + 1, &read_set, nullptr, nullptr, &timeout) > 0;
 #endif
+}
+
+async_worker::async_worker() : timer(chrono::microseconds(0)) {
+	this->index = 0;
+	this->timer.on_tick += bind(&async_worker::tick, this);
+	this->timer.start();
+}
+
+void async_worker::tick() {
+	unique_lock<recursive_mutex> lck(this->lock);
+
+	if (this->connections.size() == 0)
+		return;
+
+	timeval timeout;
+	timeout.tv_usec = 250;
+	timeout.tv_sec = 0;
+
+	fd_set set;
+	FD_ZERO(&set);
+
+	word i;
+	for (i = 0; i < min(FD_SETSIZE, this->connections.size()); i++, this->index = (this->index + 1) % this->connections.size())
+		FD_SET(this->connections[i].get().base_socket().raw_socket, &set);
+
+#ifdef WINDOWS
+	select(0, &set, nullptr, nullptr, &timeout);
+#elif defined POSIX
+	select(i + 1, &set, nullptr, nullptr, &timeout);
+#endif
+
+	decltype(this->connections) closed;
+	for (auto& j : this->connections)
+		if (FD_ISSET(j.get().base_socket().raw_socket, &set))
+			if (this->on_data(j.get()))
+				closed.push_back(j);
+
+	for (auto& j : closed)
+		this->remove(j.get());
+}
+
+void async_worker::add(tcp_connection& s) {
+	unique_lock<recursive_mutex> lck(this->lock);
+	this->connections.emplace_back(s);
+}
+
+void async_worker::remove(tcp_connection& s) {
+	unique_lock<recursive_mutex> lck(this->lock);
+	auto iter = find_if(this->connections.cbegin(), this->connections.cend(), [&s](reference_wrapper<tcp_connection> o) { return &s == &o.get(); });
+	if (iter != this->connections.cend())
+		this->connections.erase(iter);
 }
 
 

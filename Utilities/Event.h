@@ -102,7 +102,10 @@ namespace util {
 		template<typename... V> exported T operator()(V&&... paras) {
 			std::unique_lock<std::mutex> lck(this->lock);
 
-			return this->handler(std::forward<V>(paras)...);
+			if (this->handler)
+				return this->handler(std::forward<V>(paras)...);
+			else
+				return T();
 		}
 	};
 }
