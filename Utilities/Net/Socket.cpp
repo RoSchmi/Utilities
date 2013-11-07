@@ -311,7 +311,7 @@ void async_worker::tick() {
 	FD_ZERO(&set);
 
 	word i;
-	for (i = 0; i < min(FD_SETSIZE, this->connections.size()); i++, this->index = (this->index + 1) % this->connections.size())
+	for (i = 0; i < min(static_cast<vector<reference_wrapper<tcp_connection>>::size_type>(FD_SETSIZE), this->connections.size()); i++, this->index = (this->index + 1) % this->connections.size())
 		FD_SET(this->connections[i].get().base_socket().raw_socket, &set);
 
 #ifdef WINDOWS
