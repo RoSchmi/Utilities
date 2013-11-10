@@ -314,8 +314,8 @@ void async_worker::tick() {
 
 	if (this->index > this->connections.size())
 		this->index %= this->connections.size();
-
-	for (i = 0; i < min(FD_SETSIZE, this->connections.size()); i++, this->index = (this->index + 1) % this->connections.size())
+	
+	for (i = 0; i < min(static_cast<vector<shared_ptr<tcp_connection>>::size_type>(FD_SETSIZE), this->connections.size()); i++, this->index = (this->index + 1) % this->connections.size())
 		FD_SET(this->connections[this->index]->base_socket().raw_socket, &set);
 
 #ifdef WINDOWS
@@ -324,7 +324,7 @@ void async_worker::tick() {
 	select(i + 1, &set, nullptr, nullptr, &timeout);
 #endif
 
-	decltype(this->connections) closed;
+	vector<shared_ptr<tcp_connection>> closed;
 	for (auto& j : this->connections)
 		if (FD_ISSET(j->base_socket().raw_socket, &set))
 			if (this->on_data(j))
