@@ -97,6 +97,9 @@ namespace util {
 				///@return The socket.
 				exported const socket& base_socket() const;
 
+				///@return Whether or not the connection is open.
+				exported bool connected() const;
+
 				///Gets whether or not data is available to be read.
 				///@return True if data is available, false otherwise.
 				exported bool data_available() const;
@@ -147,7 +150,6 @@ namespace util {
 				socket connection;
 				uint8* buffer;
 				word received;
-				bool connected;
 				std::vector<message> queued;
 
 				bool ensure_write(const uint8* data, word count);

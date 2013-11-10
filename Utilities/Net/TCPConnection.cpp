@@ -11,32 +11,27 @@ using namespace util::net;
 tcp_connection::tcp_connection() {
 	this->received = 0;
 	this->state = nullptr;
-	this->connected = false;
 	this->buffer = nullptr;
 }
 
 tcp_connection::tcp_connection(endpoint ep) : connection(socket::families::ip_any, socket::types::tcp, ep) {
 	this->received = 0;
 	this->state = nullptr;
-	this->connected = true;
 	this->buffer = new uint8[tcp_connection::message_max_size];
 }
 
 tcp_connection::tcp_connection(socket&& sock) : connection(move(sock)) {
 	this->received = 0;
 	this->state = nullptr;
-	this->connected = true;
 	this->buffer = new uint8[tcp_connection::message_max_size];
 }
 
 tcp_connection::tcp_connection(tcp_connection&& other) : connection(move(other.connection)) {
 	this->state = other.state;
-	this->connected = other.connected;
 	this->queued = move(other.queued);
 	this->received = other.received;
 	this->buffer = other.buffer;
 	other.buffer = nullptr;
-	other.connected = false;
 }
 
 #ifdef WINDOWS
@@ -50,12 +45,10 @@ tcp_connection& tcp_connection::operator = (tcp_connection&& other) {
 
 	this->connection = move(other.connection);
 	this->state = other.state;
-	this->connected = other.connected;
 	this->queued = move(other.queued);
 	this->received = other.received;
 	this->buffer = other.buffer;
 	other.buffer = nullptr;
-	other.connected = false;
 
 	return *this;
 }
@@ -68,31 +61,29 @@ tcp_connection::~tcp_connection() {
 }
 
 array<uint8, socket::address_length> tcp_connection::address() const {
-	if (!this->connected)
-		throw not_connected_exception();
-
 	return this->connection.remote_address();
 }
 
 const socket& tcp_connection::base_socket() const {
-	if (!this->connected)
-		throw not_connected_exception();
-
 	return this->connection;
 }
 
+bool tcp_connection::connected() const {
+	return this->connection.is_connected();
+}
+
 bool tcp_connection::data_available() const {
-	if (!this->connected)
+	if (!this->connected())
 		throw not_connected_exception();
 
 	return this->connection.data_available();
 }
 
 vector<tcp_connection::message> tcp_connection::read(word wait_for) {
-	if (!this->connected)
-		throw not_connected_exception();
-
 	vector<tcp_connection::message> messages;
+
+	if (!this->connected())
+		return messages;
 
 	do {
 		word received = this->connection.read(this->buffer + this->received, tcp_connection::message_max_size - this->received);
@@ -123,7 +114,7 @@ vector<tcp_connection::message> tcp_connection::read(word wait_for) {
 }
 
 bool tcp_connection::send(const uint8* buffer, word length) {
-	if (!this->connected)
+	if (!this->connected())
 		throw not_connected_exception();
 
 	if (length > 0xFFFF)
@@ -139,9 +130,6 @@ bool tcp_connection::send(const uint8* buffer, word length) {
 }
 
 void tcp_connection::enqueue(const uint8* buffer, word length) {
-	if (!this->connected)
-		throw not_connected_exception();
-
 	this->queued.emplace_back(buffer, length);
 }
 
@@ -150,7 +138,7 @@ void tcp_connection::clear_queued() {
 }
 
 bool tcp_connection::send_queued() {
-	if (!this->connected)
+	if (!this->connected())
 		throw not_connected_exception();
 
 	word length = 0;
@@ -178,16 +166,15 @@ error:
 }
 
 void tcp_connection::close() {
-	if (!this->connected)
+	if (!this->connected())
 		return;
 
 	this->connection.close();
-	this->connected = false;
 }
 
 bool tcp_connection::ensure_write(const uint8* data, word count) {
-	if (count == 0)
-		return true;
+	if (!this->connected())
+		throw not_connected_exception();
 
 	word sent = 0;
 	for (word i = 0; i < 10 && sent < count; i++) {

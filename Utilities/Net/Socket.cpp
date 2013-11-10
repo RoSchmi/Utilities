@@ -291,7 +291,7 @@ bool socket::data_available() const {
 #endif
 }
 
-async_worker::async_worker() : timer(chrono::microseconds(0)) {
+async_worker::async_worker() : timer(chrono::milliseconds(1)) {
 	this->index = 0;
 	this->timer.on_tick += bind(&async_worker::tick, this);
 	this->timer.start();
@@ -311,8 +311,12 @@ void async_worker::tick() {
 	FD_ZERO(&set);
 
 	word i;
+
+	if (this->index > this->connections.size())
+		this->index %= this->connections.size();
+
 	for (i = 0; i < min(FD_SETSIZE, this->connections.size()); i++, this->index = (this->index + 1) % this->connections.size())
-		FD_SET(this->connections[i].get().base_socket().raw_socket, &set);
+		FD_SET(this->connections[this->index]->base_socket().raw_socket, &set);
 
 #ifdef WINDOWS
 	select(0, &set, nullptr, nullptr, &timeout);
@@ -322,22 +326,22 @@ void async_worker::tick() {
 
 	decltype(this->connections) closed;
 	for (auto& j : this->connections)
-		if (FD_ISSET(j.get().base_socket().raw_socket, &set))
-			if (this->on_data(j.get()))
+		if (FD_ISSET(j->base_socket().raw_socket, &set))
+			if (this->on_data(j))
 				closed.push_back(j);
 
 	for (auto& j : closed)
-		this->remove(j.get());
+		this->remove(j);
 }
 
-void async_worker::add(tcp_connection& s) {
+void async_worker::add(shared_ptr<tcp_connection> s) {
 	unique_lock<recursive_mutex> lck(this->lock);
-	this->connections.emplace_back(s);
+	this->connections.push_back(s);
 }
 
-void async_worker::remove(tcp_connection& s) {
+void async_worker::remove(shared_ptr<tcp_connection> s) {
 	unique_lock<recursive_mutex> lck(this->lock);
-	auto iter = find_if(this->connections.cbegin(), this->connections.cend(), [&s](reference_wrapper<tcp_connection> o) { return &s == &o.get(); });
+	auto iter = find(this->connections.cbegin(), this->connections.cend(), s);
 	if (iter != this->connections.cend())
 		this->connections.erase(iter);
 }

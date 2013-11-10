@@ -101,30 +101,38 @@ void request_server::stop() {
 	this->outgoing.stop();
 }
 
-tcp_connection& request_server::adopt(tcp_connection&& connection, bool call_on_connect) {
+shared_ptr<tcp_connection> request_server::adopt(tcp_connection&& connection, bool call_on_connect) {
 	unique_lock<recursive_mutex> lck(this->client_lock);
 
-	this->clients.push_back(make_unique<tcp_connection>(move(connection)));
-	auto& ref = *this->clients.back();
+	auto shared = make_shared<tcp_connection>(move(connection));
+
+	this->clients.push_back(shared);
 
 	if (call_on_connect)
-		this->on_connect(ref);
+		this->on_connect(shared);
 
-	return ref;
+	return shared;
 }
 
 void request_server::on_client_connect(unique_ptr<tcp_connection> connection) {
 	unique_lock<recursive_mutex> lck(this->client_lock);
-	this->io_worker.add(*connection.get());
-	this->clients.push_back(move(connection));
-	this->on_connect(*this->clients.back());
+
+	auto shared = shared_ptr<tcp_connection>(move(connection));
+
+	this->clients.push_back(shared);
+	
+	lck.unlock();
+	
+	this->on_connect(shared);
+	this->io_worker.add(shared);
 }
 
-void request_server::on_client_disconnect(tcp_connection& connection) {
+void request_server::on_client_disconnect(shared_ptr<tcp_connection> connection) {
 	unique_lock<recursive_mutex> lck(this->client_lock);
-	this->on_disconnect(connection);
-	auto iter = find_if(this->clients.begin(), this->clients.end(), [&connection](unique_ptr<tcp_connection>& conn) { return conn.get() == &connection; });
+	auto iter = find(this->clients.begin(), this->clients.end(), connection);
 	this->clients.erase(iter);
+	lck.unlock();
+	this->on_disconnect(connection);
 }
 
 void request_server::on_incoming(word worker_number, message& request) {
@@ -155,15 +163,18 @@ void request_server::on_incoming(word worker_number, message& request) {
 }
 
 void request_server::on_outgoing(word worker_number, message& response) {
-	unique_lock<recursive_mutex> lck(this->client_lock);
-	auto iter = find_if(this->clients.begin(), this->clients.end(), [&response](unique_ptr<tcp_connection>& conn) { return conn.get() == &response.connection; });
+	if (response.connection->connected()) {
+		try {
+			response.connection->send(response.data.data(), response.data.size());
+		}
+		catch (tcp_connection::not_connected_exception) {
 
-	if (iter != this->clients.end() && response.connection.base_socket().is_connected())
-		response.connection.send(response.data.data(), response.data.size());
+		}
+	}
 }
 
-bool request_server::on_data(tcp_connection& connection) {
-	for (auto& k : connection.read()) {
+bool request_server::on_data(shared_ptr<tcp_connection> connection) {
+	for (auto& k : connection->read()) {
 		if (!k.closed) {
 			this->enqueue_incoming(message(connection, move(k)));
 		}
@@ -191,21 +202,21 @@ void request_server::enqueue_outgoing(message m) {
 	this->outgoing.add_work(move(m));
 }
 
-request_server::message::message(tcp_connection& connection, tcp_connection::message message) : connection(connection), data(message.data, message.length) {
+request_server::message::message(shared_ptr<tcp_connection> connection, tcp_connection::message message) : connection(connection), data(message.data, message.length) {
 	message.data = nullptr;
 	message.length = 0;
 	this->attempts = 0;
 }
 
-request_server::message::message(tcp_connection& connection, data_stream data) : connection(connection), data(move(data)) {
+request_server::message::message(shared_ptr<tcp_connection> connection, data_stream data) : connection(connection), data(move(data)) {
 	this->attempts = 0;
 }
 
-request_server::message::message(tcp_connection& connection, const uint8* data, word length) : connection(connection), data(data, length) {
+request_server::message::message(shared_ptr<tcp_connection> connection, const uint8* data, word length) : connection(connection), data(data, length) {
 	this->attempts = 0;
 }
 
-request_server::message::message(tcp_connection& connection, uint16 id, uint8 category, uint8 method) : connection(connection) {
+request_server::message::message(shared_ptr<tcp_connection> connection, uint16 id, uint8 category, uint8 method) : connection(connection) {
 	request_server::message::write_header(this->data, id, category, method);
 	this->attempts = 0;
 }

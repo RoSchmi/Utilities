@@ -133,7 +133,7 @@ namespace util {
 		};
 
 		class async_worker {
-			std::vector<std::reference_wrapper<tcp_connection>> connections;
+			std::vector<std::shared_ptr<tcp_connection>> connections;
 			std::recursive_mutex lock;
 			timer<> timer;
 			word index;
@@ -143,10 +143,10 @@ namespace util {
 			public:
 				async_worker();
 
-				void add(tcp_connection& s);
-				void remove(tcp_connection& s);
+				void add(std::shared_ptr<tcp_connection> s);
+				void remove(std::shared_ptr<tcp_connection> s);
 
-				event_single<bool, tcp_connection&> on_data;
+				event_single<bool, std::shared_ptr<tcp_connection>> on_data;
 
 				async_worker(const async_worker&) = delete;
 				async_worker(async_worker&&) = delete;

@@ -79,10 +79,10 @@ complete:
 }
 
 vector<tcp_connection::message> websocket_connection::read(word wait_for) {
-	if (!this->connected)
-		throw tcp_connection::not_connected_exception();
-
 	vector<tcp_connection::message> messages;
+
+	if (!this->connected())
+		return messages;
 
 	if (this->ready == false) {
 		if (this->handshake()) {
@@ -200,14 +200,14 @@ close:
 }
 
 bool websocket_connection::send(const uint8* data, word length) {
-	if (!this->connected)
+	if (!this->connected())
 		throw tcp_connection::not_connected_exception();
 
 	return this->send(data, length, op_codes::binary);
 }
 
 bool websocket_connection::send(const uint8* data, word length, op_codes code) {
-	if (!this->connected)
+	if (!this->connected())
 		throw tcp_connection::not_connected_exception();
 
 	if (length > 0xFFFF)
@@ -235,7 +235,7 @@ bool websocket_connection::send(const uint8* data, word length, op_codes code) {
 }
 
 bool websocket_connection::send_queued() {
-	if (!this->connected)
+	if (!this->connected())
 		throw tcp_connection::not_connected_exception();
 
 	uint8 bytes[4];
@@ -277,8 +277,8 @@ sendFailed:
 }
 
 void websocket_connection::close(close_codes code) {
-	if (!this->connected)
-		throw tcp_connection::not_connected_exception();
+	if (!this->connected())
+		return;
 
 	this->send(reinterpret_cast<uint8*>(&code), sizeof(code), op_codes::close);
 	
