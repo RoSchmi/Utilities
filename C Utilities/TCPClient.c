@@ -2,13 +2,13 @@
 
 static void ClientReadCallback(SAL_Socket* socket, void* state) {
 	TCPClient* client;
-	uint32 received;
-	uint32 excess;
-	uint32 messageLength;
+	uint16 received;
+	uint16 excess;
+	uint16 messageLength;
 
 	client = (TCPClient*)state;
 
-	received = SAL_Socket_Read(socket, client->Buffer + client->BytesReceived, MESSAGE_MAXSIZE - client->BytesReceived);
+	received = (uint16)SAL_Socket_Read(socket, client->Buffer + client->BytesReceived, MESSAGE_MAXSIZE - client->BytesReceived);
 	client->BytesReceived += received;
 
 	if (received == 0) {

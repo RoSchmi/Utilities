@@ -269,7 +269,7 @@ error:
 SAL_Socket* SAL_Socket_Accept(SAL_Socket* listener) {
 	SAL_Socket* socket;
 	/*struct sockaddr_in6 remoteAddress;*/
-	int addressLength = sizeof(struct sockaddr_in6);
+	//int addressLength = sizeof(struct sockaddr_in6);
 
 #ifdef WINDOWS
 	SOCKET rawSocket;
