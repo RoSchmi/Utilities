@@ -22,12 +22,16 @@ static boolean allocationsInitialized = false;
 
 //add a record of the allocation to allocations and remove it on FreeD()
 void* Memory_AllocateD(uint32 size, uint64 line, int8* file) {
+	line;
+	file;
 	/*if (!allocationsInitialized) allocations = LinkedList_New( ( void(*)(void*) ) String_Free);*/
 
 	return malloc(size);
 }
 
 void* Memory_ReallocateD(void* block, uint32 size, uint64 line, int8* file) {
+	line;
+	file;
 	/*if (!allocationsInitialized) allocations = LinkedList_New( ( void(*)(void*) ) String_Free);*/
 
 	return realloc(block, size);

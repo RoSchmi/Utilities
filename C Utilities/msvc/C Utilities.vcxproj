@@ -55,6 +55,7 @@
 	<ItemDefinitionGroup>
 		<ClCompile>
 			<DisableLanguageExtensions>false</DisableLanguageExtensions>
+			<DisableSpecificWarnings>4706;$(DisableSpecificWarnings)</DisableSpecificWarnings>
 		</ClCompile>
 	</ItemDefinitionGroup>
 </Project>

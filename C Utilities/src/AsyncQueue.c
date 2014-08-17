@@ -44,6 +44,6 @@ void* AsyncQueue_Dequeue(AsyncQueue* self) {
 void AsyncQueue_Enqueue(AsyncQueue* self, void* toEnqueue) {
 	assert(self != NULL);
 	SAL_Mutex_Acquire(self->Lock);
-	Queue_Dequeue(self->BaseQueue);
+	Queue_Enqueue(self->BaseQueue, toEnqueue);
 	SAL_Mutex_Release(self->Lock);
 }

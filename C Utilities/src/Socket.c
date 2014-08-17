@@ -40,6 +40,7 @@ static SAL_Thread asyncWorker;
 static boolean asyncWorkerRunning = false;
 
 static SAL_Thread_Start(SAL_Socket_CallbackWorker_Run) {
+	startupArgument;
 #ifdef WINDOWS
 	fd_set readSet;
 	uint32 i;
@@ -388,7 +389,7 @@ uint32 SAL_Socket_EnsureWrite(SAL_Socket* socket, const uint8* const toWrite, co
 	tries = 0;
 	isFirstTry = true;
 
-	while (true) {
+	for (;;) {
 	
 		#ifdef WINDOWS
 			result = send((SOCKET)socket->RawSocket, (const int8*)(toWrite + sentSoFar), writeAmount - sentSoFar, 0);
