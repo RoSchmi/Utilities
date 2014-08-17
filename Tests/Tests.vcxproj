@@ -6,9 +6,6 @@
     <ClCompile Include="DataStream.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="CMakeLists.txt" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5A9F392E-9D05-4F1E-951C-C236005614EB}</ProjectGuid>
   </PropertyGroup>

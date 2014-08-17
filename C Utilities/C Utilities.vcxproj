@@ -48,12 +48,6 @@
     <ClCompile Include="Thread.c" />
     <ClCompile Include="Time.c" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="CMakeLists.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Doxyfile" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}</ProjectGuid>
   </PropertyGroup>
