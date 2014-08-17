@@ -2,15 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "Utilities\Utilities.vcxproj", "{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "Utilities\msvc\Utilities.vcxproj", "{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests\Tests.vcxproj", "{5A9F392E-9D05-4F1E-951C-C236005614EB}"
-	ProjectSection(ProjectDependencies) = postProject
-		{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D} = {98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}
-		{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B} = {4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "C Utilities", "C Utilities\C Utilities.vcxproj", "{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "C Utilities", "C Utilities\msvc\C Utilities.vcxproj", "{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,10 +16,6 @@ Global
 		{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}.Debug|x64.Build.0 = Debug|x64
 		{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}.Release|x64.ActiveCfg = Release|x64
 		{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}.Release|x64.Build.0 = Release|x64
-		{5A9F392E-9D05-4F1E-951C-C236005614EB}.Debug|x64.ActiveCfg = Debug|x64
-		{5A9F392E-9D05-4F1E-951C-C236005614EB}.Debug|x64.Build.0 = Debug|x64
-		{5A9F392E-9D05-4F1E-951C-C236005614EB}.Release|x64.ActiveCfg = Release|x64
-		{5A9F392E-9D05-4F1E-951C-C236005614EB}.Release|x64.Build.0 = Release|x64
 		{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}.Debug|x64.ActiveCfg = Debug|x64
 		{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}.Debug|x64.Build.0 = Debug|x64
 		{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}.Release|x64.ActiveCfg = Release|x64

@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\Common.cpp" />
+    <ClCompile Include="..\src\Cryptography.cpp" />
+    <ClCompile Include="..\src\DataStream.cpp" />
+    <ClCompile Include="..\src\Misc.cpp" />
+    <ClCompile Include="..\src\SQL\Database.cpp">
+      <Filter>SQL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SQL\PostgreSQL.cpp">
+      <Filter>SQL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Net\RequestServer.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Net\Socket.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Net\TCPConnection.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Net\TCPServer.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Net\WebSocketConnection.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\Common.h" />
+    <ClInclude Include="..\src\Cryptography.h" />
+    <ClInclude Include="..\src\DataStream.h" />
+    <ClInclude Include="..\src\Event.h" />
+    <ClInclude Include="..\src\Locked.h" />
+    <ClInclude Include="..\src\Misc.h" />
+    <ClInclude Include="..\src\Optional.h" />
+    <ClInclude Include="..\src\Timer.h" />
+    <ClInclude Include="..\src\WorkProcessor.h" />
+    <ClInclude Include="..\src\WorkQueue.h" />
+    <ClInclude Include="..\src\SQL\Database.h">
+      <Filter>SQL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\SQL\PostgreSQL.h">
+      <Filter>SQL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Net\RequestServer.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Net\Socket.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Net\TCPConnection.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Net\TCPServer.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Net\WebSocketConnection.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Net">
+      <UniqueIdentifier>{eaa291a2-383b-4c60-a49d-b046673f3da6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SQL">
+      <UniqueIdentifier>{04650e25-8404-4848-8262-63bc3c7bdea9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

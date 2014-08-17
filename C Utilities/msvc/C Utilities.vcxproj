@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Import Project="$(CONFIG_PATH)\VC Static Library.props" />
+	<PropertyGroup Label="Globals">
+		<ProjectGuid>{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}</ProjectGuid>
+	</PropertyGroup>
+	<ItemGroup>
+		<ClInclude Include="..\src\Array.h" />
+		<ClInclude Include="..\src\AsyncHashTable.h" />
+		<ClInclude Include="..\src\AsyncLinkedList.h" />
+		<ClInclude Include="..\src\AsyncList.h" />
+		<ClInclude Include="..\src\AsyncQueue.h" />
+		<ClInclude Include="..\src\AsyncStack.h" />
+		<ClInclude Include="..\src\Common.h" />
+		<ClInclude Include="..\src\Cryptography.h" />
+		<ClInclude Include="..\src\DataStream.h" />
+		<ClInclude Include="..\src\HashTable.h" />
+		<ClInclude Include="..\src\LinkedList.h" />
+		<ClInclude Include="..\src\List.h" />
+		<ClInclude Include="..\src\Memory.h" />
+		<ClInclude Include="..\src\Misc.h" />
+		<ClInclude Include="..\src\Queue.h" />
+		<ClInclude Include="..\src\Socket.h" />
+		<ClInclude Include="..\src\Stack.h" />
+		<ClInclude Include="..\src\Strings.h" />
+		<ClInclude Include="..\src\TCPClient.h" />
+		<ClInclude Include="..\src\TCPServer.h" />
+		<ClInclude Include="..\src\Thread.h" />
+		<ClInclude Include="..\src\Time.h" />
+	</ItemGroup>
+	<ItemGroup>
+		<ClCompile Include="..\src\Array.c" />
+		<ClCompile Include="..\src\AsyncHashTable.c" />
+		<ClCompile Include="..\src\AsyncLinkedList.c" />
+		<ClCompile Include="..\src\AsyncList.c" />
+		<ClCompile Include="..\src\AsyncQueue.c" />
+		<ClCompile Include="..\src\AsyncStack.c" />
+		<ClCompile Include="..\src\Cryptography.c" />
+		<ClCompile Include="..\src\DataStream.c" />
+		<ClCompile Include="..\src\HashTable.c" />
+		<ClCompile Include="..\src\LinkedList.c" />
+		<ClCompile Include="..\src\List.c" />
+		<ClCompile Include="..\src\Memory.c" />
+		<ClCompile Include="..\src\Misc.c" />
+		<ClCompile Include="..\src\Queue.c" />
+		<ClCompile Include="..\src\Socket.c" />
+		<ClCompile Include="..\src\Stack.c" />
+		<ClCompile Include="..\src\Strings.c" />
+		<ClCompile Include="..\src\TCPClient.c" />
+		<ClCompile Include="..\src\TCPServer.c" />
+		<ClCompile Include="..\src\Thread.c" />
+		<ClCompile Include="..\src\Time.c" />
+	</ItemGroup>
+	<ItemDefinitionGroup>
+		<ClCompile>
+			<DisableLanguageExtensions>false</DisableLanguageExtensions>
+		</ClCompile>
+	</ItemDefinitionGroup>
+</Project>
