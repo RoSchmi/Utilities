@@ -25,11 +25,11 @@ namespace util {
 		std::function<void()> event_added;
 		std::function<void()> event_removed;
 
-		exported event(event&& other) {
+		event(event&& other) {
 			*this = std::move(other);
 		}
 
-		exported event& operator=(event&& other) {
+		event& operator=(event&& other) {
 			std::unique_lock<std::mutex> lck1(this->lock);
 			std::unique_lock<std::mutex> lck2(other.lock);
 
@@ -38,7 +38,7 @@ namespace util {
 			return *this;
 		}
 
-		exported void operator+=(handler_type hndlr) {
+		void operator+=(handler_type hndlr) {
 			std::unique_lock<std::mutex> lck(this->lock);
 
 			this->handlers.push_back(hndlr);
@@ -47,7 +47,7 @@ namespace util {
 				this->event_added();
 		}
 
-		template<typename... V> exported void operator()(V&&... paras) {
+		template<typename... V> void operator()(V&&... paras) {
 			std::unique_lock<std::mutex> lck(this->lock);
 
 			for (auto i : this->handlers)
@@ -73,11 +73,11 @@ namespace util {
 		std::function<void()> event_added;
 		std::function<void()> event_removed;
 
-		exported event_single(event_single&& other) {
+		event_single(event_single&& other) {
 			*this = std::move(other);
 		}
 
-		exported event_single& operator=(event_single&& other) {
+		event_single& operator=(event_single&& other) {
 			std::unique_lock<std::mutex> lck1(this->lock);
 			std::unique_lock<std::mutex> lck2(other.lock);
 
@@ -87,7 +87,7 @@ namespace util {
 			return *this;
 		}
 
-		exported void operator+=(handler_type func) {
+		void operator+=(handler_type func) {
 			std::unique_lock<std::mutex> lck(this->lock);
 
 			if (this->handler)
@@ -99,7 +99,7 @@ namespace util {
 				this->event_added();
 		}
 
-		template<typename... V> exported T operator()(V&&... paras) {
+		template<typename... V> T operator()(V&&... paras) {
 			std::unique_lock<std::mutex> lck(this->lock);
 
 			if (this->handler)

@@ -20,9 +20,9 @@ namespace util {
 			std::string port;
 			bool is_websocket;
 
-			exported endpoint(std::string address, std::string port, bool is_websocket = false);
-			exported endpoint(std::string port, bool is_websocket = false);
-			exported endpoint();
+			endpoint(std::string address, std::string port, bool is_websocket = false);
+			endpoint(std::string port, bool is_websocket = false);
+			endpoint();
 		};
 
 		/**
@@ -40,7 +40,7 @@ namespace util {
 		 * foo.listen("8080");
 		 * foo.accept();
 		 */
-		class exported socket {
+		class socket {
 			public:	
 				static const uint16 address_length = 16;
 

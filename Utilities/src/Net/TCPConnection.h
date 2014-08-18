@@ -18,7 +18,7 @@ namespace util {
 				static const word message_max_size = 0xFFFF + message_length_bytes;
 
 				///Represents a message that is generated when reading from the connection.
-				struct exported message {
+				struct message {
 					///The length of the message excluding the length bytes themselves.
 					word length;
 
@@ -69,70 +69,70 @@ namespace util {
 
 				///Constructs an unconnected instance.
 				///You must move assign to make use of it.
-				exported tcp_connection();
+				tcp_connection();
 				
 				///Constructs a new tcp_connection by using an existing socket.
 				///Takes ownership of the socket.
-				exported tcp_connection(socket&& sock);
+				tcp_connection(socket&& sock);
 
 				///Constructs a new tcp_connection by establishing a new connection to the specified address and port.
 				///@param address The address to connect to. 
 				///@param port The port to connect to. 
-				exported tcp_connection(endpoint ep);
+				tcp_connection(endpoint ep);
 
 				///Constructs this connection by moving from another connection.
 				///@param other The message to move from. 
-				exported tcp_connection(tcp_connection&& other);
+				tcp_connection(tcp_connection&& other);
 
 				///Moves an existing connection into this connection.
 				///@param other The connection to move. 
 				///@return This connection.
-				exported tcp_connection& operator=(tcp_connection&& other);
+				tcp_connection& operator=(tcp_connection&& other);
 
 				///Gets the IP address of the underlying socket.
 				///@return The IP address.
-				exported std::array<uint8, socket::address_length> address() const;
+				std::array<uint8, socket::address_length> address() const;
 
 				///Gets the underlying socket.
 				///@return The socket.
-				exported const socket& base_socket() const;
+				const socket& base_socket() const;
 
 				///@return Whether or not the connection is open.
-				exported bool connected() const;
+				bool connected() const;
 
 				///Gets whether or not data is available to be read.
 				///@return True if data is available, false otherwise.
-				exported bool data_available() const;
+				bool data_available() const;
 
 				///Gets a list of messages that are available and complete.
 				///@param wait_for The number of messages to wait for. Defaults to zero. 
 				///@return A vector of possible zero messages that were read.
-				exported virtual std::vector<message> read(word wait_for = 0);
+				virtual std::vector<message> read(word wait_for = 0);
 
 				///Sends the given data over the connection.
 				///@param buffer The data to send. 
 				///@param length The number of bytes to be sent. 
 				///@return True if all the data was sent, false otherwise.
-				exported virtual bool send(const uint8* buffer, word length);
+				virtual bool send(const uint8* buffer, word length);
 
 				///Adds the data to the internal pending queue.
 				///Call send_queued to send all the data queued with this message as one contiguous message
 				///@param buffer The data to send. 
 				///@param length The number of bytes to be sent. 
-				exported void enqueue(const uint8* buffer, word length);
+				void enqueue(const uint8* buffer, word length);
 
 				///Sends all the data queued with enqueue as one contiguous message.
 				///@return True if all the data was sent, false otherwise.
-				exported virtual bool send_queued();
+				virtual bool send_queued();
 
 				///Clears without sending the data in the internal pending queue.
-				exported void clear_queued();
+				void clear_queued();
 
 				///Closes the underlying connection.
-				exported virtual void close();
+				virtual void close();
 
 				///Destructs the instance.
-				exported virtual ~tcp_connection();
+				virtual ~tcp_connection();
 
 #ifdef WINDOWS
 				//Hack to work around the fact that std::bind inappropraitely binds to rvalues.

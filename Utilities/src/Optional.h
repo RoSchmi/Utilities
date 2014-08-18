@@ -16,69 +16,69 @@ namespace util {
 			optional(const optional& other) = delete;
 			optional(optional&& other) = delete;
 
-			exported optional() {
+			optional() {
 				this->is_set = false;
 			}
 
-			exported optional(const T& obj) : type(obj) {
+			optional(const T& obj) : type(obj) {
 				this->is_set = true;
 			}
 
-			exported optional(T&& obj) : type(std::move(obj)) {
+			optional(T&& obj) : type(std::move(obj)) {
 				this->is_set = true;
 			}
 
-			exported void operator=(const T& obj) {
+			void operator=(const T& obj) {
 				this->type = obj;
 				this->is_set = true;
 			}
 
-			exported void operator=(T&& obj) {
+			void operator=(T&& obj) {
 				this->type = std::move(obj);
 				this->is_set = true;
 			}
 
-			exported void set(const T& obj) {
+			void set(const T& obj) {
 				this->type = obj;
 				this->is_set = true;
 			}
 
-			exported void set(T&& obj) {
+			void set(T&& obj) {
 				this->type = std::move(obj);
 				this->is_set = true;
 			}
 
-			exported T value() {
+			T value() {
 				return this->type;
 			}
 
-			exported T&& extract() {
+			T&& extract() {
 				this->is_set = false;
 				return std::move(this->type);
 			}
 
-			exported void clear() {
+			void clear() {
 				this->is_set = false;
 				this->type = T();
 			}
 
-			exported bool valid() const {
+			bool valid() const {
 				return this->is_set;
 			}
 
-			exported operator bool() const {
+			operator bool() const {
 				return this->is_set;
 			}
 
-			exported operator T() {
+			operator T() {
 				return this->type;
 			}
 
-			exported T& operator*() {
+			T& operator*() {
 				return this->type;
 			}
 
-			exported T* operator->() {
+			T* operator->() {
 				return &this->type;
 			}
 	};
@@ -92,47 +92,47 @@ namespace util {
 			optional(const optional& other) = delete;
 			optional(optional&& other) = delete;
 
-			exported optional() {
+			optional() {
 				this->type = nullptr;
 			}
 
-			exported optional(T& obj) : type(&obj) {
+			optional(T& obj) : type(&obj) {
 
 			}
 
-			exported void operator=(T& obj) {
+			void operator=(T& obj) {
 				this->type = &obj;
 			}
 
-			exported void set(T& obj) {
+			void set(T& obj) {
 				this->type = &obj;
 			}
 
-			exported void clear() {
+			void clear() {
 				this->type = nullptr;
 			}
 
-			exported T& value() {
+			T& value() {
 				return *this->type;
 			}
 
-			exported bool valid() const {
+			bool valid() const {
 				return this->type != nullptr;
 			}
 
-			exported operator bool() const {
+			operator bool() const {
 				return this->type != nullptr;
 			}
 
-			exported operator T() {
+			operator T() {
 				return this->type;
 			}
 
-			exported T& operator*() {
+			T& operator*() {
 				return *this->type;
 			}
 
-			exported T* operator->() {
+			T* operator->() {
 				return this->type;
 			}
 	};

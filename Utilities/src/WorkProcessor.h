@@ -37,7 +37,7 @@ namespace util {
 			work_processor(const work_processor& other) = delete;
 			work_processor& operator=(const work_processor& other) = delete;
 
-			exported work_processor(word worker_count, std::chrono::microseconds delay = std::chrono::microseconds(0)) {
+			work_processor(word worker_count, std::chrono::microseconds delay = std::chrono::microseconds(0)) {
 				this->running = false;
 
 				for (word i = 0; i < worker_count; i++) {
@@ -46,16 +46,16 @@ namespace util {
 				}
 			}
 
-			exported work_processor(work_processor&& other) {
+			work_processor(work_processor&& other) {
 				this->running = false;
 				*this = std::move(other);
 			}
 
-			exported ~work_processor() {
+			~work_processor() {
 				this->stop();
 			}
 
-			exported work_processor& operator=(work_processor&& other) {
+			work_processor& operator=(work_processor&& other) {
 				bool was_running = other.running.load();
 
 				other.stop();
@@ -72,11 +72,11 @@ namespace util {
 				return *this;
 			}
 
-			exported void add_work(T&& item) {
+			void add_work(T&& item) {
 				this->queue.enqueue(std::move(item));
 			}
 
-			exported void start() {
+			void start() {
 				if (this->running)
 					return;
 
@@ -86,7 +86,7 @@ namespace util {
 					i.start();
 			}
 
-			exported void stop() {
+			void stop() {
 				if (!this->running)
 					return;
 

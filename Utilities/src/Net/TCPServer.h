@@ -14,14 +14,14 @@ namespace util {
 	namespace net {
 		class tcp_server {
 			public:
-				exported tcp_server();
-				exported tcp_server(endpoint ep);
-				exported tcp_server(tcp_server&& other);
-				exported tcp_server& operator=(tcp_server&& other);
-				exported ~tcp_server();
+				tcp_server();
+				tcp_server(endpoint ep);
+				tcp_server(tcp_server&& other);
+				tcp_server& operator=(tcp_server&& other);
+				~tcp_server();
 
-				exported void start();
-				exported void stop();
+				void start();
+				void stop();
 
 				class cant_move_running_server_exception {};
 				class cant_start_default_constructed_exception {};

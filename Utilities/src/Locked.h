@@ -10,27 +10,27 @@ namespace util {
 		T* data;
 
 	public:
-		exported locked(T* item = nullptr) {
+		locked(T* item = nullptr) {
 			this->data = item;
 		}
 
-		exported void lock() {
+		void lock() {
 			this->mtx.lock();
 		}
 
-		exported void unlock() {
+		void unlock() {
 			this->mtx.unlock();
 		}
 
-		exported T* get() {
+		T* get() {
 			return this->data;
 		}
 
-		exported T& operator*() {
+		T& operator*() {
 			return *this->data;
 		}
 
-		exported T* operator->() {
+		T* operator->() {
 			return this->data;
 		}
 	};

@@ -22,17 +22,17 @@ namespace util {
 					word attempts;
 					data_stream data;
 
-					exported message(std::shared_ptr<tcp_connection> connection, tcp_connection::message message);
-					exported message(std::shared_ptr<tcp_connection> connection, data_stream data);
-					exported message(std::shared_ptr<tcp_connection> connection, const uint8* data, word length);
-					exported message(std::shared_ptr<tcp_connection> connection, uint16 id, uint8 category = 0, uint8 method = 0);
-					exported message(message&& other);
+					message(std::shared_ptr<tcp_connection> connection, tcp_connection::message message);
+					message(std::shared_ptr<tcp_connection> connection, data_stream data);
+					message(std::shared_ptr<tcp_connection> connection, const uint8* data, word length);
+					message(std::shared_ptr<tcp_connection> connection, uint16 id, uint8 category = 0, uint8 method = 0);
+					message(message&& other);
 
-					exported static void write_header(data_stream& stream, uint16 id, uint8 category, uint8 method);
+					static void write_header(data_stream& stream, uint16 id, uint8 category, uint8 method);
 
-					exported message(const message& other) = delete;
-					exported message& operator=(const message& other) = delete;
-					exported message& operator=(message&& other) = delete;
+					message(const message& other) = delete;
+					message& operator=(const message& other) = delete;
+					message& operator=(message&& other) = delete;
 				};
 
 				enum class request_result {
@@ -46,20 +46,20 @@ namespace util {
 
 				static const word max_retries = 5;
 
-				exported request_server();
-				exported request_server(net::endpoint port, word workers, uint16 retry_code);
-				exported request_server(std::vector<net::endpoint> ports, word workers, uint16 retry_code);
-				exported request_server(request_server&& other);
-				exported ~request_server();
+				request_server();
+				request_server(net::endpoint port, word workers, uint16 retry_code);
+				request_server(std::vector<net::endpoint> ports, word workers, uint16 retry_code);
+				request_server(request_server&& other);
+				~request_server();
 
-				exported request_server& operator=(request_server&& other); 
+				request_server& operator=(request_server&& other); 
 
-				exported void enqueue_incoming(message message);
-				exported void enqueue_outgoing(message message);
+				void enqueue_incoming(message message);
+				void enqueue_outgoing(message message);
 
-				exported void start();
-				exported void stop();
-				exported std::shared_ptr<tcp_connection> adopt(tcp_connection&& connection, bool call_on_connect = false);
+				void start();
+				void stop();
+				std::shared_ptr<tcp_connection> adopt(tcp_connection&& connection, bool call_on_connect = false);
 				
 				request_server(const request_server& other) = delete;
 				request_server& operator=(const request_server& other) = delete;

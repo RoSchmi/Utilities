@@ -34,15 +34,15 @@ namespace util {
 				void close(close_codes code);
 
 				public:
-					exported websocket_connection(socket&& socket);
-					exported websocket_connection(websocket_connection&& other);
-					exported virtual ~websocket_connection() override;
-					exported websocket_connection& operator=(websocket_connection&& other);
+					websocket_connection(socket&& socket);
+					websocket_connection(websocket_connection&& other);
+					virtual ~websocket_connection() override;
+					websocket_connection& operator=(websocket_connection&& other);
 
-					exported virtual std::vector<tcp_connection::message> read(word wait_for = 0) override;
-					exported virtual bool send(const uint8* data, word length) override;
-					exported virtual bool send_queued() override;
-					exported virtual void close() override;
+					virtual std::vector<tcp_connection::message> read(word wait_for = 0) override;
+					virtual bool send(const uint8* data, word length) override;
+					virtual bool send_queued() override;
+					virtual void close() override;
 
 					websocket_connection(const websocket_connection& other) = delete;
 					websocket_connection& operator=(const websocket_connection& other) = delete;

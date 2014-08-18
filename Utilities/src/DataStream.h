@@ -14,7 +14,7 @@ namespace util {
 	*
 	* Additionally, includes length-prefixed string parsing.
 	*/
-	class exported data_stream {
+	class data_stream {
 		word allocation;
 		word cursor;
 		word written;

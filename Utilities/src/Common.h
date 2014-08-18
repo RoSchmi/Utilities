@@ -2,46 +2,39 @@
 
 #if defined _WIN64 || defined _WIN32
 #define WINDOWS
-#define exported  __declspec(dllexport)
 #define threadlocal __declspec(thread)
 #elif defined __unix__
 #define POSIX
-#define exported __attribute__((visibility ("default")))
-// assume we have __thread. It's implemented by gcc, icc, and clang.
-#define threadlocal __thread
+#define threadlocal __thread // assume we have __thread. It's implemented by gcc, icc, and clang.
 #else
 #error Platform not supported.
 #endif
 
-#include <chrono>
-
-// libstdc++ doesn't support make_unique, libc++ supports it only in the
-// unreleased 3.4
+// libstdc++ doesn't support make_unique, libc++ supports it only in the unreleased 3.4
 #ifdef POSIX
 
 #include <memory>
 #include <type_traits>
 
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique_helper(std::false_type, Args&&... args) {
-	  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+template <typename T, typename... Args> std::unique_ptr<T> make_unique_helper(std::false_type, Args&&... args) {
+	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique_helper(std::true_type, Args&&... args) {
-	   static_assert(std::extent<T>::value == 0,
-			          "make_unique<T[N]>() is forbidden, please use make_unique<T[]>().");
+template <typename T, typename... Args> std::unique_ptr<T> make_unique_helper(std::true_type, Args&&... args) {
+	static_assert(std::extent<T>::value == 0, "make_unique<T[N]>() is forbidden, please use make_unique<T[]>().");
 
-	      typedef typename std::remove_extent<T>::type U;
-		     return std::unique_ptr<T>(new U[sizeof...(Args)]{std::forward<Args>(args)...});
+	typedef typename std::remove_extent<T>::type U;
+
+	return std::unique_ptr<T>(new U[sizeof...(Args)]{std::forward<Args>(args)...});
 }
 
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args) {
-	   return make_unique_helper<T>(std::is_array<T>(), std::forward<Args>(args)...);
+template <typename T, typename... Args> std::unique_ptr<T> make_unique(Args&&... args) {
+	return make_unique_helper<T>(std::is_array<T>(), std::forward<Args>(args)...);
 }
 
 #endif
+
+#include <chrono>
 
 typedef long long int64;
 typedef int int32;

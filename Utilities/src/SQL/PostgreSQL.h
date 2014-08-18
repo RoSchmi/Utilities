@@ -31,80 +31,80 @@ namespace util {
 
 					typedef connection connection_type;
 
-					exported query(std::string query_str = "", connection* conn = nullptr);
-					exported query(query&& other);
-					exported virtual ~query();
+					query(std::string query_str = "", connection* conn = nullptr);
+					query(query&& other);
+					virtual ~query();
 
-					exported void reset_result();
-					exported void reset_paras();
-					exported virtual void reset() override;
-					exported virtual void execute(sql::connection* conn = nullptr) override;
-					exported virtual bool is_column_null() const override;
+					void reset_result();
+					void reset_paras();
+					virtual void reset() override;
+					virtual void execute(sql::connection* conn = nullptr) override;
+					virtual bool is_column_null() const override;
 
-					exported virtual void add_para(const uint8* para, word length) override;
-					exported virtual void add_para(const std::string& para) override;
-					exported virtual void add_para(const date_time& parameter) override;
-					exported virtual void add_para(const data_stream& parameter) override;
-					exported virtual void add_para(cstr para) override;
-					exported virtual void add_para(float64 para) override;
-					exported virtual void add_para(float32 parameter) override;
-					exported virtual void add_para(uint64 para) override;
-					exported virtual void add_para(uint32 para) override;
-					exported virtual void add_para(uint16 para) override;
-					exported virtual void add_para(uint8 para) override;
-					exported virtual void add_para(int64 para) override;
-					exported virtual void add_para(int32 para) override;
-					exported virtual void add_para(int16 para) override;
-					exported virtual void add_para(int8 para) override;
-					exported virtual void add_para(bool para) override;
+					virtual void add_para(const uint8* para, word length) override;
+					virtual void add_para(const std::string& para) override;
+					virtual void add_para(const date_time& parameter) override;
+					virtual void add_para(const data_stream& parameter) override;
+					virtual void add_para(cstr para) override;
+					virtual void add_para(float64 para) override;
+					virtual void add_para(float32 parameter) override;
+					virtual void add_para(uint64 para) override;
+					virtual void add_para(uint32 para) override;
+					virtual void add_para(uint16 para) override;
+					virtual void add_para(uint8 para) override;
+					virtual void add_para(int64 para) override;
+					virtual void add_para(int32 para) override;
+					virtual void add_para(int16 para) override;
+					virtual void add_para(int8 para) override;
+					virtual void add_para(bool para) override;
 
-					exported virtual uint8* get_bytes(uint8* buffer, word count) override;
-					exported virtual std::string get_string() override;
-					exported virtual date_time get_date_time() override;
-					exported virtual data_stream get_data_stream() override;
-					exported virtual float64 get_float64() override;
-					exported virtual float32 get_float32() override;
-					exported virtual uint64 get_uint64() override;
-					exported virtual uint32 get_uint32() override;
-					exported virtual uint16 get_uint16() override;
-					exported virtual uint8 get_uint8() override;
-					exported virtual int64 get_int64() override;
-					exported virtual int32 get_int32() override;
-					exported virtual int16 get_int16() override;
-					exported virtual int8 get_int8() override;
-					exported virtual bool get_bool() override;
+					virtual uint8* get_bytes(uint8* buffer, word count) override;
+					virtual std::string get_string() override;
+					virtual date_time get_date_time() override;
+					virtual data_stream get_data_stream() override;
+					virtual float64 get_float64() override;
+					virtual float32 get_float32() override;
+					virtual uint64 get_uint64() override;
+					virtual uint32 get_uint32() override;
+					virtual uint16 get_uint16() override;
+					virtual uint8 get_uint8() override;
+					virtual int64 get_int64() override;
+					virtual int32 get_int32() override;
+					virtual int16 get_int16() override;
+					virtual int8 get_int8() override;
+					virtual bool get_bool() override;
 
-					exported virtual uint8* get_bytes(std::string column, uint8* buffer, word count) override;
-					exported virtual std::string get_string(std::string column) override;
-					exported virtual date_time get_date_time(std::string column) override;
-					exported virtual data_stream get_data_stream(std::string column) override;
-					exported virtual float64 get_float64(std::string column) override;
-					exported virtual float32 get_float32(std::string column) override;
-					exported virtual uint64 get_uint64(std::string column) override;
-					exported virtual uint32 get_uint32(std::string column) override;
-					exported virtual uint16 get_uint16(std::string column) override;
-					exported virtual uint8 get_uint8(std::string column) override;
-					exported virtual int64 get_int64(std::string column) override;
-					exported virtual int32 get_int32(std::string column) override;
-					exported virtual int16 get_int16(std::string column) override;
-					exported virtual int8 get_int8(std::string column) override;
-					exported virtual bool get_bool(std::string column) override;
+					virtual uint8* get_bytes(std::string column, uint8* buffer, word count) override;
+					virtual std::string get_string(std::string column) override;
+					virtual date_time get_date_time(std::string column) override;
+					virtual data_stream get_data_stream(std::string column) override;
+					virtual float64 get_float64(std::string column) override;
+					virtual float32 get_float32(std::string column) override;
+					virtual uint64 get_uint64(std::string column) override;
+					virtual uint32 get_uint32(std::string column) override;
+					virtual uint16 get_uint16(std::string column) override;
+					virtual uint8 get_uint8(std::string column) override;
+					virtual int64 get_int64(std::string column) override;
+					virtual int32 get_int32(std::string column) override;
+					virtual int16 get_int16(std::string column) override;
+					virtual int8 get_int8(std::string column) override;
+					virtual bool get_bool(std::string column) override;
 
-					exported virtual uint8* get_bytes(word column, uint8* buffer, word count) override;
-					exported virtual std::string get_string(word column) override;
-					exported virtual date_time get_date_time(word column) override;
-					exported virtual data_stream get_data_stream(word column) override;
-					exported virtual float64 get_float64(word column) override;
-					exported virtual float32 get_float32(word column) override;
-					exported virtual uint64 get_uint64(word column) override;
-					exported virtual uint32 get_uint32(word column) override;
-					exported virtual uint16 get_uint16(word column) override;
-					exported virtual uint8 get_uint8(word column) override;
-					exported virtual int64 get_int64(word column) override;
-					exported virtual int32 get_int32(word column) override;
-					exported virtual int16 get_int16(word column) override;
-					exported virtual int8 get_int8(word column) override;
-					exported virtual bool get_bool(word column) override;
+					virtual uint8* get_bytes(word column, uint8* buffer, word count) override;
+					virtual std::string get_string(word column) override;
+					virtual date_time get_date_time(word column) override;
+					virtual data_stream get_data_stream(word column) override;
+					virtual float64 get_float64(word column) override;
+					virtual float32 get_float32(word column) override;
+					virtual uint64 get_uint64(word column) override;
+					virtual uint32 get_uint32(word column) override;
+					virtual uint16 get_uint16(word column) override;
+					virtual uint8 get_uint8(word column) override;
+					virtual int64 get_int64(word column) override;
+					virtual int32 get_int32(word column) override;
+					virtual int16 get_int16(word column) override;
+					virtual int8 get_int8(word column) override;
+					virtual bool get_bool(word column) override;
 			};
 
 			class connection : public sql::connection {
@@ -121,14 +121,14 @@ namespace util {
 					typedef query query_type;
 					template<typename T, typename I> using binder_type = table_binder<T, I>;
 
-					exported connection(const parameters& parameters);
-					exported virtual ~connection();
+					connection(const parameters& parameters);
+					virtual ~connection();
 
-					exported query new_query(std::string query_str = "");
-					exported query operator<<(std::string query_str);
-					exported virtual void begin_transaction(isolation_level level) override;
-					exported virtual void rollback_transaction() override;
-					exported virtual void commit_transaction() override;
+					query new_query(std::string query_str = "");
+					query operator<<(std::string query_str);
+					virtual void begin_transaction(isolation_level level) override;
+					virtual void rollback_transaction() override;
+					virtual void commit_transaction() override;
 			};
 
 			template<typename T, typename I> class table_binder : public sql::table_binder<T, connection, I> {
@@ -195,21 +195,21 @@ namespace util {
 				}
 
 				public:
-					exported table_binder(postgres::connection& conn, std::string name, bool lock_row = true) : sql::table_binder<T, connection, I>(conn, name) {
+					table_binder(postgres::connection& conn, std::string name, bool lock_row = true) : sql::table_binder<T, connection, I>(conn, name) {
 						this->lock_stmt = lock_row ? " FOR UPDATE;" : "";
 					}
 
-					exported virtual ~table_binder() {
+					virtual ~table_binder() {
 
 					}
 
-					template<typename U> exported T select_one_by_field(std::string field, U value) {
+					template<typename U> T select_one_by_field(std::string field, U value) {
 						query qry = this->db << ("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lock_stmt);
 						qry << value;
 						return this->fill_one(qry);
 					}
 
-					template<typename U> exported std::vector<T> select_by_field(std::string field, U value) {
+					template<typename U> std::vector<T> select_by_field(std::string field, U value) {
 						query qry = this->db << ("SELECT * FROM " + this->name + " WHERE " + field + " = $1" + this->lock_stmt);
 						qry << value;
 						return this->fill(qry);

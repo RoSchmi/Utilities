@@ -24,19 +24,19 @@ namespace util {
 			work_queue(const work_queue& other) = delete;
 			work_queue& operator=(const work_queue& other) = delete;
 
-			exported work_queue() {
+			work_queue() {
 				this->alive = true;
 			}
 
-			exported ~work_queue() {
+			~work_queue() {
 				this->kill_waiters();
 			}
 
-			exported work_queue(work_queue&& other) {
+			work_queue(work_queue&& other) {
 				*this = std::move(other);
 			}
 
-			exported work_queue& operator=(work_queue&& other) {
+			work_queue& operator=(work_queue&& other) {
 				std::unique_lock<std::mutex> lck1(this->lock);
 				std::unique_lock<std::mutex> lck2(other.lock);
 
@@ -45,13 +45,13 @@ namespace util {
 				return *this;
 			}
 
-			exported void enqueue(T&& item) {
+			void enqueue(T&& item) {
 				std::unique_lock<std::mutex> lock(this->lock);
 				this->items.push(std::move(item));
 				this->cv.notify_one();
 			}
 
-			exported bool dequeue(T& target) {
+			bool dequeue(T& target) {
 				if (!this->alive)
 					return false;
 
@@ -70,7 +70,7 @@ namespace util {
 				return true;
 			}
 
-			exported T dequeue() {
+			T dequeue() {
 				if (!this->alive)
 					throw waiter_killed_exception();
 
@@ -89,7 +89,7 @@ namespace util {
 				return std::move(request);
 			}
 
-			exported void kill_waiters() {
+			void kill_waiters() {
 				this->alive = false;
 				this->cv.notify_all();
 			}
