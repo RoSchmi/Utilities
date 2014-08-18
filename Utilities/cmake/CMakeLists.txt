@@ -14,9 +14,13 @@ add_library(UtilitiesObjects OBJECT ${util_sources})
 add_library(Utilities SHARED $<TARGET_OBJECTS:UtilitiesObjects>)
 add_library(UtilitiesStatic STATIC $<TARGET_OBJECTS:UtilitiesObjects>)
 
-# requires clang
-set(CMAKE_CXX_FLAGS "-std=c++11 -stdlib=libc++ -fPIC -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-cast-align -Wno-exit-time-destructors -Wno-global-constructors")
-set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lc++abi")
+set(CMAKE_CXX_FLAGS "-std=c++1y -fPIE -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-cast-align -Wno-exit-time-destructors -Wno-global-constructors")
+
+if (LIBCPP)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" -stdlib=libc++)
+    set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -lc++abi")
+endif()
+
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(PostgreSQL REQUIRED)
