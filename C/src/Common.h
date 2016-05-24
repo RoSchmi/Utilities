@@ -35,8 +35,12 @@ typedef int8 boolean;
 
 #if defined _WIN32 && !defined _WIN64	
 typedef unsigned int uintptr;
+typedef uint32 word;
+typedef int32 sword;
 #elif defined _WIN64
 typedef unsigned long long uintptr;
+typedef uint64 word;
+typedef int64 sword;
 #endif
 
 #elif defined POSIX

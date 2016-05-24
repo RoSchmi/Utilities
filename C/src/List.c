@@ -46,11 +46,11 @@ void List_Uninitialize(List* self) {
 }
 
 void List_Append(List* self, void* data) {
-	uint32 address;
+	word address;
 
 	assert(self != NULL && data != NULL);
 	
-	address = (uint32)data;
+	address = (word)data;
 
 	Array_Write(&self->DataStore, (uint8*)&address, self->Count * sizeof(void*), sizeof(void*));
 
@@ -58,7 +58,7 @@ void List_Append(List* self, void* data) {
 }
 
 void* List_Iterate(List_Iterator* iterator) {
-	uint32 data;
+	word data;
 	void* address;
 
 	assert(iterator != NULL);
@@ -66,7 +66,7 @@ void* List_Iterate(List_Iterator* iterator) {
 	address = NULL;
 
 	if (iterator->Position < iterator->ParentList->Count) {
-		data = *(uint32*)Array_Read(&iterator->ParentList->DataStore, iterator->Position * sizeof(void*), sizeof(void*));
+		data = *(word*)Array_Read(&iterator->ParentList->DataStore, iterator->Position * sizeof(void*), sizeof(void*));
 		address = (void*)data;
 		iterator->Position++;
 	}

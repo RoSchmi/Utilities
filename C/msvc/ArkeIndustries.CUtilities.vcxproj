@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<Import Project="$(CONFIG_PATH)\MSBuild\VC Static Library.props" />
 	<PropertyGroup Label="Globals">
 		<ProjectGuid>{4FF6ABE7-FAF4-4C8D-BD0C-B4F0FF40BF6B}</ProjectGuid>
