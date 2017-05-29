@@ -1,20 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.25123.0
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArkeIndustries.CPPUtilities", "ArkeIndustries.CPPUtilities.vcxproj", "{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArkeIndustries.CPPUtilities", "ArkeIndustries.CPPUtilities.vcxproj", "{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}.Debug|x64.ActiveCfg = Debug|x64
-		{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}.Debug|x64.Build.0 = Debug|x64
-		{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}.Release|x64.ActiveCfg = Release|x64
-		{98033ADB-01CC-4AB8-BB8E-0A9A029BFB5D}.Release|x64.Build.0 = Release|x64
+		{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}.Debug|x64.ActiveCfg = Debug|x64
+		{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}.Debug|x64.Build.0 = Debug|x64
+		{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}.Debug|x86.ActiveCfg = Debug|Win32
+		{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}.Debug|x86.Build.0 = Debug|Win32
+		{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}.Release|x64.ActiveCfg = Release|x64
+		{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}.Release|x64.Build.0 = Release|x64
+		{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}.Release|x86.ActiveCfg = Release|Win32
+		{CDD5F6F9-8F3F-44E0-A16A-D12AA95C35C5}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
